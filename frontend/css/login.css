@@ -1,0 +1,621 @@
+:root {
+  --azul: #1a237e;
+  --dorado: #f0ad4e;
+}
+
+/* ===============================
+   BASE
+================================= */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'OpenSans', Arial, sans-serif;
+}
+
+h1,
+h2,
+h3 {
+  font-family: 'OpenSans', sans-serif;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: #fff;
+}
+
+/* ===============================
+   HEADER
+================================= */
+.navbar {
+  padding: 5px 0;
+}
+
+.encabezado-login {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding-top: 30px;
+  padding-bottom: 20px;
+
+  position: relative;
+  z-index: 20;
+
+  margin-bottom: -60px;
+  transform: translateY(-30px);
+}
+
+.logo-login {
+  width: min(100px, 100%);
+}
+
+
+.encabezado-login .col-md-4 {
+  margin-bottom: 12px;
+  /* 👈 separación SOLO del bloque del logo */
+}
+
+.encabezado-login .col-md-4,
+.encabezado-login .col-md-8 {
+  transform: translateY(6px);
+}
+
+/* ===============================
+   TITULO
+================================= */
+.titulo-formulario {
+  margin: 0;
+  margin-bottom: 25px;
+  color: var(--azul);
+  font-size: 2.2rem;
+}
+
+/* ===============================
+   MAIN (DESKTOP)
+================================= */
+main {
+  flex: 1;
+  margin-top: -184px;
+  /* Intacto como pediste */
+  padding-top: 60px;
+}
+
+/* ===============================
+   BOTONES
+================================= */
+.btn-rojo {
+  display: inline-block;
+  background-color: #EDB322;
+  color: #ffffff !important;
+  padding: 12px 35px;
+  border-radius: 50px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  border: none;
+  margin-left: 10px;
+}
+
+.btn-rojo:hover {
+  background-color: #d9a61f;
+  transform: translateY(-2px);
+}
+
+.btn-principal {
+  color: #fff !important;
+}
+
+.btn-principal:hover {
+  color: #fff !important;
+}
+
+/* ===============================
+   UPLOAD / LOGIN
+================================= */
+.main-upload {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 200px);
+  padding-top: 40px;
+  padding-bottom: clamp(80px, 10vh, 140px);
+}
+
+.login-section {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 40px 0;
+}
+
+.login-section .card {
+  width: 100%;
+  max-width: 380px;
+  border-radius: 20px;
+}
+
+/* ===============================
+   MODAL LOGIN
+================================= */
+.modal-content {
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
+}
+
+.modal-dialog {
+  max-width: 350px;
+}
+
+.modal-body {
+  padding: 20px;
+  text-align: center;
+}
+
+.modal-body form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.modal-body label {
+  width: 100%;
+  max-width: 250px;
+  text-align: left;
+}
+
+.modal-body h3 {
+  font-size: 20px;
+  color: var(--azul);
+  font-weight: bold;
+}
+
+.modal-body .form-control {
+  max-width: 250px;
+  width: 100%;
+  margin: 0 auto;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.modal-body .btn-rojo {
+  max-width: 200px;
+  margin: 10px auto 0 auto;
+  display: block;
+}
+
+/* ===============================
+   UI PANEL
+================================= */
+.ui-panel {
+  width: 100%;
+  max-width: 380px;
+  border-radius: 20px;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
+  background: #fff;
+  margin: 90px auto 40px auto;
+}
+
+/* ===============================
+   CARRUSEL
+================================= */
+#ejidosoftCarousel {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  /* 🔥 CAMBIO: Reducido de 40px a 20px para subir el contenido */
+  padding-top: 25px;
+  /* 🔥 NUEVO: Margen abajo para separarlo del final del main en pantallas grandes */
+  margin-bottom: 70px;
+}
+
+#ejidosoftCarousel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #F1F1F1;
+  z-index: -2;
+}
+
+#ejidosoftCarousel::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 60%;
+  height: 100%;
+  background: #B7C2D8;
+  clip-path: polygon(100% 0, 0 0, 100% 100%);
+  z-index: -1;
+}
+
+.carousel,
+.carousel-inner,
+.carousel-item {
+  background: transparent !important;
+}
+
+.carousel-item {
+  backface-visibility: hidden;
+  transition: opacity 0.6s ease-in-out;
+}
+
+/* ===============================
+   HERO TEXT
+================================= */
+.generalhero {
+  background: transparent;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+}
+
+.generalhero__text {
+  padding-left: clamp(10px, 3vw, 30px);
+  padding-right: clamp(10px, 2vw, 20px);
+}
+
+.generalhero__text h2 {
+  font-size: clamp(20px, 4vw, 42px);
+  font-weight: 800;
+  color: var(--azul);
+  margin-left: 10px;
+}
+
+.generalhero__text p {
+  color: var(--azul);
+  font-size: clamp(13px, 1.8vw, 18px);
+  margin: 20px 0 25px 10px;
+}
+
+/* ===============================
+   IMAGEN HERO
+================================= */
+.img-hero {
+  width: 100%;
+  max-width: 400px;
+  border-radius: 80px 20px 80px 20px;
+  filter: drop-shadow(10px 15px 20px rgba(0, 0, 0, 0.15));
+}
+
+/* ===============================
+   FOOTER
+================================= */
+footer {
+  background: var(--azul);
+  padding: 10px;
+  font-size: 0.8rem;
+  color: white;
+  margin-top: auto;
+  position: relative;
+}
+
+/* ===============================
+   RESPONSIVE TABLET / MÓVIL
+================================= */
+@media (max-width: 991px) {
+  .modal-dialog {
+    margin: 0 auto !important;
+    transform: translateY(-20px);
+    /* 👈 lo sube un poco */
+  }
+
+  .modal-dialog-centered {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+  }
+
+  .ui-panel {
+    margin: 0 auto !important;
+    /* evita que lo empuje hacia abajo */
+  }
+
+  .ui-panel {
+    max-width: 300px !important;
+    width: 88% !important;
+    padding: 10px !important;
+    transform: scale(0.95);
+  }
+
+  .modal-body {
+    font-size: 10px;
+  }
+
+  .modal-body h3 {
+    font-size: 16px;
+  }
+
+  .modal-body label {
+    font-size: 10px;
+  }
+
+  .form-control {
+    font-size: 10px;
+    padding: 6px;
+  }
+
+  .form-control,
+  .form-control::placeholder,
+  .modal-body label {
+    font-size: 10px;
+  }
+
+
+  .form-control::placeholder {
+    font-size: 10px;
+  }
+
+  /* --- NUEVA REGLA: Separa el logo del título de abajo --- */
+  .logo-login {
+    margin-bottom: 20px !important;
+  }
+
+  main {
+    margin-top: -336px;
+    padding-top: 60px;
+  }
+
+  .encabezado-login {
+    transform: translateY(-10px);
+    margin-bottom: -20px;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  .encabezado-login .row {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    width: 100% !important;
+  }
+
+  .encabezado-login .col-md-4,
+  .encabezado-login .col-md-8 {
+    width: 100% !important;
+    text-align: center !important;
+    justify-content: center !important;
+    transform: none !important;
+    margin-bottom: 10px;
+  }
+
+  .navbar {
+    position: relative;
+    z-index: 30;
+  }
+
+  main>*:first-child {
+    margin-top: 20px;
+  }
+
+  .login-section,
+  .main-upload,
+  .ui-panel {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+
+  #ejidosoftCarousel .row {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  #ejidosoftCarousel .generalhero__text,
+  #ejidosoftCarousel .text-center {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 15px !important;
+    text-align: center !important;
+  }
+
+  .generalhero__text h2 {
+    margin-left: 0 !important;
+    text-align: center !important;
+  }
+
+  .generalhero__text p {
+    margin-left: 0 !important;
+    text-align: center !important;
+    margin-bottom: 25px !important;
+  }
+
+  .btn-rojo {
+    margin: 0 auto !important;
+    display: inline-block !important;
+  }
+
+  .generalhero {
+    min-height: auto !important;
+    padding-top: 190px !important;
+    padding-bottom: 40px !important;
+  }
+
+  .img-hero {
+    max-width: 200px !important;
+    margin: 20px auto 0 auto !important;
+  }
+
+  #ejidosoftCarousel::after {
+    width: 100% !important;
+    height: 100% !important;
+    clip-path: polygon(100% 45%, 0% 100%, 100% 100%) !important;
+    display: block !important;
+    opacity: 1 !important;
+  }
+}
+
+/* ===============================
+   MÓVIL PEQUEÑO
+================================= */
+@media (max-width: 576px) {
+
+  main {
+    margin-top: -336px;
+  }
+
+  .encabezado-login {
+    transform: translateY(0);
+    margin-bottom: -10px;
+  }
+
+  .logo-login {
+    width: 80px;
+    /* Mantiene la separación también en móviles muy pequeños */
+    margin-bottom: 15px !important;
+  }
+
+  .modal-dialog {
+    margin: 0 auto !important;
+    transform: translateY(-20px);
+    /* 👈 lo sube un poco */
+  }
+
+  .modal-dialog-centered {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+  }
+
+  .ui-panel {
+    margin: 0 auto !important;
+    /* evita que lo empuje hacia abajo */
+  }
+
+  .ui-panel {
+    max-width: 320px !important;
+    width: 88% !important;
+    padding: 10px !important;
+    transform: scale(0.95);
+  }
+
+  .modal-body {
+    font-size: 10px;
+  }
+
+  .modal-body h3 {
+    font-size: 16px;
+  }
+
+  .modal-body label {
+    font-size: 10px;
+  }
+
+  .form-control {
+    font-size: 10px;
+    padding: 6px;
+  }
+
+  .form-control,
+  .form-control::placeholder,
+  .modal-body label {
+    font-size: 10px;
+  }
+
+  .form-control::placeholder {
+    font-size: 10px;
+  }
+
+}
+
+/* ===============================
+   FOOTER RESPONSIVE (MÓVIL Y TABLET)
+================================= */
+@media (max-width: 991px) {
+
+  footer {
+    padding: 20px 10px !important;
+  }
+
+  footer .row {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    gap: 15px;
+  }
+
+  footer .col-6,
+  footer .col-md-2,
+  footer .footer-contacto {
+    width: 100% !important;
+    max-width: 100% !important;
+    text-align: center !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+  }
+
+  footer img {
+    display: block;
+    margin: 0 auto !important;
+  }
+}
+
+/* ===============================
+   FOOTER DESKTOP FIX (PANTALLAS GRANDES)
+================================= */
+@media (min-width: 992px) {
+  footer .row {
+    display: flex;
+    align-items: center;
+  }
+
+  footer .col-3 {
+    display: flex;
+    justify-content: center;
+  }
+
+  footer .col-6 {
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 576px) {
+  .modal-dialog {
+    max-width: 92%;
+  }
+}
+
+/* ===============================
+   FIX SOLO ADMIN HEADER (AJUSTADO)
+================================= */
+
+body:has(#titulo-admin) main {
+  margin-top: 0 !important;
+  padding-top: 5px !important;
+}
+
+/* separación suave entre navbar y header */
+body:has(#titulo-admin) .container .row.align-items-center {
+  margin-top: 5px !important;
+}
+
+.main-upload {
+  display: block;
+  min-height: auto;
+  padding-top: 60px;
+  padding-bottom: 120px;
+}
+
+/* ===============================
+   FORMULARIOS - TAMAÑO LETRA
+================================= */
+.form-control,
+.form-control::placeholder,
+.modal-body label {
+  font-size: 16px;
+}
+
+.modal-body {
+  font-size: 16px;
+}

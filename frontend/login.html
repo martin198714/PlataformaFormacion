@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+  <!-- SEO -->
+  <meta name="description"
+    content="Acceso a la plataforma de formación Ejidosoft. Gestión, desarrollo y aprendizaje para el sector transporte." />
+  <meta name="robots" content="index, follow" />
+  <meta name="theme-color" content="#000000" />
+
+  <!-- SEO extra (Open Graph) -->
+  <meta property="og:title" content="Login - Ejidosoft Formación" />
+  <meta property="og:description" content="Plataforma de formación Ejidosoft para gestión, desarrollo y aprendizaje." />
+  <meta property="og:image" content="img/logo.png" />
+  <meta property="og:type" content="website" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Login - Ejidosoft Formación" />
+  <meta name="twitter:description" content="Accede a la plataforma de formación Ejidosoft." />
+  <meta name="twitter:image" content="img/logo.png" />
+
+  <title>Login - Ejidosoft Formación</title>
+  <link rel="icon" type="image/webp" href="img/logo.png" />
+
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/login.css" />
+</head>
+
+<body>
+
+  <!-- NAV -->
+  <nav class="navbar navbar-expand-lg" role="navigation" aria-label="Navegación principal">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="index.html" aria-label="Ir a inicio"></a>
+    </div>
+  </nav>
+
+  <!-- HEADER -->
+  <header class="encabezado-login" role="banner">
+    <div class="container">
+      <div class="row align-items-center text-center text-md-start">
+
+        <div class="col-md-4 mb-4 mb-md-0 d-flex justify-content-center justify-content-md-start">
+          <img src="img/logo.png" alt="Logo Ejidosoft Formación" class="img-fluid logo-login" />
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main role="main">
+
+    <!-- CARRUSEL PRINCIPAL -->
+    <div id="ejidosoftCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="2000"
+      aria-label="Carrusel principal de formación">
+
+      <div class="carousel-indicators carousel-dots">
+        <button type="button" data-bs-target="#ejidosoftCarousel" data-bs-slide-to="0" class="active dot"
+          aria-label="Diapositiva 1"></button>
+        <button type="button" data-bs-target="#ejidosoftCarousel" data-bs-slide-to="1" class="dot"
+          aria-label="Diapositiva 2"></button>
+      </div>
+
+      <div class="carousel-inner">
+
+        <div class="carousel-item active">
+          <section class="generalhero" aria-label="Sección formación carretera">
+            <div class="container">
+              <div class="row align-items-center">
+                <div class="col-md-6 generalhero__text">
+                  <h2>Ejidosoft Formación</h2>
+                  <p>Gestión de manuales y vídeos.</p>
+                  <button class="btn-rojo" data-bs-toggle="modal" data-bs-target="#loginModal" aria-label="Abrir login">
+                    Acceder
+                  </button>
+                </div>
+                <div class="col-md-6 text-center">
+                  <img src="img/carretera-380.webp" class="img-hero" alt="Imagen carretera formación" />
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="carousel-item">
+          <section class="generalhero" aria-label="Sección formación transporte">
+            <div class="container">
+              <div class="row align-items-center">
+                <div class="col-md-6 generalhero__text">
+                  <h2>Ejidosoft Formación</h2>
+                  <p>Gestión de manuales y vídeos.</p>
+                  <button class="btn-rojo" data-bs-toggle="modal" data-bs-target="#loginModal" aria-label="Abrir login">
+                    Acceder
+                  </button>
+                </div>
+                <div class="col-md-6 text-center">
+                  <img src="img/camion-380.webp" class="img-hero" alt="Imagen camión formación" />
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- LOGIN MODAL -->
+    <section class="login-section">
+      <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true" aria-labelledby="loginModalLabel">
+
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+
+          <div class="modal-content border-0 ui-panel">
+
+            <div class="text-end p-3">
+              <button type="button" class="btn-close" data-bs-dismiss="modal"
+                aria-label="Cerrar ventana de login"></button>
+            </div>
+
+            <div class="modal-body p-4">
+              <h3 class="text-center mb-4" id="loginModalLabel">
+                <i class="fa-solid fa-right-to-bracket me-2"></i>
+                Acceder
+              </h3>
+
+              <form id="loginForm">
+                <div class="mb-3">
+                  <label for="loginEmail">Correo electrónico</label>
+                  <input type="email" id="loginEmail" class="form-control" aria-label="Correo electrónico" required />
+                </div>
+
+                <div class="mb-3">
+                  <label for="loginPassword">Contraseña</label>
+                  <input type="password" id="loginPassword" class="form-control" aria-label="Contraseña" required />
+                </div>
+
+                <button type="submit" class="btn btn-rojo w-100" aria-label="Iniciar sesión">
+                  Ingresar
+                </button>
+              </form>
+
+              <p class="text-center mt-4">
+                ¿No tienes cuenta?
+                <a href="#" class="text-primary fw-bold" data-bs-toggle="modal" data-bs-target="#registerModal"
+                  data-bs-dismiss="modal" aria-label="Ir a registro">
+                  Regístrate
+                </a>
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REGISTER MODAL -->
+    <div class="modal fade" id="registerModal" tabindex="-1" aria-hidden="true" aria-labelledby="registerModalLabel">
+
+      <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 ui-panel">
+
+          <div class="text-end p-3">
+            <button type="button" class="btn-close" data-bs-dismiss="modal"
+              aria-label="Cerrar ventana de registro"></button>
+          </div>
+
+          <div class="modal-body p-4">
+            <h3 class="text-center mb-4" id="registerModalLabel">
+              <i class="fa-solid fa-user-plus me-2"></i>
+              Registrarse
+            </h3>
+
+            <form id="registerForm" autocomplete="off">
+              <div class="mb-3">
+                <label for="nombre">Nombre completo</label>
+                <input type="text" class="form-control" id="nombre" aria-label="Nombre completo" required
+                  autocomplete="off">
+              </div>
+
+              <div class="mb-3">
+                <label for="registerEmail">Correo electrónico</label>
+                <input type="email" class="form-control" id="registerEmail" aria-label="Correo electrónico" required
+                  autocomplete="off">
+              </div>
+
+              <div class="mb-3">
+                <label for="registerTelefono">Teléfono</label>
+                <input type="text" class="form-control" id="registerTelefono" aria-label="Teléfono" required
+                  pattern="[0-9]{9}" autocomplete="off">
+              </div>
+
+              <div class="mb-3">
+                <label for="registerPassword">Contraseña</label>
+                <input type="password" class="form-control" id="registerPassword" aria-label="Contraseña" required
+                  autocomplete="off">
+              </div>
+
+              <div class="g-recaptcha" data-sitekey="6LeOt_ssAAAAAH6FWF_opRk8eY28NYt29x-oinq1"></div>
+
+              <button type="submit" class="btn btn-principal w-100" aria-label="Crear cuenta">
+                <i class="fa-solid fa-user-plus me-1"></i>Registrarse
+              </button>
+            </form>
+
+            <p class="text-center mt-3">
+              ¿Ya tienes cuenta?
+              <a href="#" data-bs-toggle="modal" data-bs-target="#loginModal" data-bs-dismiss="modal"
+                aria-label="Ir a login">
+                Inicia sesión
+              </a>
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="text-center py-3 text-white" role="contentinfo">
+    <div class="container">
+      <div class="row">
+
+        <div class="col-6 col-md-2"></div>
+        <div class="col-6 col-md-2"></div>
+
+        <div class="col-6 col-md-2">
+          © 2026 Ejidosoft Formación
+        </div>
+
+        <div class="col-6 col-md-2"></div>
+
+        <div class="col-6 col-md-2">
+          <img src="img/logo-pie.png" alt="Logo pie Ejidosoft" />
+        </div>
+
+        <div class="col-md-2 footer-contacto ms-auto text-md-end">
+          C/Jaén nº18-20 04700<br>
+          El Ejido (Almería)<br>
+          Telf.: 950 48 73 99<br>
+          info@ejidosoft.es
+        </div>
+
+      </div>
+    </div>
+  </footer>
+
+  <!-- JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+
+      const loginForm = document.getElementById("loginForm");
+      if (!loginForm) return;
+
+      loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const email = document.getElementById("loginEmail").value.trim();
+        const password = document.getElementById("loginPassword").value;
+
+        if (!email || !password) {
+          alert("Email y contraseña son obligatorios");
+          return;
+        }
+
+        try {
+
+          const resp = await fetch("http://localhost:3000/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          });
+
+          const data = await resp.json().catch(() => ({}));
+
+          if (!resp.ok) {
+            alert(data.error || "Credenciales incorrectas");
+            return;
+          }
+
+          // =========================
+          // 🔐 USUARIO (BACKEND FIJO)
+          // =========================
+          const usuario = data.usuario;
+
+          if (!usuario) {
+            console.error("❌ Respuesta inválida:", data);
+            alert("Error en respuesta del servidor");
+            return;
+          }
+
+          const userId = Number(usuario.id);
+
+          if (!userId) {
+            console.error("❌ ID inválido:", usuario);
+            alert("Error: usuario sin ID");
+            return;
+          }
+
+          // =========================
+          // 🔐 PERFIL (YA VIENE COMO ARRAY DE IDS)
+          // =========================
+          let perfiles = usuario.perfiles;
+
+          if (!Array.isArray(perfiles)) {
+            perfiles = [];
+          }
+
+          if (perfiles.length === 0) {
+            console.error("❌ Usuario sin perfiles:", usuario);
+            alert("El usuario no tiene perfiles asignados");
+            return;
+          }
+
+          const perfilId = Number(perfiles[0]);
+
+          if (!perfilId) {
+            console.error("❌ Perfil inválido:", perfiles);
+            alert("Error leyendo perfil del usuario");
+            return;
+          }
+
+          // =========================
+          // 💾 STORAGE
+          // =========================
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("usuario", JSON.stringify(usuario));
+          localStorage.setItem("userId", String(userId));
+          localStorage.setItem("perfilId", String(perfilId));
+
+          localStorage.setItem("session", JSON.stringify({
+            userId,
+            perfilId,
+            token: data.token
+          }));
+
+          console.log("✅ LOGIN OK");
+          console.log("USER:", userId);
+          console.log("PERFIL:", perfilId);
+
+          alert("Login correcto");
+
+          // =========================
+          // 🔒 CERRAR MODAL
+          // =========================
+          const modalElement = document.getElementById("loginModal");
+
+          let modalInstance = bootstrap.Modal.getInstance(modalElement);
+          if (!modalInstance) {
+            modalInstance = new bootstrap.Modal(modalElement);
+          }
+
+          modalInstance.hide();
+
+          // =========================
+          // 🚀 REDIRECCIÓN POR ROL
+          // =========================
+          setTimeout(() => {
+
+            const rol = (usuario.rol || "").toLowerCase();
+
+            window.location.href =
+              rol === "admin"
+                ? "admin.html"
+                : "index.html";
+
+          }, 300);
+
+        } catch (err) {
+
+          console.error("LOGIN ERROR:", err);
+          alert("Error conectando con el servidor.");
+        }
+      });
+
+    });
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+      const registerForm = document.getElementById("registerForm");
+      const registerModal = document.getElementById("registerModal");
+
+      // =========================
+      // LIMPIAR MODAL AL ABRIR
+      // =========================
+      if (registerModal) {
+        registerModal.addEventListener('show.bs.modal', () => {
+          registerForm.reset();
+
+          if (window.grecaptcha) {
+            grecaptcha.reset();
+          }
+        });
+      }
+
+      // =========================
+      // SUBMIT REGISTER
+      // =========================
+      if (registerForm) {
+        registerForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const nombre_completo = document.getElementById("nombre").value.trim();
+          const email = document.getElementById("registerEmail").value.trim();
+          const password = document.getElementById("registerPassword").value;
+          const telefono = document.getElementById("registerTelefono").value.trim();
+
+          // =========================
+          // VALIDACIONES FRONT
+          // =========================
+          if (!nombre_completo || !email || !password || !telefono) {
+            return alert("Todos los campos son obligatorios");
+          }
+
+          if (password.length < 6) {
+            return alert("La contraseña debe tener al menos 6 caracteres");
+          }
+
+          // =========================
+          // CAPTCHA
+          // =========================
+          let captcha = "";
+
+          if (window.grecaptcha) {
+            captcha = grecaptcha.getResponse();
+          }
+
+          if (!captcha) {
+            return alert("Confirma que no eres un robot");
+          }
+
+          try {
+
+            const resp = await fetch("http://localhost:3000/api/auth/register", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                nombre_completo,
+                email,
+                password,
+                telefono,
+                captcha
+              })
+            });
+
+            // 🔥 FIX: evitar crash si backend no devuelve JSON válido
+            const data = await resp.json().catch(() => ({
+              error: "Respuesta inválida del servidor"
+            }));
+
+            if (!resp.ok) {
+              return alert("Error: " + data.error);
+            }
+
+            alert(data.message || "Registro correcto");
+
+            // =========================
+            // LIMPIAR FORM
+            // =========================
+            registerForm.reset();
+
+            if (window.grecaptcha) {
+              grecaptcha.reset();
+            }
+
+            // =========================
+            // CERRAR MODAL
+            // =========================
+            const modalInstance = bootstrap.Modal.getInstance(registerModal);
+            if (modalInstance) {
+              modalInstance.hide();
+            }
+
+            // =========================
+            // REDIRECCIÓN
+            // =========================
+            window.location.href = "login.html";
+
+          } catch (err) {
+            console.error("ERROR REGISTER:", err);
+            alert("Error conectando con el servidor.");
+          }
+        });
+      }
+
+    });
+  </script>
+
+</body>
+
+</html>

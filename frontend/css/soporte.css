@@ -1,0 +1,218 @@
+ /* Cabeceras de tabla azul claro */
+ #incidencias-recientes table thead th {
+     background-color: #cfe2ff;
+     /* azul claro */
+     color: #000;
+     font-weight: bold;
+ }
+
+ /* Filas con colores por prioridad */
+ .table-success {
+     background-color: #d1e7dd !important;
+ }
+
+ .table-warning {
+     background-color: #fff3cd !important;
+ }
+
+ .table-danger {
+     background-color: #f8d7da !important;
+ }
+
+ /* Botón amarillo */
+ #form-soporte button {
+     background-color: #ffc107;
+     border-color: #ffc107;
+     color: #000;
+ }
+
+ #form-soporte button:hover {
+     background-color: #e0a800;
+     border-color: #d39e00;
+ }
+
+ .btn-eliminar {
+     font-size: 14px;
+     padding: 5px 10px;
+     display: inline-flex;
+     align-items: center;
+     gap: 5px;
+ }
+
+ /* Subir ligeramente el header */
+ .encabezado-login {
+     padding-top: 10px;
+     padding-bottom: 10px;
+     margin-top: -10px;
+ }
+
+ /* Subir un poco la sección principal */
+ section.container {
+     margin-top: -15px !important;
+ }
+
+ /* Tablet */
+ @media (max-width: 992px) {
+     .btn-eliminar {
+         font-size: 13px;
+         padding: 4px 8px;
+     }
+ }
+
+ /* Móvil */
+ @media (max-width: 576px) {
+     .btn-eliminar {
+         font-size: 12px;
+         padding: 3px 6px;
+         border-radius: 50%;
+         width: 34px;
+         height: 34px;
+         justify-content: center;
+     }
+
+     .btn-eliminar span {
+         display: none;
+     }
+ }
+
+ .table-responsive {
+     width: 100%;
+     overflow-x: auto;
+ }
+
+ table {
+     width: 100%;
+     white-space: nowrap;
+ }
+
+ td,
+ th {
+     vertical-align: middle !important;
+ }
+
+ @media (max-width: 768px) {
+
+     table {
+         font-size: 14px;
+     }
+
+     .btn-sm {
+         padding: 4px 8px;
+     }
+ }
+
+ body {
+     position: relative;
+     min-height: 100vh;
+     overflow-x: hidden;
+     background-color: #f8f9fa;
+     z-index: 0;
+ }
+
+ /* Marca de agua visible */
+ body::before {
+     content: "";
+     position: fixed;
+     inset: 0;
+     background-image: url("../img/image006.jpg");
+     background-repeat: no-repeat;
+     background-position: center center;
+     background-size: cover;
+     opacity: 0.40;
+     filter: grayscale(20%);
+     z-index: -1;
+     /* 👈 CLAVE */
+     pointer-events: none;
+ }
+
+ .navbar {
+     position: relative;
+     z-index: 9999;
+ }
+
+ /* ===============================
+   AJUSTE FINO HEADER (LOGO + TÍTULO)
+================================= */
+ .encabezado-login {
+     margin-top: 5px !important;
+     /* antes 10px → un poco más arriba */
+     padding-top: 18px !important;
+     /* antes 25px → menos separación */
+ }
+
+ /* leve ajuste interno (más sutil que antes) */
+ .encabezado-login .row {
+     transform: translateY(3px);
+ }
+
+ tr.prio-baja {
+     background: #e9f7ef;
+ }
+
+ tr.prio-media {
+     background: #fff8e1;
+ }
+
+ tr.prio-alta {
+     background: #ffe0b2;
+ }
+
+ tr.prio-muy-alta {
+     background: #ffcdd2;
+ }
+
+ tr.prio-critica {
+     background: #b71c1c;
+     color: white !important;
+     font-weight: bold;
+ }
+
+ tbody tr {
+     transition: background-color 0.15s ease;
+ }
+
+ tbody tr:hover {
+     background-color: rgba(13, 110, 253, 0.08);
+ }
+
+ .badge-prioridad {
+     padding: 4px 10px;
+     border-radius: 20px;
+     font-size: 12px;
+     font-weight: bold;
+     display: inline-block;
+ }
+
+ .prio-baja .badge-prioridad {
+     background: #d4edda;
+     color: #155724;
+ }
+
+ .prio-media .badge-prioridad {
+     background: #fff3cd;
+     color: #856404;
+ }
+
+ .prio-alta .badge-prioridad {
+     background: #ffe5b4;
+     color: #8a4b08;
+ }
+
+ .prio-muy-alta .badge-prioridad {
+     background: #f8d7da;
+     color: #721c24;
+ }
+
+ .prio-critica .badge-prioridad {
+     background: #dc3545;
+     color: white;
+ }
+
+ .badge-estado {
+     background: #d1ecf1;
+     color: #0c5460;
+     padding: 4px 10px;
+     border-radius: 20px;
+     font-size: 12px;
+     font-weight: bold;
+ }

@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- SEO -->
+    <meta name="description"
+        content="Calendario de formación para gestión de cursos, inscripción y administración de eventos formativos.">
+    <meta name="keywords" content="formación, cursos, calendario, educación, gestión de cursos">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="http://localhost/calendario-formacion">
+    <!-- BUENAS PRÁCTICAS -->
+    <meta name="theme-color" content="#0d6efd">
+    <meta name="author" content="Ejidosoft Formación">
+
+    <title>Calendario de Formación</title>
+    <link rel="icon" type="image/webp" href="img/logo.png" />
+
+    <!-- BOOTSTRAP -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+    <!-- FULLCALENDAR -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/locales-all.global.min.js"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/login.css">
+    <link rel="stylesheet" href="css/calendario_usuario.css">
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-dark navbar-ejidosoft">
+        <div class="container-fluid">
+            <span class="navbar-brand">📚 Cursos disponibles</span>
+            <div class="ms-auto">
+                <a href="index.html" class="btn btn-warning">
+                    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                    Volver
+                </a>
+            </div>
+        </div>
+    </nav>
+    <header class="encabezado-login" role="banner">
+        <div class="container">
+            <div class="row align-items-center">
+
+                <!-- LOGO -->
+                <div class="col-12 col-md-3 text-center text-md-start mb-3 mb-md-0">
+                    <img src="img/logo.png" alt="Logo Ejidosoft Formación" class="img-fluid logo-login" loading="lazy">
+                </div>
+
+                <!-- TÍTULO -->
+                <div class="col-12 col-md-6 text-center">
+                    <h1 class="fw-bold titulo-formulario m-0">
+                        Calendario de formaciones
+                    </h1>
+                </div>
+
+                <div class="col-12 col-md-3 text-center text-md-end"></div>
+
+            </div>
+        </div>
+    </header>
+
+    <br>
+    <!-- CONTENIDO -->
+    <div class="container mt-4">
+
+        <div class="card shadow">
+            <div class="card-body">
+                <div id="calendar"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODAL -->
+    <div class="modal fade" id="cursoModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="m_titulo"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <p id="m_desc"></p>
+                    <p id="m_fechas"></p>
+                    <p id="m_plazas"></p>
+                    <!-- 🔥 SELECT MODALIDAD -->
+                    <label class="form-label">Modalidad</label>
+                    <select id="modalidad" class="form-control">
+                        <option value="online">Online</option>
+                        <option value="presencial">Presencial</option>
+                        <option value="ambos">ambos</option>
+                    </select>
+                </div>
+
+                <div class="modal-footer">
+                    <button id="btnInscribirse" class="btn btn-sm" onclick="inscribirse()"
+                        style="background-color:#FFCA2C; border-color:#FFCA2C; color:white;">
+                        Inscribirse
+                    </button>
+
+                    <button class="btn btn-sm" data-bs-dismiss="modal"
+                        style="background-color:#FFCA2C; border-color:#FFCA2C; color:white;">
+                        Cerrar
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <!-- FOOTER -->
+    <footer class="text-center py-3 text-white" role="contentinfo" aria-label="Pie de página">
+
+        <div class="container">
+            <div class="row">
+
+                <div class="col-6 col-md-2"></div>
+                <div class="col-6 col-md-2"></div>
+
+                <div class="col-6 col-md-2">
+                    © 2026 Ejidosoft Formación
+                </div>
+
+                <div class="col-6 col-md-2"></div>
+
+                <div class="col-6 col-md-2">
+                    <img src="img/logo-pie.png" alt="Logo pie Ejidosoft" loading="lazy">
+                </div>
+
+                <div class="col-md-2 footer-contacto ms-auto text-md-end">
+                    C/Jaén nº18-20 04700<br>
+                    El Ejido (Almería)<br>
+                    Telf.: 950 48 73 99<br>
+                    info@ejidosoft.es
+                </div>
+
+            </div>
+        </div>
+    </footer>
+    <!-- JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const API = "http://localhost:3000/api";
+
+        let cursoSeleccionado = null;
+        let modal;
+
+        document.addEventListener("DOMContentLoaded", () => {
+
+            modal = new bootstrap.Modal(document.getElementById("cursoModal"));
+
+            const calendar = new FullCalendar.Calendar(document.getElementById("calendar"), {
+
+                initialView: "dayGridMonth",
+                locale: "es",
+                height: 650,
+
+                buttonText: {
+                    today: "Hoy",
+                    month: "Mes",
+                    week: "Semana",
+                    day: "Día",
+                    list: "Lista"
+                },
+
+                // =====================
+                // CURSOS DEL USUARIO
+                // =====================
+                events: async (info, successCallback, failureCallback) => {
+
+                    try {
+
+                        const email = getEmailUsuario();
+
+                        console.log("EMAIL LOGIN:", email);
+
+                        if (!email) {
+                            successCallback([]);
+                            return;
+                        }
+
+                        const response = await fetch(
+                            `${API}/cursos/usuario/${encodeURIComponent(email)}`
+                        );
+
+                        if (!response.ok) {
+                            throw new Error("Error obteniendo cursos");
+                        }
+
+                        const data = await response.json();
+
+                        console.log("CURSOS:", data);
+
+                        const eventos = (data || []).map(c => {
+
+                            const ocupadas = Number(c.OCUPADAS || 0);
+                            const plazas = Number(c.PLAZAS || 0);
+
+                            return {
+
+                                id: String(c.CURSO_ID),
+
+                                title: c.TITULO || "Curso",
+
+                                // 🔥 IMPORTANTE
+                                start: toLocalDate(c.FECHA_INICIO),
+
+                                // 🔥 FULLCALENDAR necesita +1 día para allDay
+                                end: sumarDia(c.FECHA_FIN),
+
+                                allDay: true,
+
+                                extendedProps: {
+                                    descripcion: c.DESCRIPCION || "",
+                                    plazas,
+                                    ocupadas
+                                }
+                            };
+                        });
+
+                        console.log("EVENTOS:", eventos);
+
+                        successCallback(eventos);
+
+                    } catch (err) {
+
+                        console.error("ERROR CALENDARIO:", err);
+
+                        successCallback([]);
+                    }
+                },
+
+                // =====================
+                // COLORES
+                // =====================
+                eventDidMount: (info) => {
+
+                    const ocupadas =
+                        Number(info.event.extendedProps.ocupadas || 0);
+
+                    const plazas =
+                        Number(info.event.extendedProps.plazas || 0);
+
+                    let color = "#198754";
+
+                    if (plazas > 0 && ocupadas >= plazas) {
+                        color = "#dc3545";
+                    }
+
+                    info.el.style.backgroundColor = color;
+                    info.el.style.border = "none";
+                },
+
+                // =====================
+                // CLICK EVENTO
+                // =====================
+                eventClick: (info) => {
+
+                    const e = info.event;
+
+                    cursoSeleccionado = e.id;
+
+                    const ocupadas =
+                        Number(e.extendedProps.ocupadas || 0);
+
+                    const plazas =
+                        Number(e.extendedProps.plazas || 0);
+
+                    const libres = plazas - ocupadas;
+
+                    document.getElementById("m_titulo").innerText =
+                        e.title;
+
+                    document.getElementById("m_desc").innerText =
+                        e.extendedProps.descripcion || "";
+
+                    document.getElementById("m_fechas").innerText =
+                        `📅 ${e.startStr}`;
+
+                    document.getElementById("m_plazas").innerText =
+                        `👥 ${ocupadas} / ${plazas}`;
+
+                    const btn =
+                        document.getElementById("btnInscribirse");
+
+                    if (libres <= 0) {
+
+                        btn.disabled = true;
+                        btn.innerText = "Curso completo";
+
+                        btn.classList.remove("btn-success");
+                        btn.classList.add("btn-danger");
+
+                    } else {
+
+                        btn.disabled = false;
+                        btn.innerText = "Inscribirse";
+
+                        btn.classList.remove("btn-danger");
+                        btn.classList.add("btn-success");
+                    }
+
+                    modal.show();
+                }
+            });
+
+            calendar.render();
+        });
+
+        // =====================
+        // OBTENER EMAIL LOGIN
+        // =====================
+        function getEmailUsuario() {
+
+            const email = localStorage.getItem("email");
+
+            if (email) return email;
+
+            try {
+
+                const usuario =
+                    JSON.parse(localStorage.getItem("usuario"));
+
+                if (usuario?.email) {
+                    return usuario.email;
+                }
+
+            } catch (e) { }
+
+            try {
+
+                const user =
+                    JSON.parse(localStorage.getItem("user"));
+
+                if (user?.email) {
+                    return user.email;
+                }
+
+            } catch (e) { }
+
+            return null;
+        }
+
+        // =====================
+        // INSCRIPCIÓN
+        // =====================
+        function inscribirse() {
+
+            const email = getEmailUsuario();
+
+            if (!email) {
+                alert("No hay usuario logueado");
+                return;
+            }
+
+            if (!cursoSeleccionado) {
+                alert("No hay curso seleccionado");
+                return;
+            }
+
+            const modalidad =
+                document.getElementById("modalidad").value;
+
+            fetch(`${API}/inscripciones`, {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+
+                    email: email.trim(),
+
+                    curso_id: Number(cursoSeleccionado),
+
+                    modalidad
+                })
+            })
+                .then(async r => {
+
+                    const data = await r.json();
+
+                    if (!r.ok) {
+                        throw new Error(data.message);
+                    }
+
+                    return data;
+                })
+                .then(res => {
+
+                    alert(res.message);
+
+                    modal.hide();
+
+                    location.reload();
+                })
+                .catch(err => {
+
+                    console.error(err);
+
+                    alert(err.message);
+                });
+        }
+
+        // =====================
+        // FECHA LOCAL
+        // =====================
+        function toLocalDate(date) {
+
+            if (!date) return null;
+
+            const d = new Date(date);
+
+            if (isNaN(d.getTime())) return null;
+
+            const year = d.getFullYear();
+
+            const month =
+                String(d.getMonth() + 1).padStart(2, "0");
+
+            const day =
+                String(d.getDate()).padStart(2, "0");
+
+            return `${year}-${month}-${day}`;
+        }
+
+        // =====================
+        // SUMAR 1 DÍA
+        // =====================
+        function sumarDia(date) {
+
+            if (!date) return null;
+
+            const d = new Date(date);
+
+            d.setDate(d.getDate() + 1);
+
+            const year = d.getFullYear();
+
+            const month =
+                String(d.getMonth() + 1).padStart(2, "0");
+
+            const day =
+                String(d.getDate()).padStart(2, "0");
+
+            return `${year}-${month}-${day}`;
+        }
+    </script>
+</body>
+
+</html>

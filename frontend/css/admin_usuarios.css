@@ -1,0 +1,234 @@
+/* =========================================
+   AJUSTE GENERAL FORM (CREAR USUARIO)
+========================================= */
+
+#formTitle {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+#usuarioForm {
+  margin-top: 5px;
+}
+
+/* =========================================
+   TITULO FORM RESPONSIVE
+========================================= */
+
+#formTitle {
+  text-align: left;
+}
+
+@media (max-width: 1024px) {
+  #formTitle {
+    text-align: center;
+  }
+}
+
+@media (max-width: 768px) {
+  #formTitle {
+    text-align: center;
+    font-size: 1.2rem;
+  }
+}
+
+/* =========================================
+   TABLA RESPONSIVE MEJORADA
+========================================= */
+
+.table-responsive {
+  overflow-x: hidden !important;
+}
+
+/* TABLA GENERAL */
+#usuariosTable {
+  width: 100%;
+  table-layout: fixed;
+  font-size: 0.82rem;
+}
+
+/* CABECERAS */
+#usuariosTable th {
+  font-size: 0.78rem;
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* CELDAS (TODO IZQUIERDA POR DEFECTO) */
+#usuariosTable td {
+  padding: 6px 8px;
+  vertical-align: middle;
+  text-align: left;
+  word-break: break-word;
+}
+
+/* BOTONES (ACCIÓN CENTRADO) */
+#usuariosTable td:last-child {
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* FECHA (CENTRADO - AJUSTA SI CAMBIA LA COLUMNA) */
+#usuariosTable td:nth-child(3) {
+  text-align: center;
+}
+
+/* ACTIVO (CENTRADO - AJUSTA SI CAMBIA LA COLUMNA) */
+#usuariosTable td:nth-child(5) {
+  text-align: center;
+}
+
+/* BOTONES */
+#usuariosTable td button {
+  padding: 4px 6px;
+  font-size: 0.7rem;
+  min-width: auto;
+  min-height: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+/* ICONOS */
+#usuariosTable i {
+  font-size: 0.75rem;
+}
+
+/* EMAIL */
+#usuariosTable td:nth-child(2) {
+  word-break: break-word;
+}
+
+/* =========================================
+   💻 DESKTOP GRANDES
+========================================= */
+
+@media (min-width: 1400px) {
+
+  #usuariosTable {
+    font-size: 0.78rem;
+  }
+
+  #usuariosTable th,
+  #usuariosTable td {
+    padding: 5px 6px;
+  }
+
+  #usuariosTable td button {
+    padding: 3px 5px;
+    font-size: 0.65rem;
+  }
+}
+
+/* =========================================
+   📲 TABLET
+========================================= */
+
+@media (max-width: 1024px) {
+
+  #usuariosTable {
+    font-size: 0.68rem;
+  }
+
+  #usuariosTable th,
+  #usuariosTable td {
+    padding: 4px;
+  }
+
+  #usuariosTable td button {
+    padding: 2px 4px;
+    font-size: 0.6rem;
+  }
+
+  #usuariosTable i {
+    font-size: 0.65rem;
+  }
+
+  #usuarioForm {
+    text-align: center;
+  }
+
+  #usuarioForm .btn {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+}
+
+/* =========================================
+   📱 MÓVIL
+========================================= */
+
+@media (max-width: 768px) {
+
+  #usuariosTable {
+    font-size: 0.58rem;
+  }
+
+  #usuariosTable th,
+  #usuariosTable td {
+    padding: 2px;
+  }
+
+  #usuariosTable td button {
+    padding: 2px;
+    font-size: 0.55rem;
+  }
+
+  #usuariosTable i {
+    font-size: 0.6rem;
+  }
+
+  #usuariosTable td:nth-child(2) {
+    font-size: 0.55rem;
+    line-height: 1.1;
+  }
+
+  #usuarioForm {
+    text-align: center;
+  }
+
+  #usuarioForm .btn {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+}
+
+/* EMPRESA (IZQUIERDA) */
+#usuariosTable td:nth-child(3) {
+  text-align: left !important;
+}
+
+/* ROL (IZQUIERDA) */
+#usuariosTable td:nth-child(5) {
+  text-align: left !important;
+}
+
+/* Activo */
+#usuariosTable td:nth-child(7) {
+  text-align: center !important;
+}
+
+/* Fecha */
+#usuariosTable td:nth-child(8) {
+  text-align: center !important;
+}
+
+/* ===============================
+   FIX HEADER ADMIN USUARIOS
+================================= */
+
+body:has(#usuarioForm) main {
+  margin-top: 0 !important;
+  padding-top: 10px !important;
+}
+
+/* separa logo + título del navbar */
+body:has(#usuarioForm) header.container {
+  margin-top: 15px !important;
+}
+
+/* ajusta fila del logo y título */
+body:has(#usuarioForm) header .row.align-items-center {
+  margin-top: 10px !important;
+}

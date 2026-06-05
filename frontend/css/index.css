@@ -1,0 +1,69 @@
+body {
+    position: relative;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-color: #f8f9fa;
+    z-index: 0;
+}
+
+/* Marca de agua visible */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+
+    background-image: url("../img/image010.jpg");
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+
+    opacity: 0.40;
+    filter: grayscale(20%);
+
+    z-index: -1; /* 🔥 IMPORTANTE: evita bloquear clicks */
+    pointer-events: none;
+}
+
+/* 🔥 IMPORTANTE: asegura que todo el contenido esté por encima de la marca de agua */
+header,
+nav,
+main,
+footer {
+    position: relative;
+    z-index: 2;
+}
+
+.navbar {
+    position: relative;
+    z-index: 9999;
+}
+
+#logoutBtn {
+    position: relative;
+    z-index: 10000;
+    cursor: pointer;
+}
+
+/* =================================
+   SEPARACIÓN SOLO INDEX
+================================= */
+main#contenido {
+    margin-top: -130px !important;
+    padding-top: 110px !important;
+}
+
+/* TABLET */
+@media (max-width: 991px) {
+    main#contenido {
+        margin-top: -260px !important;
+        padding-top: 100px !important;
+    }
+}
+
+/* MÓVIL */
+@media (max-width: 576px) {
+    main#contenido {
+        margin-top: -240px !important;
+        padding-top: 95px !important;
+    }
+}

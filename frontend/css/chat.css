@@ -1,0 +1,338 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background: #f4f6f8;
+
+    /* evita que el contenido choque con el footer */
+    padding-bottom: 90px;
+}
+
+/* =========================
+   CHAT MESSAGES
+========================= */
+
+#chat {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.msg {
+    padding: 10px 14px;
+    border-radius: 10px;
+    max-width: 70%;
+    word-wrap: break-word;
+}
+
+.user {
+    background: #2563eb;
+    color: white;
+    align-self: flex-end;
+}
+
+.bot {
+    background: #e5e7eb;
+    align-self: flex-start;
+}
+
+/* =========================
+   INPUT GENERAL
+========================= */
+
+input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+button {
+    padding: 10px 15px;
+    background: #111827;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #1f2937;
+}
+
+/* =========================
+   CHAT FULLSCREEN
+========================= */
+
+.chat-overlay {
+    position: fixed;
+    inset: 0;
+    background: #f4f6f8;
+    backdrop-filter: blur(6px);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    z-index: 99999;
+}
+
+.chat-fullscreen {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    /* 🔥 CLAVE */
+}
+
+/* HEADER CHAT */
+.chat-header {
+    background: #1A237E;
+    color: white;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* BODY CHAT */
+.chat-body {
+    flex: 1;
+    min-height: 0;
+    /* 🔥 CLAVE para evitar desbordes en flex */
+    overflow-y: auto;
+    padding: 15px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+body.chat-open {
+    overflow: hidden;
+}
+
+
+/* FOOTER CHAT */
+.chat-footer {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    background: white;
+    border-top: 1px solid #ddd;
+}
+
+/* =========================
+   CONTENEDOR MAIN (CLAVE)
+========================= */
+
+.chat-area {
+    position: relative;
+    min-height: 100vh;
+}
+
+/* =========================
+   BOTÓN FLOTANTE CORRECTO
+========================= */
+
+/* BOTÓN CHAT PRINCIPAL */
+#chatButton {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+
+    width: 60px;
+    height: 60px;
+
+    background: #ffc107;
+    color: #000;
+
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 26px;
+    cursor: pointer;
+
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+
+    z-index: 10;
+}
+
+/* OCULTAR */
+.hidden {
+    display: none;
+}
+
+/* =========================
+   NAVBAR FIX
+========================= */
+
+.navbar {
+    position: relative;
+    z-index: 11000;
+}
+
+/* =========================
+   ROBOT 3D FOOTER
+========================= */
+
+/* BOTÓN ROBOT */
+#chatButtonFooter {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    /* 👈 ahora a la izquierda */
+
+    width: 70px;
+    height: 70px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Robot */
+.robot-ejido {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    animation: floatRobot 3s ease-in-out infinite;
+}
+
+/* Antena */
+.antenna {
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.35);
+}
+
+.antenna::after {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: -3px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #ffd000;
+    box-shadow: 0 0 6px rgba(255, 208, 0, 0.6);
+}
+
+/* Cabeza (MEJORADA: menos transparencia + más contraste) */
+.head {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    border-radius: 18px;
+
+    /* 👇 mucho más sólido */
+    background: rgba(10, 90, 255, 0.95);
+
+    /* 👇 borde fuerte tipo neón */
+    border: 2px solid rgba(0, 200, 255, 1);
+
+    /* 👇 blur casi eliminado para que NO desaparezca */
+    backdrop-filter: blur(1px);
+
+    /* 👇 más contraste y brillo */
+    box-shadow:
+        0 0 35px rgba(0, 180, 255, 1),
+        0 0 10px rgba(0, 120, 255, .8),
+        inset 0 0 8px rgba(255, 255, 255, .25);
+}
+
+/* Marca */
+.logo-mark {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+
+    width: 38px;
+    height: 10px;
+
+    transform-origin: center;
+
+    clip-path: polygon(0 100%, 0 0, 100% 0,
+            100% 100%, 70% 100%, 70% 35%, 30% 35%, 30% 100%);
+}
+
+/* Ojos */
+.eyes {
+    position: absolute;
+    top: 26px;
+    width: 100%;
+    display: flex;
+    justify-content: space-evenly;
+}
+
+.eyes span {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #00d9ff;
+    box-shadow: 0 0 6px rgba(0, 217, 255, 0.6);
+}
+
+.ear {
+    position: absolute;
+    top: 20px;
+    width: 4px;
+    height: 18px;
+
+    background: rgba(0, 200, 255, 0.6);
+    border-radius: 2px;
+}
+
+.left-ear { left: -6px; }
+.right-ear { right: -6px; }
+
+/* Boca */
+.mouth {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+
+    width: 18px;
+    height: 2px;
+
+    background: rgba(255, 208, 0, 0.8);
+    border-radius: 2px;
+    box-shadow: 0 0 6px rgba(255, 208, 0, 0.5);
+}
+
+/* Animación flotante */
+@keyframes floatRobot {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+.chat-robot-header {
+    width: 60px;
+    height: 60px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+.hidden {
+    display: none;
+}

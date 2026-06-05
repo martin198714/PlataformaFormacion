@@ -1,0 +1,283 @@
+/* =========================
+   BASE LAYOUT
+========================= */
+
+body {
+    position: relative;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-color: #f8f9fa;
+    text-rendering: optimizeSpeed;
+}
+
+/* =========================
+   MARCA DE AGUA (SEGURA)
+========================= */
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+
+    background-image: url("../img/image008.jpg");
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+
+    opacity: 0.40;
+    filter: grayscale(20%);
+
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* =========================
+   HEADER LOGIN
+========================= */
+
+.encabezado-login {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 10px 0;
+}
+
+.logo-login {
+    width: min(100px, 100%);
+    height: auto;
+}
+
+.titulo-formulario {
+    margin: 0;
+    color: #1a237e;
+    font-size: clamp(1.4rem, 4vw, 2.2rem);
+}
+
+/* =========================
+   TABLA ARCHIVOS (ESTILO CAPÍTULOS)
+========================= */
+
+.table-fixed {
+    width: 100% !important;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+}
+
+/* cabeceras */
+.table-fixed th {
+    font-size: 0.75rem;
+    text-align: center;
+}
+
+/* celdas */
+.table-fixed th,
+.table-fixed td {
+    text-align: center;
+    vertical-align: middle;
+    padding: 6px 4px !important;
+
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* optimización visual */
+.table-fixed {
+    will-change: transform;
+}
+
+/* =========================
+   COLUMNAS (ARCHIVOS)
+========================= */
+
+/* DESCRIPCIÓN (más ancha como pediste) */
+.table-fixed th:nth-child(1),
+.table-fixed td:nth-child(1) {
+    width: 45%;
+    text-align: left;
+}
+
+/* VERSIÓN */
+.table-fixed th:nth-child(2),
+.table-fixed td:nth-child(2) {
+    width: 10%;
+}
+
+/* TAMAÑO */
+.table-fixed th:nth-child(3),
+.table-fixed td:nth-child(3) {
+    width: 12%;
+}
+
+/* FECHA */
+.table-fixed th:nth-child(4),
+.table-fixed td:nth-child(4) {
+    width: 18%;
+}
+
+/* ACCIONES */
+.table-fixed th:nth-child(5),
+.table-fixed td:nth-child(5) {
+    width: 15%;
+    white-space: nowrap;
+}
+
+/* =========================
+   BOTONES TABLA
+========================= */
+
+.table-fixed td .btn {
+    padding: 3px 6px;
+    font-size: 0.7rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 28px;   /* clave para uniformidad */
+    min-height: 24px;
+}
+
+.table-fixed td {
+    vertical-align: middle;
+}
+
+.table-fixed td .btn i {
+    font-size: 0.7rem;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 1024px) {
+
+    .table-fixed {
+        font-size: 0.68rem;
+    }
+
+    .table-fixed th,
+    .table-fixed td {
+        padding: 4px;
+    }
+
+    .table-fixed td button {
+        padding: 2px 4px;
+        font-size: 0.6rem;
+    }
+
+    .table-fixed td i {
+        font-size: 0.65rem;
+    }
+}
+
+@media (max-width: 768px) {
+
+    .titulo-formulario {
+        text-align: center;
+    }
+
+    .table-fixed {
+        font-size: 0.58rem;
+    }
+
+    .table-fixed th,
+    .table-fixed td {
+        padding: 2px;
+    }
+
+    .table-fixed td button {
+        padding: 2px;
+        font-size: 0.55rem;
+    }
+}
+
+/* =========================
+   TÍTULOS COLAPSABLES
+========================= */
+
+.titulo-colapsable {
+    cursor: pointer;
+    user-select: none;
+    margin-top: 20px;
+}
+
+/* primer título más pegado */
+#archivosContainer > h4:first-of-type {
+    margin-top: 5px !important;
+}
+
+/* =========================
+   BOOTSTRAP FIXES
+========================= */
+
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.collapse {
+    overflow-anchor: none;
+}
+
+.modal {
+    will-change: opacity, transform;
+}
+
+/* =========================
+   NAVBAR FIX
+========================= */
+
+.navbar {
+    position: relative;
+    z-index: 9999;
+}
+
+/* ===============================
+   FIX HEADER ADMIN USUARIOS
+================================= */
+
+body:has(#usuarioForm) main {
+  margin-top: 0 !important;
+  padding-top: 10px !important;
+}
+
+body:has(#usuarioForm) header.container {
+  margin-top: 25px !important;
+}
+
+body:has(#usuarioForm) header .row.align-items-center {
+  margin-top: 10px !important;
+}
+
+/* ===============================
+   ADMIN ARCHIVOS (AJUSTE LIGERO)
+================================= */
+
+body:has(#archivosContainer) .encabezado-login {
+  margin-bottom: -12px !important;
+  transform: translateY(-4px) !important;
+}
+
+body:has(#archivosContainer) main {
+  margin-top: -35px !important;
+  padding-top: 55px !important;
+}
+
+/* ===============================
+   ESPACIO TÍTULO → TABLA (ARCHIVOS)
+================================= */
+
+#archivosContainer h4.titulo-colapsable {
+  margin-top: 5px !important;     /* lo sube visualmente */
+  margin-bottom: 4px !important;  /* reduce separación con tabla */
+}
+
+#archivosContainer .collapse {
+  margin-top: 0 !important;
+}
+
+#archivosContainer .table-responsive {
+  margin-top: 0 !important;
+}

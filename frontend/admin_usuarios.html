@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <title>Gestión de usuarios - Panel Admin | Ejidosoft Formación</title>
+
+    <meta name="description"
+        content="Panel de administración para gestionar usuarios, roles y permisos en Ejidosoft Formación.">
+
+    <link rel="icon" type="image/webp" href="img/logo.png" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/login.css">
+    <link rel="stylesheet" href="css/admin_usuarios.css">
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+
+            <a class="navbar-brand" href="admin.html">
+                <span class="visually-hidden">Ejidosoft Formación</span>
+            </a>
+
+            <div class="ms-auto">
+                <a href="admin.html" class="btn btn-warning">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    Volver
+                </a>
+            </div>
+
+        </div>
+    </nav>
+
+    <main>
+
+        <header class="container my-5">
+
+            <div class="row align-items-center text-center text-md-start">
+
+                <div class="col-md-4">
+                    <img src="img/logo.png" class="img-fluid logo-login" alt="Logo Ejidosoft">
+                </div>
+
+                <div class="col-md-8">
+                    <h2 class="fw-bold titulo-formulario">
+                        <i class="fa-solid fa-user-shield me-2"></i>
+                        Gestión de usuarios
+                    </h2>
+                </div>
+
+            </div>
+
+        </header>
+
+        <div id="liveMessage" class="visually-hidden" aria-live="polite"></div>
+
+        <section class="container">
+
+            <!-- FORM -->
+            <div class="mb-3">
+
+                <h3>Crear usuario</h3>
+
+                <form id="usuarioForm">
+
+                    <input type="hidden" id="usuarioId">
+
+                    <div class="row g-2">
+
+                        <div class="col-md-6">
+                            <label>Nombre</label>
+                            <input type="text" id="nombre" class="form-control" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label>Email</label>
+                            <input type="email" id="email" class="form-control" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label>Contraseña</label>
+                            <input type="password" id="password" class="form-control">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label>Rol</label>
+                            <select id="rol" class="form-control">
+                                <option value="1">Administrador</option>
+                                <option value="2" selected>Usuario</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label>Empresa ID</label>
+                            <input type="number" id="empresa_id" class="form-control">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label>Teléfono</label>
+                            <input type="text" id="telefono" class="form-control">
+                        </div>
+
+                        <div class="col-md-12">
+                            <label>Perfiles</label>
+
+                            <select id="perfiles" class="form-control" multiple size="8">
+
+                                <option value="1">Planning 4.0</option>
+                                <option value="2">Transporta 4.0</option>
+                                <option value="3">Base 4.0</option>
+                                <option value="4">Gestion Horto 4.0</option>
+                                <option value="5">Contasoft 4.0</option>
+                                <option value="6">SII 4.0</option>
+                                <option value="7">Fiscal 4.0</option>
+                                <option value="8">Verifactu 4.0</option>
+
+                            </select>
+
+                            <small class="text-muted">
+                                Mantén CTRL pulsado para seleccionar varios perfiles
+                            </small>
+                        </div>
+
+                    </div>
+
+                    <button type="submit" class="btn btn-warning mt-2">Guardar</button>
+
+                    <button type="button" class="btn btn-warning mt-2" id="cancelEdit">
+                        Cancelar
+                    </button>
+
+                </form>
+
+            </div>
+
+            <!-- TABLE -->
+            <div class="table-responsive">
+
+                <table class="table table-bordered table-striped" id="usuariosTable">
+
+                    <thead class="table-primary">
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Empresa</th>
+                            <th>Teléfono</th>
+                            <th>Rol</th>
+                            <th>Perfiles</th>
+                            <th>Activo</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+
+                    <tbody></tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <footer class="text-center py-3 text-white">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-md-2"></div>
+                <div class="col-md-2"></div>
+
+                <div class="col-md-2">© 2026 Ejidosoft Formación</div>
+
+                <div class="col-md-2"></div>
+
+                <div class="col-md-2">
+                    <img src="img/logo-pie.png" alt="Logo pie">
+                </div>
+
+                <div class="col-md-2 text-md-end">
+                    C/Jaén nº18-20<br>
+                    El Ejido (Almería)<br>
+                    950 48 73 99<br>
+                    info@ejidosoft.es
+                </div>
+
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+
+    <script>
+
+        const token = localStorage.getItem("token");
+        const API_URL = "http://localhost:3000/api/usuarios";
+
+        if (!token) location.href = "login.html";
+
+        const liveMessage = document.getElementById("liveMessage");
+
+        // ==========================
+        // MENSAJES
+        // ==========================
+        function notify(msg) {
+            liveMessage.textContent = msg;
+            liveMessage.classList.remove("visually-hidden");
+
+            setTimeout(() => {
+                liveMessage.classList.add("visually-hidden");
+            }, 3000);
+        }
+
+        // ==========================
+        // FETCH SEGURO
+        // ==========================
+        async function safeFetch(url, options = {}) {
+
+            const res = await fetch(url, options);
+            const text = await res.text();
+
+            if (!res.ok) {
+                console.error("API ERROR:", text);
+                notify("Error del servidor");
+                throw new Error(text);
+            }
+
+            if (!text) return null;
+
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                console.error("JSON inválido:", text);
+                throw e;
+            }
+        }
+
+        // ==========================
+        // LISTAR USUARIOS
+        // ==========================
+        async function cargarUsuarios() {
+
+            try {
+
+                const usuarios = await safeFetch(API_URL, {
+                    headers: { "Authorization": "Bearer " + token }
+                });
+
+                const tbody = document.querySelector("#usuariosTable tbody");
+                tbody.innerHTML = "";
+
+                if (!Array.isArray(usuarios)) {
+                    notify("Respuesta inválida del servidor");
+                    return;
+                }
+
+                usuarios.forEach(u => {
+
+                    const tr = document.createElement("tr");
+
+                    const perfiles = Array.isArray(u.perfiles)
+                        ? u.perfiles
+                            .filter(p => p && p.NOMBRE)
+                            .map(p => p.NOMBRE)
+                            .join(", ")
+                        : "";
+
+                    tr.innerHTML = `
+                    <td>${u.nombre ?? ""}</td>
+                    <td>${u.email ?? ""}</td>
+                    <td>${u.empresa ?? ""}</td>
+                    <td>${u.telefono ?? ""}</td>
+                    <td>${u.rol == 1 ? "Administrador" : "Usuario"}</td>
+                    <td>${perfiles}</td>
+
+                    <td>
+                        <button
+                            class="btn btn-sm ${u.activo ? 'btn-success' : 'btn-danger'} toggle-activo"
+                            data-id="${u.id}">
+                            ${u.activo ? 'Activo' : 'Inactivo'}
+                        </button>
+                    </td>
+
+                    <td>${u.fecha_reg ?? ""}</td>
+
+                    <td>
+                        <button class="btn btn-warning btn-sm btn-edit" data-id="${u.id}">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+
+                        <button class="btn btn-warning btn-sm btn-delete" data-id="${u.id}">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+
+                    tbody.appendChild(tr);
+                });
+
+            } catch (err) {
+                console.error(err);
+                notify("Error cargando usuarios");
+            }
+        }
+
+        // ==========================
+        // GUARDAR USUARIO
+        // ==========================
+        document.getElementById("usuarioForm")
+            .addEventListener("submit", async (e) => {
+
+                e.preventDefault();
+
+                const id = document.getElementById("usuarioId").value;
+
+                const perfiles = [...document.getElementById("perfiles").selectedOptions]
+                    .map(o => parseInt(o.value, 10))
+                    .filter(n => !isNaN(n));
+
+                const empresaVal = document.getElementById("empresa_id").value;
+
+                const data = {
+                    nombre: document.getElementById("nombre").value.trim(),
+                    email: document.getElementById("email").value.trim(),
+                    password: document.getElementById("password").value,
+                    rol: parseInt(document.getElementById("rol").value, 10),
+                    empresa_id: empresaVal ? parseInt(empresaVal, 10) : null,
+                    telefono: document.getElementById("telefono").value || null,
+                    perfiles
+                };
+
+                if (!data.nombre || !data.email) {
+                    notify("Nombre y email obligatorios");
+                    return;
+                }
+
+                if (!id && !data.password) {
+                    notify("La contraseña es obligatoria");
+                    return;
+                }
+
+                try {
+
+                    await safeFetch(
+                        id ? `${API_URL}/${id}` : API_URL,
+                        {
+                            method: id ? "PUT" : "POST",
+                            headers: {
+                                "Authorization": "Bearer " + token,
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify(data)
+                        }
+                    );
+
+                    notify(id ? "Usuario actualizado" : "Usuario creado");
+
+                    limpiarFormulario();
+                    cargarUsuarios();
+
+                } catch (err) {
+                    console.error(err);
+                    notify("Error guardando usuario");
+                }
+            });
+
+        // ==========================
+        // EVENTOS TABLA
+        // ==========================
+        document.querySelector("#usuariosTable tbody")
+            .addEventListener("click", async (e) => {
+
+                const btn = e.target.closest("button");
+                if (!btn) return;
+
+                const id = btn.dataset.id;
+
+                // EDITAR
+                if (btn.classList.contains("btn-edit")) {
+
+                    try {
+
+                        const u = await safeFetch(`${API_URL}/${id}`, {
+                            headers: { "Authorization": "Bearer " + token }
+                        });
+
+                        document.getElementById("usuarioId").value = u.id || "";
+                        document.getElementById("nombre").value = u.nombre || "";
+                        document.getElementById("email").value = u.email || "";
+                        document.getElementById("rol").value = u.rol || 2;
+
+                        document.getElementById("empresa_id").value =
+                            u.empresa_id ?? "";
+
+                        document.getElementById("telefono").value = u.telefono || "";
+                        document.getElementById("password").value = "";
+
+                        const select = document.getElementById("perfiles");
+
+                        const perfilesUsuario = Array.isArray(u.perfiles)
+                            ? u.perfiles
+                            : [];
+
+                        [...select.options].forEach(o => {
+                            o.selected = perfilesUsuario.some(p =>
+                                String(p.ID) === String(o.value)
+                            );
+                        });
+
+                        notify("Editando usuario");
+
+                    } catch (err) {
+                        console.error(err);
+                        notify("Error cargando usuario");
+                    }
+                }
+
+                // DELETE
+                if (btn.classList.contains("btn-delete")) {
+
+                    if (!confirm("¿Eliminar usuario?")) return;
+
+                    try {
+
+                        await safeFetch(`${API_URL}/${id}`, {
+                            method: "DELETE",
+                            headers: { "Authorization": "Bearer " + token }
+                        });
+
+                        notify("Usuario eliminado");
+                        cargarUsuarios();
+
+                    } catch (err) {
+                        console.error(err);
+                        notify("Error eliminando usuario");
+                    }
+                }
+
+                // ACTIVO
+                if (btn.classList.contains("toggle-activo")) {
+
+                    const idUsuario = btn.dataset.id;
+
+                    // mejor que depender del color
+                    const activo = btn.textContent.trim() === "Activo";
+
+                    try {
+
+                        await safeFetch(`${API_URL}/${idUsuario}/activo`, {
+                            method: "PATCH",
+                            headers: {
+                                "Authorization": "Bearer " + token,
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({ activo: !activo })
+                        });
+
+                        cargarUsuarios();
+
+                    } catch (err) {
+                        console.error(err);
+                        notify("Error cambiando estado");
+                    }
+                }
+            });
+
+        // ==========================
+        // LIMPIAR
+        // ==========================
+        function limpiarFormulario() {
+            document.getElementById("usuarioForm").reset();
+            document.getElementById("usuarioId").value = "";
+
+            [...document.getElementById("perfiles").options]
+                .forEach(o => o.selected = false);
+        }
+
+        // ==========================
+        // CANCELAR
+        // ==========================
+        document.getElementById("cancelEdit")
+            .addEventListener("click", () => {
+                limpiarFormulario();
+                notify("Cancelado");
+            });
+
+        // INIT
+        cargarUsuarios();
+
+    </script>
+
+</body>
+
+</html>

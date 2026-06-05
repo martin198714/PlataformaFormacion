@@ -1,0 +1,38 @@
+body {
+    position: relative;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-color: #f8f9fa;
+}
+
+/* Marca de agua visible */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+
+    background-image: url("../img/image008.jpg");
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+
+    opacity: 0.40;
+    filter: grayscale(20%);
+
+    z-index: -1;
+    pointer-events: none;
+}
+
+.navbar {
+  position: relative;
+  z-index: 9999;
+}
+
+.login-section {
+    padding-top: 1.2rem !important;
+}
+
+/* SOLO el contenido interno, no el modal completo */
+.ui-panel .p-4 {
+    padding-top: 0.75rem;
+}

@@ -1,0 +1,85 @@
+:root {
+    --azul: #182f64;
+    --amarillo: #EDB322;
+    --blanco: #ffffff;
+    --azulete: #20408E;
+}
+
+body {
+    background-color: #FFFFFF;
+    font-family: 'OpenSans-Bold',Arial;
+}
+
+
+.navbar {
+    background-color: var(--azul);
+}
+
+.navbar-brand, .nav-link {
+    color: var(--blanco) !important;
+}
+
+.btn-principal {
+    background-color: var(--amarillo);
+    border: none;
+    color: #000;
+    font-weight: bold;
+}
+
+.btn-principal:hover {
+    background-color: #EDB322;
+}
+
+#cancelEdit {
+  color: white;
+}
+
+#cancelEdit:hover {
+  color: white;
+}
+
+.btn-warning {
+    color: white !important;
+}
+
+.btn-warning:hover,
+.btn-warning:focus,
+.btn-warning:active {
+    color: white !important;
+}
+
+.btn-warning-custom {
+    color: white;
+}
+
+.btn-warning-custom:hover,
+.btn-warning-custom:focus,
+.btn-warning-custom:active {
+    color: white;
+}
+
+.btn.btn-warning i {
+  color: white;
+}
+
+.section-title {
+    text-align: center;
+    margin-top: 50px;
+    margin-bottom: 30px;
+}
+
+footer{
+    background-color: var(--azulete);
+}
+
+.card {
+    min-height: 240px;
+}
+
+.card .btn {
+    margin-top: auto;
+}
+
+.titulo-colapsable {
+    margin-top: 20px; /* más fino que mt-2 de Bootstrap */
+}

@@ -1,0 +1,53 @@
+ body {
+     background: #f5f7fa;
+ }
+
+ #calendar {
+     max-width: 1000px;
+     margin: auto;
+ }
+
+ .fc-event {
+     cursor: pointer;
+ }
+
+ /* 🔥 tamaño de letra de los eventos del calendario */
+.fc-event {
+    font-size: 0.58rem;   /* más pequeño */
+    padding: 1px 3px;
+    line-height: 1.2;
+}
+
+/* 🔥 reduce también el alto del evento */
+.fc-daygrid-event {
+    padding: 1px 2px;
+}
+
+/* Espaciado interno */
+.fc-daygrid-day {
+    padding: 10px;
+}
+
+/* Número del día ligeramente más grande */
+.fc-daygrid-day-number {
+    font-size: 0.9rem;
+}
+.navbar-ejidosoft {
+    background-color: #1A237E;
+}
+
+.encabezado-login img,
+.encabezado-login h1 {
+    position: relative;
+    top: 5px;
+}
+
+.encabezado-login {
+  margin-bottom: -20px;  /* menos agresivo */
+  transform: translateY(0); /* quitamos el empuje hacia arriba */
+  padding-top: 20px; /* separación real desde la navbar */
+}
+
+.encabezado-login .container {
+    margin-top: -10px;  /* pequeño empuje hacia arriba */
+}

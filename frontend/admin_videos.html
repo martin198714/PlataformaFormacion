@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <!-- SEO -->
+    <title>Administrar Capítulos - Ejidosoft Formación</title>
+    <meta name="description"
+        content="Panel de administración para gestionar capítulos formativos de Ejidosoft Formación. Edita, elimina y organiza contenidos educativos.">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Administrar Capítulos - Ejidosoft Formación">
+    <meta property="og:description"
+        content="Gestión de capítulos formativos: edición, eliminación y organización desde el panel de administración.">
+    <meta property="og:type" content="website">
+
+    <link rel="icon" type="image/webp" href="img/logo.png" />
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/login.css">
+    <link rel="stylesheet" href="css/admin_archivos.css">
+    <link rel="stylesheet" href="css/admin_videos.css">
+</head>
+
+<body>
+
+    <!-- NAV -->
+    <nav class="navbar navbar-expand-lg" role="navigation" aria-label="Menú principal de administración">
+        <div class="container">
+
+            <a class="navbar-brand" href="admin.html" aria-label="Ir al panel de administración"></a>
+
+            <div class="ms-auto">
+                <a href="admin.html" class="btn btn-warning" aria-label="Volver al panel de administración">
+                    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Volver
+                </a>
+            </div>
+
+        </div>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="encabezado-login" role="banner">
+        <div class="container">
+            <div class="row align-items-center text-center text-md-start">
+
+                <div class="col-md-4">
+                    <img src="img/logo.png" width="180" height="60" loading="eager" decoding="async"
+                        alt="Logo de Ejidosoft Formación" class="img-fluid logo-login" />
+                </div>
+
+                <div class="col-md-8">
+                    <h1 class="fw-bold titulo-formulario"><i class="fa-solid fa-video me-2"></i> Gestión de Capítulos
+                    </h1>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <main class="container my-5" role="main">
+
+        <div id="chaptersContainer" aria-live="polite" aria-busy="false" aria-label="Listado de capítulos"
+            style="min-height: 600px;"></div>
+
+    </main>
+
+    <!-- MODAL -->
+    <div class="modal fade" id="editChapterModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="editChapterForm">
+
+                    <div class="modal-header">
+                        <h5 class="modal-title">Editar Capítulo</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <input type="hidden" id="editChapterId">
+
+                        <div class="mb-3">
+                            <label class="form-label">Título</label>
+                            <input type="text" class="form-control" id="editChapterTitulo" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Descripción</label>
+                            <textarea class="form-control" id="editChapterDescripcion" rows="3" required></textarea>
+                        </div>
+
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="editChapterPublico">
+                            <label class="form-check-label">Capítulo público</label>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button class="btn btn-primary">Guardar cambios</button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="text-center py-3 text-white" role="contentinfo">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-6 col-md-2"></div>
+                <div class="col-6 col-md-2"></div>
+
+                <div class="col-6 col-md-2">© 2026 Ejidosoft Formación</div>
+
+                <div class="col-6 col-md-2"></div>
+
+                <div class="col-6 col-md-2">
+                    <img src="img/logo-pie.png" alt="Logo pie de página Ejidosoft">
+                </div>
+
+                <div class="col-md-2 footer-contacto ms-auto text-md-end">
+                    C/Jaén nº18-20 04700<br>
+                    El Ejido (Almería)<br>
+                    Telf.: 950 48 73 99<br>
+                    info@ejidosoft.es
+                </div>
+
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+
+            const token = localStorage.getItem("token");
+            const API = "http://localhost:3000/api/videos/capitulos";
+
+            if (!token) location.href = "login.html";
+
+            const ORDEN_MODULOS = [
+                "Planning 4.0",
+                "Transporta 4.0",
+                "Base 4.0",
+                "Gestion Horto 4.0",
+                "Contasoft 4.0",
+                "SII 4.0",
+                "Fiscal 4.0",
+                "Verifactu 4.0"
+            ];
+
+            // orden rápido por índice
+            const ordenMap = Object.fromEntries(
+                ORDEN_MODULOS.map((t, i) => [t, i])
+            );
+
+            // versión
+            function calcularVersion(a) {
+                if (a.VERSION) return "v" + a.VERSION;
+
+                if (a.FECHA_CREACION) {
+                    const d = new Date(a.FECHA_CREACION);
+                    return `v${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
+                }
+
+                return "v1";
+            }
+
+            const modal = new bootstrap.Modal(
+                document.getElementById('editChapterModal')
+            );
+
+            let cache = [];
+
+            const container = document.getElementById("chaptersContainer");
+
+            /* =========================
+               FETCH SEGURO
+            ========================= */
+
+            async function safeFetch(url, options = {}) {
+                const res = await fetch(url, options);
+                const text = await res.text();
+
+                console.log("RESPUESTA RAW:", text);
+
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    throw new Error("Respuesta no válida del servidor");
+                }
+
+                if (!res.ok) {
+                    throw new Error(data.error || "Error en API");
+                }
+
+                return data;
+            }
+
+            /* =========================
+               CREAR ELEMENTOS
+            ========================= */
+
+            function el(tag, className, text) {
+                const element = document.createElement(tag);
+                if (className) element.className = className;
+                if (text !== undefined) element.textContent = text;
+                return element;
+            }
+
+            /* =========================
+               LOAD CAPITULOS
+            ========================= */
+
+            async function load() {
+                try {
+                    const data = await safeFetch(API, {
+                        headers: {
+                            Authorization: "Bearer " + token
+                        }
+                    });
+
+                    cache = data;
+                    container.innerHTML = "";
+
+                    // =========================
+                    // AGRUPAR POR TITULO
+                    // =========================
+                    const groups = new Map();
+
+                    cache.forEach(c => {
+                        const key = (c.TITULO || "Sin título").trim();
+
+                        if (!groups.has(key)) groups.set(key, []);
+                        groups.get(key).push(c);
+                    });
+
+                    // =========================
+                    // ORDENAR TITULOS
+                    // =========================
+                    const sortedTitles = [...groups.keys()].sort((a, b) => {
+                        const ia = ordenMap[a] ?? 999;
+                        const ib = ordenMap[b] ?? 999;
+                        return ia - ib;
+                    });
+
+                    let i = 0;
+
+                    for (const title of sortedTitles) {
+
+                        const items = groups.get(title);
+
+                        // HEADER
+                        const header = el("h4", "mt-4 titulo-colapsable", title);
+                        header.setAttribute("data-bs-toggle", "collapse");
+                        header.setAttribute("data-bs-target", `#c${i}`);
+                        header.style.cursor = "pointer";
+
+                        container.appendChild(header);
+
+                        // COLLAPSE
+                        const collapse = el("div", "collapse show");
+                        collapse.id = `c${i}`;
+
+                        const wrapper = el("div", "table-responsive");
+
+                        const table = el("table", "table table-bordered table-striped");
+
+                        table.innerHTML = `
+                <thead class="table-primary">
+                    <tr>
+                        <th>Descripción</th>
+                        <th>Versión</th>
+                        <th>Tamaño</th>
+                        <th>Fecha</th>
+                        <th>Público</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            `;
+
+                        const tbody = table.querySelector("tbody");
+
+                        items.forEach(c => {
+
+                            const tr = document.createElement("tr");
+
+                            tr.innerHTML = `
+                    <td><strong>${c.DESCRIPCION || "-"}</strong></td>
+                    <td class="text-center">${calcularVersion(c)}</td>
+                    <td>${c.TAMANIO ? (Number(c.TAMANIO) / 1024 / 1024).toFixed(2) + " MB" : "-"}</td>
+                    <td>${c.FECHA_CREACION ?? "-"}</td>
+                    <td class="text-center">${c.PUBLICO ? "✔" : "✖"}</td>
+                    <td class="text-center">
+                        <button class="btn btn-warning btn-sm"
+                            onclick="openEditModal(${c.CAPITULO_ID})">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+
+                        <button class="btn btn-warning btn-sm"
+                            onclick="deleteChapter(${c.CAPITULO_ID})">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+
+                            tbody.appendChild(tr);
+                        });
+
+                        wrapper.appendChild(table);
+                        collapse.appendChild(wrapper);
+
+                        container.appendChild(collapse);
+
+                        i++;
+                    }
+
+                } catch (err) {
+                    console.error(err);
+                    alert("Error cargando capítulos: " + err.message);
+                }
+            }
+
+            /* =========================
+               MODAL EDIT
+            ========================= */
+
+            window.openEditModal = function (id) {
+
+                const c = cache.find(item => item.CAPITULO_ID == id);
+
+                if (!c) {
+                    alert("Capítulo no encontrado");
+                    return;
+                }
+
+                document.getElementById("editChapterId").value = c.CAPITULO_ID;
+                document.getElementById("editChapterTitulo").value = c.TITULO || "";
+                document.getElementById("editChapterDescripcion").value = c.DESCRIPCION || "";
+                document.getElementById("editChapterPublico").checked = !!c.PUBLICO;
+
+                modal.show();
+            };
+            /* =========================
+               SAVE EDIT
+            ========================= */
+
+            document.getElementById("editChapterForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+
+                const id = document.getElementById("editChapterId").value;
+
+                try {
+                    await safeFetch(`${API}/${id}`, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: "Bearer " + token
+                        },
+                        body: JSON.stringify({
+                            titulo: document.getElementById("editChapterTitulo").value,
+                            descripcion: document.getElementById("editChapterDescripcion").value,
+                            publico: document.getElementById("editChapterPublico").checked
+                        })
+                    });
+
+                    modal.hide();
+                    load();
+
+                } catch (err) {
+                    alert("Error al guardar: " + err.message);
+                }
+            });
+
+            /* =========================
+               DELETE
+            ========================= */
+
+            window.deleteChapter = async function (id) {
+
+                if (!confirm("¿Seguro que quieres eliminar este capítulo?")) return;
+
+                try {
+                    await safeFetch(`${API}/${id}`, {
+                        method: "DELETE",
+                        headers: {
+                            Authorization: "Bearer " + token
+                        }
+                    });
+
+                    load();
+
+                } catch (err) {
+                    alert("Error al eliminar: " + err.message);
+                }
+            };
+
+            /* =========================
+               INIT
+            ========================= */
+
+            load();
+
+        });
+    </script>
+</body>
+
+</html>

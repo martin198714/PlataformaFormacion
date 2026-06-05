@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Descargar Capítulos - Ejidosoft Formación</title>
+    <link rel="icon" type="image/webp" href="img/logo.png" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/login.css">
+    <link rel="stylesheet" href="css/descargar_videos.css">
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg" role="navigation" aria-label="Menú principal del sitio">
+        <div class="container">
+
+            <a class="navbar-brand" href="admin.html" aria-label="Ir al panel de administración de Ejidosoft Formación">
+            </a>
+
+            <div class="ms-auto">
+                <a href="index.html" class="btn btn-warning" aria-label="Volver a la página anterior">
+                    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                    Volver
+                </a>
+            </div>
+
+        </div>
+    </nav>
+    <header class="encabezado-login" role="banner">
+        <div class="container">
+            <div class="row align-items-center text-center text-md-start">
+
+                <div class="col-md-4">
+                    <img src="img/logo.png" width="180" height="60" class="img-fluid logo-login"
+                        alt="Logo de Ejidosoft Formación" loading="lazy" />
+                </div>
+
+                <div class="col-md-8">
+                    <h1 class="fw-bold titulo-formulario">
+                        <i class="fa-solid fa-download me-2"></i>Descargar Capítulos
+                    </h1>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <section class="container my-5">
+
+
+        <div id="capitulosContainer"></div>
+    </section>
+
+    <footer class="text-center py-3 text-white" role="contentinfo">
+
+        <div class="container">
+            <div class="row">
+
+                <div class="col-6 col-md-2"></div>
+                <div class="col-6 col-md-2"></div>
+
+                <div class="col-6 col-md-2">
+                    © 2026 Ejidosoft Formación
+                </div>
+
+                <div class="col-6 col-md-2"></div>
+
+                <div class="col-6 col-md-2">
+                    <img src="img/logo-pie.png" alt="Logo Ejidosoft Formación" loading="lazy">
+                </div>
+
+                <div class="col-md-2 footer-contacto ms-auto text-md-end">
+                    C/Jaén nº18-20 04700<br>
+                    El Ejido (Almería)<br>
+                    Telf.: 950 48 73 99<br>
+                    info@ejidosoft.es
+                </div>
+
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const TOKEN_USUARIO = localStorage.getItem('token');
+
+        if (!TOKEN_USUARIO) {
+            alert('Debes iniciar sesión para acceder a los capítulos');
+            window.location.href = 'login.html';
+        }
+
+        async function cargarCapitulos() {
+
+            try {
+
+                const response = await fetch(
+                    'http://localhost:3000/api/videos/capitulos/publicos',
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${TOKEN_USUARIO}`
+                        }
+                    }
+                );
+
+                if (!response.ok) throw new Error('Error al obtener capítulos');
+
+                const capitulos = await response.json();
+
+                const container = document.getElementById('capitulosContainer');
+                container.innerHTML = '';
+
+                if (!capitulos.length) {
+                    container.innerHTML =
+                        '<p class="text-center text-muted">No hay capítulos disponibles.</p>';
+                    return;
+                }
+
+                const ORDEN_TITULOS = {
+                    "Planning 4.0": 1,
+                    "Transporta 4.0": 2,
+                    "Base 4.0": 3,
+                    "Gestion Horto 4.0": 4,
+                    "Contasoft 4.0": 5,
+                    "SII 4.0": 6,
+                    "Fiscal 4.0": 7,
+                    "Verifactu 4.0": 8
+                };
+
+                const porTitulo = {};
+
+                for (const c of capitulos) {
+                    const t = c.TITULO || "Sin título";
+                    (porTitulo[t] ??= []).push(c);
+                }
+
+                const titulosOrdenados =
+                    Object.keys(porTitulo).sort(
+                        (a, b) =>
+                            (ORDEN_TITULOS[a] ?? 999) - (ORDEN_TITULOS[b] ?? 999)
+                    );
+
+                let index = 0;
+
+                for (const titulo of titulosOrdenados) {
+
+                    const h3 = document.createElement('h3');
+                    h3.textContent = titulo;
+                    h3.className = 'titulo-colapsable';
+
+                    h3.setAttribute("data-bs-toggle", "collapse");
+                    h3.setAttribute("data-bs-target", `#collapse${index}`);
+                    h3.style.cursor = "pointer";
+
+                    container.appendChild(h3);
+
+                    const div = document.createElement("div");
+                    div.className = "collapse show";
+                    div.id = `collapse${index}`;
+
+                    const table = document.createElement('table');
+                    table.className = 'table table-bordered table-striped table-desc table-fixed mt-2';
+
+                    table.innerHTML = `
+                    <thead class="table-primary">
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Descripción</th>
+                            <th>Descargar</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                `;
+
+                    const tbody = table.querySelector('tbody');
+
+                    for (const file of porTitulo[titulo]) {
+
+                        const tr = document.createElement('tr');
+
+                        tr.innerHTML = `
+                        <td class="text-center">
+                            <i class="fa-solid fa-video text-primary"></i>
+                        </td>
+                        <td>${file.DESCRIPCION || ''}</td>
+                    `;
+
+                        const tdBtn = document.createElement('td');
+                        tdBtn.className = "text-center";
+
+                        const btn = document.createElement('button');
+
+                        // 🔐 BOTÓN CONTROLADO POR BACKEND
+                        if (!file.PUEDE_DESCARGAR) {
+
+                            btn.className = "btn btn-secondary btn-sm";
+                            btn.innerHTML = '<i class="fa-solid fa-lock"></i>';
+                            btn.disabled = true;
+                            btn.title = "Sin permisos para descargar";
+
+                            tr.style.opacity = "0.5";
+
+                        } else {
+
+                            btn.className = "btn btn-warning btn-sm";
+                            btn.innerHTML = '<i class="fa-solid fa-download"></i>';
+
+                            btn.addEventListener('click', () =>
+                                descargarCapitulo(btn, file.CAPITULO_ID, file.FICHERO_NOMBRE)
+                            );
+                        }
+
+                        tdBtn.appendChild(btn);
+                        tr.appendChild(tdBtn);
+                        tbody.appendChild(tr);
+                    }
+
+                    div.appendChild(table);
+                    container.appendChild(div);
+
+                    index++;
+                }
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('capitulosContainer').innerHTML =
+                    '<p class="text-danger text-center">No se pudieron cargar los capítulos</p>';
+            }
+        }
+
+        function descargarCapitulo(btn, id, nombre) {
+
+            btn.disabled = true;
+
+            fetch(`http://localhost:3000/api/videos/capitulos/${id}/descargar`, {
+                headers: {
+                    Authorization: `Bearer ${TOKEN_USUARIO}`
+                }
+            })
+                .then(async res => {
+
+                    if (!res.ok) {
+
+                        btn.disabled = false;
+
+                        let msg = "Sin permisos";
+
+                        try {
+                            const err = await res.json();
+                            msg = err.error || msg;
+                        } catch (e) { }
+
+                        alert(msg);
+                        return null;
+                    }
+
+                    return res.blob();
+                })
+                .then(blob => {
+
+                    if (!blob) return;
+
+                    const url = window.URL.createObjectURL(blob);
+
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = nombre || "capitulo.mp4";
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+
+                    window.URL.revokeObjectURL(url);
+
+                    btn.className = "btn btn-success btn-sm";
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i>';
+
+                })
+                .catch(() => {
+                    alert("Error al descargar");
+                    btn.disabled = false;
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', cargarCapitulos);
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,292 @@
+/* Todas las tablas iguales */
+.table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+/* Columna descripción */
+.table th:nth-child(1),
+.table td:nth-child(1) {
+    width: 40%;
+    word-wrap: break-word;
+}
+
+/* Versión */
+.table th:nth-child(2),
+.table td:nth-child(2) {
+    width: 10%;
+}
+
+/* Tamaño */
+.table th:nth-child(3),
+.table td:nth-child(3) {
+    width: 10%;
+}
+
+/* Fecha */
+.table th:nth-child(4),
+.table td:nth-child(4) {
+    width: 20%;
+}
+
+/* Público */
+.table th:nth-child(5),
+.table td:nth-child(5) {
+    width: 8%;
+    text-align: center;
+}
+
+/* Acciones */
+.table th:nth-child(6),
+.table td:nth-child(6) {
+    width: 12%;
+    text-align: center;
+}
+
+/* ===============================
+   SEPARACIÓN NAVBAR → HEADER
+================================= */
+
+body nav.navbar {
+    margin-bottom: 5px; /* más compacto */
+}
+
+/* header */
+header.encabezado-login {
+    margin-top: 5px;
+    margin-bottom: 10px; /* 🔥 aquí está la clave */
+}
+
+/* logo + título */
+header.encabezado-login .row {
+    align-items: center;
+}
+
+/* ===============================
+   SEPARACIÓN HEADER → CONTENIDO
+================================= */
+
+nav.navbar {
+    margin-bottom: 12px; /* separación suave del header */
+}
+
+header.encabezado-login {
+    margin-top: 20px; /* aire entre navbar y logo/título */
+}
+
+/* contenedor principal */
+main.container {
+    margin-top: 5px !important; /* antes era más grande */
+}
+
+/* ===============================
+   TÍTULOS DE TABLAS
+================================= */
+
+.titulo-colapsable {
+    margin-top: 12px !important;
+}
+
+/* 🔥 FIX IMPORTANTE:
+   primera tabla mucho más pegada al header */
+#chaptersContainer > h4.titulo-colapsable:first-of-type,
+#archivosContainer > h4.titulo-colapsable:first-of-type {
+    margin-top: 4px !important; /* ajusta aquí si lo quieres aún más pegado */
+}
+
+/* =========================
+   TABLA ARCHIVOS (ESTILO CAPÍTULOS)
+========================= */
+
+.table-fixed {
+    width: 100% !important;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+}
+
+/* cabeceras */
+.table-fixed th {
+    font-size: 0.75rem;
+    text-align: center;
+}
+
+/* celdas */
+.table-fixed th,
+.table-fixed td {
+    text-align: center;
+    vertical-align: middle;
+    padding: 6px 4px !important;
+
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* optimización visual */
+.table-fixed {
+    will-change: transform;
+}
+/* ===============================
+   IGUALAR VIDEOS A ARCHIVOS
+================================= */
+
+/* mismo tamaño de letra */
+table {
+    table-layout: fixed;
+    width: 100%;
+    font-size: 0.78rem; /* igual que archivos */
+}
+
+/* cabeceras */
+table th {
+    font-size: 0.75rem;
+    text-align: center;
+}
+
+/* celdas */
+table td {
+    font-size: 0.75rem;
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* descripción alineada a la izquierda */
+table td:first-child,
+table th:first-child {
+    text-align: left;
+}
+
+/* ===============================
+   BOTONES IGUALES A ARCHIVOS
+================================= */
+
+.table-fixed td .btn {
+    padding: 3px 6px;
+    font-size: 0.7rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 28px;   /* clave para uniformidad */
+    min-height: 24px;
+}
+
+/* iconos */
+table td i {
+    font-size: 0.75rem;
+}
+
+/* evitar salto en acciones */
+table td:last-child {
+    white-space: nowrap;
+}
+
+/* 🔥 Reduce espacio general del header */
+header {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+/* 🔥 Si el logo está dentro de un contenedor */
+header .logo,
+header .brand,
+header .header-logo {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+/* 🔥 Título */
+header h1,
+header h2 {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    line-height: 1.1; /* lo hace más compacto */
+}
+
+/* 🔥 Por si hay separación global del body */
+body {
+    margin-top: 0 !important;
+}
+
+/* ===============================
+   ADMIN ARCHIVOS (AJUSTE LIGERO)
+================================= */
+
+body:has(#archivosContainer) .encabezado-login {
+  margin-bottom: -12px !important;
+  transform: translateY(-4px) !important;
+}
+
+body:has(#archivosContainer) main {
+  margin-top: -35px !important;
+  padding-top: 55px !important;
+}
+
+/* ===============================
+   ESPACIO TÍTULO → TABLA (ARCHIVOS)
+================================= */
+
+#archivosContainer h4.titulo-colapsable {
+  margin-top: 5px !important;     /* lo sube visualmente */
+  margin-bottom: 4px !important;  /* reduce separación con tabla */
+}
+
+#archivosContainer .collapse {
+  margin-top: 0 !important;
+}
+
+#archivosContainer .table-responsive {
+  margin-top: 0 !important;
+}
+
+/* ===============================
+   AJUSTE FINAL: HEADER → CONTENIDO
+   (SEPARACIÓN MÍNIMA ~1cm)
+================================= */
+
+header.encabezado-login {
+    margin-bottom: 8px !important;   /* controla separación con main */
+    padding-bottom: 0 !important;
+}
+
+main.container {
+    margin-top: 8px !important;      /* reduce separación superior */
+    padding-top: 0 !important;
+}
+
+/* elimina “empujes” conflictivos */
+body:has(#archivosContainer) main {
+    margin-top: 8px !important;   /* sobrescribe el -35px */
+    padding-top: 0 !important;    /* elimina exceso */
+    transform: none !important;
+}
+
+body:has(#archivosContainer) .encabezado-login {
+    margin-bottom: 8px !important; /* elimina el -12px */
+    transform: none !important;
+}
+
+/* ===============================
+   NAV → HEADER (separación clara)
+================================= */
+
+nav.navbar {
+    margin-bottom: 25px !important; /* aquí está la clave */
+}
+
+header.encabezado-login {
+    margin-top: 0 !important;  /* evitamos conflictos */
+    padding-top: 10px !important; /* esto crea aire real */
+}
+
+/* ===============================
+   TÍTULO DE CADA TABLA EN NEGRITA
+================================= */
+.titulo-colapsable {
+    font-weight: 600 !important;
+}

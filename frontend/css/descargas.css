@@ -1,0 +1,230 @@
+.card-icon {
+    display: block;
+    margin: 0 auto;
+    height: 50px;
+    width: 50px;
+    object-fit: contain;
+}
+
+.titulo-colapsable {
+    cursor: pointer;
+}
+
+/* =========================
+   ACCESIBILIDAD (NUEVO)
+========================= */
+
+/* Foco visible para teclado */
+:focus-visible {
+    outline: 3px solid #ffbf47;
+    outline-offset: 2px;
+}
+
+/* Mejora legibilidad global en tablas */
+.table-fija th,
+.table-fija td {
+    vertical-align: middle;
+
+    word-break: break-word;
+    white-space: normal;
+
+    /* 🔥 NUEVO: mejor lectura */
+    font-size: 16px;
+    color: #222;
+}
+
+/* =========================
+   TABLA
+========================= */
+.table-fija {
+    table-layout: fixed !important;
+    width: 100% !important;
+}
+
+/* Encabezados más legibles */
+.table-primary th {
+    font-weight: 700;
+}
+
+/* =========================
+   RESPONSIVE SIN SCROLL
+========================= */
+
+/* Tablet */
+@media (max-width: 992px) {
+
+    .table-fija {
+        font-size: 13px;
+    }
+
+    .card-icon {
+        height: 40px;
+        width: 40px;
+    }
+
+    .table-fija th,
+    .table-fija td {
+        padding: 6px 6px;
+    }
+}
+
+/* Móvil */
+@media (max-width: 576px) {
+
+    .table-fija {
+        font-size: 11px;
+    }
+
+    .card-icon {
+        height: 32px;
+        width: 32px;
+    }
+
+    .table-fija th,
+    .table-fija td {
+        padding: 5px 4px;
+    }
+}
+
+/* =========================
+   ACCESIBILIDAD INTERACTIVA
+========================= */
+
+/* Mejora foco en títulos clicables */
+.titulo-colapsable:focus {
+    outline: 3px solid #0d6efd;
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
+/* Botones más fáciles de pulsar */
+button.btn {
+    min-height: 38px;
+    min-width: 38px;
+}
+
+/* =========================
+   MISMO ESTILO QUE EL OTRO PANEL
+========================= */
+.encabezado-login {
+    padding: 20px 0;
+}
+
+.logo-login {
+    max-width: 180px;
+}
+
+.titulo-formulario {
+    font-weight: bold;
+}
+
+#archivosContainer table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+body {
+    position: relative;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-color: #f8f9fa;
+}
+
+/* Marca de agua visible */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+
+    background-image: url("../img/image008.jpg");
+    background-repeat: no-repeat;
+    background-position: center center;
+
+    /* OCUPA TODA LA PANTALLA */
+    background-size: cover;
+
+    /* transparencia */
+    opacity: 0.40;
+
+    /* efecto elegante */
+    filter: grayscale(20%);
+
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Contenido encima */
+body > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* =========================
+   TABLA DESCARGAS (AJUSTE FINO)
+========================= */
+
+.table-fixed {
+    font-size: 0.8rem; /* antes 0.75rem */
+}
+
+.table-fixed th {
+    font-size: 0.77rem; /* antes 0.72rem */
+    font-weight: 600;
+}
+
+.table-fixed td {
+    font-size: 0.78rem; /* antes 0.74rem */
+}
+
+/* =========================
+   BOTÓN DESCARGA
+========================= */
+
+.table-fixed td .btn {
+    padding: 3px 6px;
+    font-size: 0.7rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 28px;   /* clave para uniformidad */
+    min-height: 24px;
+}
+
+
+.table-fixed td .btn i {
+    font-size: 0.7rem;
+}
+
+.card-icon {
+    width: 25px;
+    height: 25px;
+    object-fit: contain;
+}
+
+/* =========================
+   ANCHO COLUMNAS TABLA DESCARGAS
+========================= */
+
+/* TIPO (1ª columna) MÁS PEQUEÑA */
+.table-fixed th:nth-child(1),
+.table-fixed td:nth-child(1) {
+    width: 8%;
+    text-align: center;
+}
+
+/* DESCRIPCIÓN (2ª columna) MÁS GRANDE */
+.table-fixed th:nth-child(2),
+.table-fixed td:nth-child(2) {
+    width: 72%;
+    text-align: left;
+}
+
+/* DESCARGA (3ª columna) */
+.table-fixed th:nth-child(3),
+.table-fixed td:nth-child(3) {
+    width: 20%;
+    text-align: center;
+    white-space: nowrap;
+}

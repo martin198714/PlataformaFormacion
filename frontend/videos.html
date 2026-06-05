@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Vídeos - Ejidosoft Formación</title>
+    <link rel="icon" type="image/webp" href="img/logo.png" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/login.css">
+    <link rel="stylesheet" href="css/videos.css">
+</head>
+
+<body>
+
+    <!-- NAV -->
+    <nav class="navbar navbar-expand-lg" role="navigation" aria-label="Menú principal del sitio">
+        <div class="container">
+
+            <a class="navbar-brand" href="admin.html" aria-label="Ir al panel de administración de Ejidosoft Formación">
+            </a>
+
+            <div class="ms-auto">
+                <a href="index.html" class="btn btn-warning" aria-label="Volver a la página anterior">
+                    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                    Volver
+                </a>
+            </div>
+
+        </div>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="encabezado-login">
+        <div class="container">
+            <div class="row align-items-center text-center text-md-start">
+
+                <div class="col-md-4 mb-4 mb-md-0 d-flex justify-content-center justify-content-md-start">
+                    <img src="img/logo.png" alt="Logo Ejidosoft Formación" class="img-fluid logo-login" />
+                </div>
+
+                <div class="col-md-8 d-flex align-items-center justify-content-md-start justify-content-center">
+                    <h2 class="fw-bold titulo-formulario">
+                        <i class="fa-solid fa-video me-2"></i>Visualizar Vídeos
+                    </h2>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section class="container my-5">
+
+        <div id="videosContainer"></div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="text-center py-3 text-white">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-6 col-md-2"></div>
+                <div class="col-6 col-md-2"></div>
+
+                <div class="col-6 col-md-2">
+                    © 2026 Ejidosoft Formación
+                </div>
+
+                <div class="col-6 col-md-2"></div>
+
+                <div class="col-6 col-md-2">
+                    <img src="img/logo-pie.png" alt="Logo pie Ejidosoft" />
+                </div>
+
+                <div class="col-md-2 footer-contacto ms-auto text-md-end">
+                    C/Jaén nº18-20 04700<br>
+                    El Ejido (Almería)<br>
+                    Telf.: 950 48 73 99<br>
+                    info@ejidosoft.es
+                </div>
+
+            </div>
+        </div>
+    </footer>
+
+    <!-- 🔥 MODAL VIDEO (AÑADIDO) -->
+    <div class="modal fade" id="videoModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content bg-dark text-white">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="videoModalTitle">Vídeo</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <video id="modalVideo" controls class="w-100 rounded">
+                        <source id="modalSource" src="" type="video/mp4">
+                    </video>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        const API = "http://localhost:3000/api/videos";
+        const TOKEN = localStorage.getItem("token");
+        const ROLE = localStorage.getItem("rol") || "usuario";
+
+        async function cargarVideos() {
+
+            try {
+
+                const response = await fetch(
+                    `${API}/capitulos/publicos`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${TOKEN}`
+                        },
+                        cache: "no-store"
+                    }
+                );
+
+                if (!response.ok)
+                    throw new Error("Error obteniendo vídeos");
+
+                const capitulos = await response.json();
+
+                const container =
+                    document.getElementById("videosContainer");
+
+                container.innerHTML = "";
+
+                if (!capitulos.length) {
+                    container.innerHTML =
+                        '<p class="text-center text-muted">No hay vídeos disponibles</p>';
+                    return;
+                }
+
+                const ORDEN_TITULOS = {
+                    "Planning 4.0": 1,
+                    "Transporta 4.0": 2,
+                    "Base 4.0": 3,
+                    "Gestion Horto 4.0": 4,
+                    "Contasoft 4.0": 5,
+                    "SII 4.0": 6,
+                    "Fiscal 4.0": 7,
+                    "Verifactu 4.0": 8
+                };
+
+                const porTitulo = {};
+
+                for (const c of capitulos) {
+                    const t = c.TITULO || "Sin título";
+                    (porTitulo[t] ??= []).push(c);
+                }
+
+                const titulosOrdenados =
+                    Object.keys(porTitulo)
+                        .sort((a, b) =>
+                            (ORDEN_TITULOS[a] ?? 999) -
+                            (ORDEN_TITULOS[b] ?? 999)
+                        );
+
+                let index = 0;
+
+                for (const titulo of titulosOrdenados) {
+
+                    const collapseId = `collapse-${index}`;
+
+                    // 🔹 TÍTULO (CLICKABLE)
+                    const h4 = document.createElement("h4");
+                    h4.className = "mt-4 titulo-colapsable";
+                    h4.style.cursor = "pointer";
+
+                    h4.innerHTML = `
+                <i class="fa-solid fa-folder-open me-2 text-primary"></i>
+                ${titulo}
+            `;
+
+                    h4.setAttribute("data-bs-toggle", "collapse");
+                    h4.setAttribute("data-bs-target", `#${collapseId}`);
+                    h4.setAttribute("aria-expanded", "true");
+
+                    container.appendChild(h4);
+
+                    // 🔹 CONTENEDOR COLLAPSE (ABIERTO POR DEFECTO)
+                    const collapseDiv = document.createElement("div");
+                    collapseDiv.className = "collapse show";
+                    collapseDiv.id = collapseId;
+
+                    const innerContainer = document.createElement("div");
+
+                    // 🔹 CAPÍTULOS
+                    for (const [i, cap] of porTitulo[titulo].entries()) {
+
+                        const videoUrl = `http://localhost:3000${cap.URL}`;
+
+                        const box = document.createElement("div");
+                        box.className = "capitulo-box mb-3 p-3 border rounded bg-light";
+                        box.style.cursor = "pointer";
+
+                        box.innerHTML = `
+                    <h5 class="mb-1">
+                        <i class="fa-solid fa-circle-play me-2 text-primary"></i>
+                        Capítulo ${i + 1}
+                    </h5>
+                    <p class="mb-0 text-muted">${cap.DESCRIPCION || ''}</p>
+                `;
+
+                        box.addEventListener("click", () => {
+                            abrirVideo(videoUrl, `Capítulo ${i + 1}`);
+                        });
+
+                        innerContainer.appendChild(box);
+                    }
+
+                    collapseDiv.appendChild(innerContainer);
+                    container.appendChild(collapseDiv);
+
+                    index++;
+                }
+
+            } catch (error) {
+                console.error(error);
+                document.getElementById("videosContainer").innerHTML =
+                    '<p class="text-danger text-center">Error cargando vídeos</p>';
+            }
+        }
+
+        // 🔥 MODAL VIDEO
+        function abrirVideo(url, titulo) {
+
+            document.getElementById("videoModalTitle").textContent = titulo;
+            document.getElementById("modalSource").src = url;
+
+            const video = document.getElementById("modalVideo");
+            video.load();
+
+            const modal = new bootstrap.Modal(
+                document.getElementById("videoModal")
+            );
+
+            modal.show();
+        }
+
+        // 🔥 RESET VIDEO AL CERRAR MODAL
+        document.getElementById("videoModal")
+            .addEventListener("hidden.bs.modal", () => {
+
+                const video = document.getElementById("modalVideo");
+                video.pause();
+                video.currentTime = 0;
+            });
+
+        // 🔥 INIT
+        document.addEventListener("DOMContentLoaded", cargarVideos);
+
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+
+</html>

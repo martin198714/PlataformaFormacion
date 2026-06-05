@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <!-- 🔎 SEO básico -->
+    <title>Ejidosoft Formación</title>
+    <meta name="description"
+        content="Ejidosoft Formación ofrece cursos, vídeos formativos, soporte técnico y descarga de recursos educativos. Plataforma de aprendizaje online." />
+    <meta name="keywords"
+        content="formación online, cursos, vídeos educativos, soporte técnico, descargas, Ejidosoft, aprendizaje" />
+    <meta name="author" content="Ejidosoft Formación" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- 🌍 Idioma -->
+    <meta name="language" content="es" />
+
+    <!-- 📱 Mobile SEO -->
+    <meta name="theme-color" content="#0d6efd" />
+
+    <!-- 📌 Open Graph (Facebook, WhatsApp, LinkedIn) -->
+    <meta property="og:title" content="Ejidosoft Formación" />
+    <meta property="og:description"
+        content="Plataforma de formación con vídeos, soporte técnico y descargas educativas." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="img/logo.png" />
+    <meta property="og:url" content="https://ejidosoft.es" />
+
+    <!-- 🐦 Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Ejidosoft Formación" />
+    <meta name="twitter:description" content="Cursos, vídeos y soporte técnico online." />
+    <meta name="twitter:image" content="img/logo.png" />
+
+    <!-- 📍 Favicon -->
+    <link rel="icon" type="image/webp" href="img/logo.png" />
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/login.css">
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/chat.css">
+
+    <!-- 🧭 Canonical (IMPORTANTE SEO) -->
+    <link rel="canonical" href="https://ejidosoft.es/index.html" />
+</head>
+
+<body>
+
+    <!-- ACCESIBILIDAD: SALTO AL CONTENIDO -->
+    <a href="#contenido" class="visually-hidden-focusable">Saltar al contenido principal</a>
+
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg" aria-label="Navegación principal">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="index.html"
+                aria-label="Ir a inicio de Ejidosoft Formación">
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu"
+                aria-controls="menu" aria-expanded="false" aria-label="Abrir menú de navegación">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div id="menu" class="collapse navbar-collapse justify-content-end">
+                <ul class="navbar-nav" role="menubar">
+
+                    <li class="nav-item d-flex align-items-center text-white fw-bold me-3" id="userEmail"
+                        aria-live="polite">
+                    </li>
+
+                    <li class="nav-item" role="none">
+                        <a id="loginBtn" class="nav-link" href="login.html" role="menuitem">
+                            Acceder
+                        </a>
+                    </li>
+
+                    <li class="nav-item" role="none">
+                        <a id="adminBtn" class="nav-link btn btn-secondary ms-3" href="admin.html" role="menuitem"
+                            aria-label="Acceso al panel de administración">
+                            Admin
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <button type="button" id="logoutBtn" class="btn btn-warning ms-3" aria-label="Cerrar sesión">
+                            Cerrar sesión
+                        </button>
+                    </li>
+
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="encabezado-login" role="banner">
+        <div class="container">
+            <div class="row align-items-center text-center text-md-start">
+
+                <div class="col-md-4 mb-4 mb-md-0 d-flex justify-content-center justify-content-md-start">
+                    <img src="img/logo.png" alt="Logo de Ejidosoft Formación" class="img-fluid logo-login" />
+                </div>
+
+                <div class="col-md-8 d-flex align-items-center justify-content-md-start justify-content-center">
+                    <h1 class="fw-bold titulo-formulario">
+                        Bienvenido a Ejidosoft Formación
+                    </h1>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main id="contenido" role="main">
+
+        <!-- SECCIÓN SERVICIOS -->
+        <section class="container my-5" aria-labelledby="servicios-titulo">
+
+            <h2 id="servicios-titulo" class="visually-hidden">
+                Servicios disponibles
+            </h2>
+
+            <div class="row g-4">
+
+                <div class="col-md-4">
+                    <div class="card shadow h-100 text-center p-3 d-flex flex-column" role="region"
+                        aria-label="Soporte clientes">
+                        <i class="fa-solid fa-headset fa-3x text-primary mb-3" aria-hidden="true"></i>
+                        <h5 class="card-title">Clientes</h5>
+                        <p class="card-text">Solicita soporte técnico. La incidencia será enviada automáticamente a
+                            nuestro sistema.</p>
+                        <a href="soporte.html" class="btn btn-principal mt-auto" aria-label="Solicitar soporte técnico">
+                            Solicitar soporte
+                        </a>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card shadow h-100 text-center p-3 d-flex flex-column" role="region"
+                        aria-label="Descarga de archivos">
+                        <i class="fa-solid fa-download fa-3x text-primary mb-3" aria-hidden="true"></i>
+                        <h5 class="card-title">Descargar Archivos</h5>
+                        <p class="card-text">Accede a manuales, documentos y herramientas disponibles para descarga.</p>
+                        <a href="descargas.html" class="btn btn-principal mt-auto"
+                            aria-label="Ir a descargas de archivos">
+                            Ir a descargas
+                        </a>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card shadow h-100 text-center p-3 d-flex flex-column" role="region"
+                        aria-label="Vídeos formativos">
+                        <i class="fa-solid fa-video fa-3x text-primary mb-3" aria-hidden="true"></i>
+                        <h5 class="card-title">Vídeos</h5>
+                        <p class="card-text">Visualiza videotutoriales, formaciones y sesiones grabadas.</p>
+                        <a href="videos.html" class="btn btn-principal mt-auto" aria-label="Ver vídeos formativos">
+                            Ver vídeos
+                        </a>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card shadow h-100 text-center p-3 d-flex flex-column" role="region"
+                        aria-label="Descarga de vídeos">
+                        <i class="fa-solid fa-circle-down fa-3x text-primary mb-3" aria-hidden="true"></i>
+                        <h5 class="card-title">Descargar Vídeos</h5>
+                        <p class="card-text">Descarga tus vídeos favoritos.</p>
+                        <a href="descargar_videos.html" class="btn btn-principal mt-auto" aria-label="Descargar vídeos">
+                            Descargar vídeos
+                        </a>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card shadow h-100 text-center p-3 d-flex flex-column" role="region"
+                        aria-label="Calendario de formaciones">
+                        <i class="fa-solid fa-calendar-days fa-3x text-primary mb-3" aria-hidden="true"></i>
+                        <h5 class="card-title">Calendario de Formaciones</h5>
+                        <p class="card-text">Consulta todas las fechas y horarios de nuestras formaciones.</p>
+                        <a href="calendario.html" class="btn btn-principal mt-auto"
+                            aria-label="Ver calendario de formaciones">
+                            Ver calendario
+                        </a>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card shadow h-100 text-center p-3 d-flex flex-column" role="region"
+                        aria-label="Calendario de formaciones">
+                        <i class="fa-solid fa-file-signature fa-3x text-primary mb-3" aria-hidden="true"></i>
+                        <h5 class="card-title">Contratos</h5>
+                        <p class="card-text">Consulta el contrato</p>
+                        <a href="contratos.html" class="btn btn-principal mt-auto" aria-label="Ver contrato">
+                            Ver contrato
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- CHAT OVERLAY -->
+    <div id="chatOverlay" class="chat-overlay hidden">
+
+        <div class="chat-fullscreen">
+
+            <div class="chat-header">
+                <div id="chat-robot-header" onclick="toggleChat()" aria-label="Abrir chat">
+                    <div class="robot-ejido">
+                        <div class="antenna"></div>
+
+                        <div class="head">
+                            <div class="ear left-ear"></div>
+                            <div class="ear right-ear"></div>
+                            <div class="logo-mark"></div>
+
+                            <div class="eyes">
+                                <span></span>
+                                <span></span>
+                            </div>
+
+                            <div class="mouth"></div>
+                        </div>
+                    </div>
+                </div> Asistente IA
+                <span onclick="toggleChat()" style="cursor:pointer;">✖</span>
+            </div>
+
+            <div id="chat" class="chat-body">
+
+                <!-- 🔥 TYPING INDICATOR -->
+                <div id="typing" class="msg bot typing hidden">
+                    <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                </div>
+
+            </div>
+
+            <div class="chat-footer">
+                <input id="messageInput" type="text" class="form-control" placeholder="Escribe tu duda...">
+                <button class="btn btn-warning" onclick="sendMessage()">Enviar</button>
+            </div>
+
+        </div>
+
+    </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="text-center py-3 text-white" role="contentinfo" aria-label="Pie de página">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-6 col-md-2 d-flex justify-content-center align-items-center">
+                    <div id="chatButtonFooter" onclick="toggleChat()" aria-label="Abrir chat">
+                        <div class="robot-ejido">
+                            <div class="antenna"></div>
+
+                            <div class="head">
+                                <div class="ear left-ear"></div>
+                                <div class="ear right-ear"></div>
+
+                                <div class="logo-mark"></div>
+
+                                <div class="eyes">
+                                    <span></span>
+                                    <span></span>
+                                </div>
+
+                                <div class="mouth"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-2"></div>
+
+                <div class="col-6 col-md-2">
+                    © 2026 Ejidosoft Formación
+                </div>
+
+                <div class="col-6 col-md-2"></div>
+
+                <div class="col-6 col-md-2">
+                    <img src="img/logo-pie.png" alt="Logo inferior de Ejidosoft Formación" />
+                </div>
+
+                <div class="col-md-2 footer-contacto ms-auto text-md-end">
+                    <address>
+                        C/Jaén nº18-20 04700<br>
+                        El Ejido (Almería)<br>
+                        Telf.: 950 48 73 99<br>
+                        info@ejidosoft.es
+                    </address>
+                </div>
+
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- SCRIPT DE USUARIO -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+
+            // ELEMENTOS
+            const adminBtn = document.getElementById("adminBtn");
+            const logoutBtn = document.getElementById("logoutBtn");
+            const userEmail = document.getElementById("userEmail");
+
+            // BOTÓN ACCEDER
+            const loginLink = document.getElementById("loginBtn");
+
+            // OBTENER USUARIO
+            const usuario = JSON.parse(localStorage.getItem("usuario"));
+
+            // =========================
+            // USUARIO LOGUEADO
+            // =========================
+            if (usuario) {
+
+                // Mostrar email
+                userEmail.textContent = usuario.email;
+                userEmail.setAttribute(
+                    "aria-label",
+                    "Usuario conectado: " + usuario.email
+                );
+
+                // Ocultar botón acceder
+                if (loginLink) {
+                    loginLink.style.display = "none";
+                }
+
+                // Mostrar admin solo si es admin
+                if (usuario.rol !== "admin") {
+                    adminBtn.style.display = "none";
+                }
+
+                // Mostrar logout
+                logoutBtn.style.display = "inline-block";
+
+            } else {
+
+                // Usuario NO logueado
+
+                adminBtn.style.display = "none";
+                logoutBtn.style.display = "none";
+
+                userEmail.textContent = "";
+
+            }
+
+            // =========================
+            // LOGOUT
+            // =========================
+            if (logoutBtn) {
+
+                logoutBtn.addEventListener("click", (e) => {
+
+                    e.preventDefault();
+
+                    // Eliminar sesión
+                    localStorage.removeItem("usuario");
+
+                    // Redirección
+                    window.location.href = "login.html";
+
+                });
+
+            }
+
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+
+            const API_URL = "http://localhost:3000/chat/message";
+            const VIDEO_BASE = "http://localhost:3000";
+
+            // =========================
+            // 💬 TOGGLE CHAT
+            // =========================
+            function toggleChat() {
+                const overlay = document.getElementById("chatOverlay");
+                const page = document.getElementById("pageContent");
+
+                const isOpen = !overlay.classList.contains("hidden");
+
+                if (isOpen) {
+                    overlay.classList.add("hidden");
+                    page.style.visibility = "visible";
+                    page.style.pointerEvents = "auto";
+                    document.body.classList.remove("chat-open");
+
+                } else {
+                    overlay.classList.remove("hidden");
+                    page.style.visibility = "hidden";
+                    page.style.pointerEvents = "none";
+                    document.body.classList.add("chat-open");
+
+                    setTimeout(() => {
+                        document.getElementById("messageInput")?.focus();
+                    }, 50);
+                }
+            }
+
+            window.toggleChat = toggleChat;
+
+            // =========================
+            // 💬 MENSAJE CHAT
+            // =========================
+            function addMessage(text, type) {
+
+                const chat = document.getElementById("chat");
+                if (!chat) return;
+
+                const div = document.createElement("div");
+                div.classList.add("msg", type);
+                div.textContent = text;
+
+                chat.appendChild(div);
+
+                scrollChat();
+            }
+
+            // =========================
+            // ⏳ TYPING INDICATOR (NUEVO)
+            // =========================
+            function showTyping() {
+                const chat = document.getElementById("chat");
+
+                const typing = document.createElement("div");
+                typing.id = "typing";
+                typing.classList.add("msg", "bot", "typing");
+
+                typing.innerHTML = `
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+        `;
+
+                chat.appendChild(typing);
+                scrollChat();
+            }
+
+            function hideTyping() {
+                const typing = document.getElementById("typing");
+                if (typing) typing.remove();
+            }
+
+            // =========================
+            // 📜 SCROLL
+            // =========================
+            function scrollChat() {
+                const body = document.querySelector(".chat-body");
+                if (!body) return;
+
+                body.scrollTop = body.scrollHeight;
+            }
+
+            // =========================
+            // 👤 USER ID (NO TOCADO)
+            // =========================
+            function getUserId() {
+
+                const id = localStorage.getItem("userId");
+
+                if (!id || id === "undefined" || id === "null") return null;
+
+                const userId = Number(id);
+
+                if (!Number.isInteger(userId)) return null;
+
+                return userId;
+            }
+
+            // =========================
+            // 🧠 PERFIL ID
+            // =========================
+            function getPerfilId() {
+                return localStorage.getItem("perfilId");
+            }
+
+            // =========================
+            // 📚 LISTA RESULTADOS
+            // =========================
+            function showList(items, icon = "📘", type = null) {
+
+                if (!Array.isArray(items)) return;
+
+                const chat = document.getElementById("chat");
+                if (!chat) return;
+
+                const FILE_BASE = "http://localhost:3000/uploads/archivos/";
+
+                items.forEach(i => {
+
+                    const titulo = i?.TITULO || "Sin título";
+
+                    const div = document.createElement("div");
+                    div.classList.add("msg", "bot");
+
+                    // =========================
+                    // 🧠 DETECCIÓN INTELIGENTE
+                    // =========================
+                    const esVideo = type === "video" || (i?.URL && !i?.FICHERO_NOMBRE);
+                    const esManual = type === "manual" || (i?.FICHERO_NOMBRE && i?.URL);
+
+                    // =========================
+                    // 🎬 CAPÍTULOS (VIDEOS) → SIN CAMBIOS
+                    // =========================
+                    if (esVideo) {
+
+                        div.innerHTML = `<span style="cursor:pointer; text-decoration:underline;">🎬 ${titulo}</span>`;
+
+                        div.onclick = () => {
+                            window.open(VIDEO_BASE + i.URL, "_blank");
+                        };
+
+                    }
+
+                    // =========================
+                    // 📘 MANUALES (ARREGLADO)
+                    // =========================
+                    else if (esManual) {
+
+                        div.innerHTML = `<span style="cursor:pointer; text-decoration:underline;">📘 ${titulo} ⬇ Descargar</span>`;
+
+                        div.onclick = async () => {
+
+                            const fileUrl = FILE_BASE + i.URL;
+
+                            try {
+                                const response = await fetch(fileUrl);
+                                if (!response.ok) throw new Error("Error al descargar");
+
+                                const blob = await response.blob();
+                                const url = window.URL.createObjectURL(blob);
+
+                                const a = document.createElement("a");
+                                a.href = url;
+                                a.download = i.FICHERO_NOMBRE || `${titulo}.pdf`;
+
+                                document.body.appendChild(a);
+                                a.click();
+                                a.remove();
+
+                                window.URL.revokeObjectURL(url);
+
+                            } catch (err) {
+                                console.warn("Fallback descarga manual:", err);
+
+                                const a = document.createElement("a");
+                                a.href = fileUrl;
+                                a.target = "_blank";
+                                a.download = i.FICHERO_NOMBRE || `${titulo}.pdf`;
+
+                                document.body.appendChild(a);
+                                a.click();
+                                a.remove();
+                            }
+                        };
+                    }
+
+                    // =========================
+                    // 📚 OTROS → SIN CAMBIOS
+                    // =========================
+                    else {
+                        const grupo = i?.GRUPO_ID ? ` (Curso ${i.GRUPO_ID})` : "";
+                        div.textContent = `${icon} ${titulo}${grupo}`;
+                    }
+
+                    chat.appendChild(div);
+                });
+
+                setTimeout(scrollChat, 0);
+            }
+
+            // =========================
+            // 🎯 ICONO
+            // =========================
+            function getIcon(type) {
+                switch (type) {
+                    case "capitulo": return "🎬";
+                    case "curso": return "📚";
+                    case "archivo": return "📘";
+                    case "manual": return "📘";
+                    default: return "📘";
+                }
+            }
+
+            // =========================
+            // 🚀 SEND MESSAGE (MEJORADO)
+            // =========================
+            async function sendMessage() {
+
+                const input = document.getElementById("messageInput");
+                if (!input) return;
+
+                const text = input.value.trim();
+                if (!text) return;
+
+                addMessage(text, "user");
+                input.value = "";
+
+                // 🔥 LOADING
+                showTyping();
+
+                const userId = getUserId();
+
+                if (!userId) {
+                    hideTyping();
+                    addMessage("❌ Usuario no autenticado", "bot");
+                    return;
+                }
+
+                try {
+
+                    const res = await fetch(API_URL, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            userId,
+                            message: text
+                        })
+                    });
+
+                    if (!res.ok) {
+                        hideTyping();
+                        addMessage(`❌ Error servidor (${res.status})`, "bot");
+                        return;
+                    }
+
+                    const data = await res.json();
+
+                    console.log("CHAT RESPONSE:", data);
+
+                    hideTyping(); // 🔥 quitamos loading
+
+                    // =========================
+                    // 📦 LISTADOS
+                    // =========================
+                    if (Array.isArray(data.data) && data.data.length > 0) {
+
+                        if (data.response) {
+                            addMessage(data.response, "bot");
+                        }
+
+                        const icon = getIcon(data.type);
+                        showList(data.data, icon, data.type);
+                        return;
+                    }
+
+                    // =========================
+                    // 💬 SIMPLE
+                    // =========================
+                    if (data.response) {
+                        addMessage(data.response, "bot");
+                        return;
+                    }
+
+                    addMessage("📭 No se encontraron resultados", "bot");
+
+                } catch (err) {
+                    console.error(err);
+                    hideTyping();
+                    addMessage("❌ Error de conexión con el servidor", "bot");
+                }
+            }
+
+            window.sendMessage = sendMessage;
+
+            // =========================
+            // ⌨️ ENTER KEY
+            // =========================
+            document.addEventListener("keydown", (e) => {
+
+                const overlay = document.getElementById("chatOverlay");
+
+                if (!overlay) return;
+
+                if (e.key === "Enter" && !overlay.classList.contains("hidden")) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+        });
+    </script>
+
+
+</body>
+
+</html>

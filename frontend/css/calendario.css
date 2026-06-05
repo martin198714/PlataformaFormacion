@@ -1,0 +1,110 @@
+body {
+    background: #FFFFFF;
+    font-family: 'OpenSans-Bold', Arial;
+    overflow-x: hidden; /* 🔥 evita scroll lateral */
+}
+
+.btn-amarillo {
+    background-color: #FFCA2C;
+    border-color: #FFCA2C;
+    color: white; /* para que el texto se vea bien */
+}
+
+.btn-amarillo:hover {
+    background-color: #FFCA2C;
+    border-color: #FFCA2C;
+    color: white;
+}
+
+#calendar {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    overflow: hidden; /* 🔥 evita desbordes internos */
+}
+
+/* 🔽 AJUSTES FULLCALENDAR */
+
+/* Evita que el calendario se salga */
+.fc {
+    font-size: 0.75rem;
+    max-width: 100%;
+}
+
+/* 🔥 tamaño de letra de los eventos del calendario */
+.fc-event {
+    font-size: 0.58rem;   /* más pequeño */
+    padding: 1px 3px;
+    line-height: 1.2;
+}
+
+/* 🔥 reduce también el alto del evento */
+.fc-daygrid-event {
+    padding: 1px 2px;
+}
+
+/* Espaciado interno */
+.fc-daygrid-day {
+    padding: 10px;
+}
+
+/* Número del día ligeramente más grande */
+.fc-daygrid-day-number {
+    font-size: 0.9rem;
+}
+
+footer {
+    background: #1A237E;
+    color: white;
+    padding: 15px;
+    text-align: center;
+    margin-top: 40px;
+}
+
+.estado-completo {
+    background-color: #0d6efd !important;
+    color: white !important;
+}
+
+.estado-cancelado {
+    background-color: #dc3545 !important;
+    color: white !important;
+}
+
+.estado-curso {
+    background-color: #198754 !important;
+    color: white !important;
+}
+
+.estado-finalizado {
+    background-color: #6c757d !important;
+    color: white !important;
+}
+
+.encabezado-login {
+    margin-top: -22px; /* antes -15px */
+    padding-top: 0;
+    margin-bottom: 3px;
+}
+
+/* título aún más compacto */
+.titulo-formulario {
+    margin-top: 0;
+    margin-bottom: 0;
+    line-height: 1.05;
+}
+
+/* mantiene todo bien centrado */
+.encabezado-login .row {
+    align-items: center;
+}
+
+main.container {
+    margin-top: 1px; /* antes 6px */
+}
+
+main.container > .row {
+    margin-top: -25px; /* antes -14px */
+}

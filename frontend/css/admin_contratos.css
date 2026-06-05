@@ -1,0 +1,26 @@
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th,
+td {
+    border: 1px solid #ccc;
+    padding: 8px;
+}
+
+th {
+    background: #f0f0f0;
+}
+
+button {
+    padding: 6px 10px;
+    cursor: pointer;
+    margin: 5px;
+}
+
+.navbar {
+    position: relative;
+    z-index: 9999;
+}
