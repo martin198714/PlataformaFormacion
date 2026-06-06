@@ -21,7 +21,7 @@ const contratosRoutes = require('./routes/contratos');
 const empresaPerfilesRoutes = require('./routes/empresaPerfilesRoutes');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 
 // ================= MIDDLEWARES =================
@@ -198,6 +198,6 @@ server.timeout = 0;
 server.keepAliveTimeout = 0;
 server.headersTimeout = 0;
 
-server.listen(PORT, () =>
-    console.log(`🚀 Servidor en http://localhost:${PORT}`)
+server.listen(PORT, '0.0.0.0', () =>
+    console.log(`🚀 Servidor corriendo en puerto ${PORT}`)
 );
