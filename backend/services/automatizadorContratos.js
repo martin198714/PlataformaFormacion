@@ -73,53 +73,77 @@ async function generarContratoAutomatico(empresaId, perfilId, creadoPor) {
     hash
   });
 
-  // =========================
-  // 4. LINK DE FIRMA
-  // =========================
-  const linkFirma = `http://localhost:3000/firma/${contratoId}`;
+  if (!pdf?.fileName) {
+    throw new Error("Error generando PDF del contrato");
+  }
 
   // =========================
-  // 5. INSERT CONTRATO
+  // 4. TOKEN DE FIRMA (🔥 FIX CRÍTICO)
+  // =========================
+  const token = generarHash({
+    contratoId,
+    empresaId: empresa,
+    perfilId: perfil,
+    time: Date.now()
+  });
+
+  if (!token) {
+    throw new Error("No se pudo generar token");
+  }
+
+  // =========================
+  // 5. LINK DE FIRMA (COHERENTE CON FRONTEND)
+  // =========================
+  const linkFirma = `http://localhost:3000/firma.html?token=${token}`;
+
+  // =========================
+  // 6. INSERT CONTRATO (🔥 AHORA CON TOKEN)
   // =========================
   await db.query(`
     INSERT INTO CONTRATOS_MANTENIMIENTO
-    (ID, EMPRESA_ID, PERFIL_ID, HASH, ARCHIVO_ENVIADO_ID, ESTADO)
-    VALUES (?, ?, ?, ?, ?, 'PENDIENTE')
+    (ID, EMPRESA_ID, PERFIL_ID, HASH, TOKEN, ARCHIVO_ENVIADO_ID, ESTADO)
+    VALUES (?, ?, ?, ?, ?, ?, 'PENDIENTE')
   `, [
     contratoId,
     empresa,
     perfil,
     hash,
+    token,
     pdf.fileName
   ]);
 
   // =========================
-  // 6. OBTENER EMAIL EMPRESA
+  // 7. OBTENER EMAIL EMPRESA (FIX EMPRESA_ID)
   // =========================
   const emailRes = await db.query(`
-    SELECT EMAIL FROM EMPRESAS WHERE ID = ?
+    SELECT EMAIL FROM EMPRESAS WHERE EMPRESA_ID = ?
   `, [empresa]);
 
   const email = emailRes?.[0]?.EMAIL;
 
   // =========================
-  // 7. ENVIAR EMAIL AUTOMÁTICO
+  // 8. ENVIAR EMAIL AUTOMÁTICO
   // =========================
   if (email) {
-    await enviarContratoEmail({
-      to: email,
-      pdfPath: pdf.filePath,
-      contratoId,
-      linkFirma
-    });
+    try {
+      await enviarContratoEmail({
+        to: email,
+        pdfPath: pdf.filePath,
+        contratoId,
+        linkFirma
+      });
+    } catch (e) {
+      console.error("EMAIL ERROR:", e.message);
+    }
   }
 
   // =========================
-  // 8. RESPUESTA FINAL
+  // 9. RESPUESTA FINAL
   // =========================
   return {
     contratoId,
     hash,
+    token,
     pdf: pdf.fileName,
     linkFirma
   };
