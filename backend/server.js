@@ -157,6 +157,10 @@ app.get('/api/videos/listar', (req, res) => {
         res.json(mp4s);
     });
 
+}); 
+
+app.get('/', (req, res) => {
+    res.send('API PlataformaFormacion funcionando correctamente')
 });
 
 
