@@ -114,155 +114,55 @@
         }
 
         /* =========================
-           CARGAR CONTRATOS
+           SAFE (ANTI NULL)
         ========================= */
-        async function cargar() {
-            try {
-                const res = await fetch(`${BASE_URL}/api/contratos`, {
-                    headers: getAuthHeaders()
-                });
-
-                if (!res.ok) {
-                    alert("Error cargando contratos");
-                    return;
-                }
-
-                const data = await res.json();
-
-                const tbody = document.getElementById("tabla");
-                tbody.innerHTML = "";
-
-                const contratosUnicos = [...new Map(data.map(c => [c.ID, c])).values()];
-
-                contratosUnicos.forEach(c => {
-
-                    const estado = (c.ESTADO || "").toUpperCase();
-
-                    const estadoClass =
-                        estado === "FIRMADO"
-                            ? "text-success"
-                            : "text-warning";
-
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${c.ID}</td>
-                            <td>${c.EMPRESA_NOMBRE || c.EMPRESA_ID}</td>
-                            <td>${c.PERFIL_NOMBRE || c.PERFIL_ID}</td>
-
-                            <td class="${estadoClass}">
-                                ${c.ESTADO}
-                            </td>
-
-                            <td>${c.FECHA_ENVIO || ""}</td>
-
-                            <td>
-                                ${c.ARCHIVO_ENVIADO_ID
-                                    ? `<a href="${BASE_URL}/api/archivos/${c.ARCHIVO_ENVIADO_ID}" target="_blank">📄 PDF</a>`
-                                    : "Sin PDF"}
-                            </td>
-
-                            <td>
-                                ${c.TOKEN
-                                    ? `<a href="${BASE_URL}/api/contratos/firma/${c.TOKEN}" target="_blank">✍️ Firmar</a>`
-                                    : ""}
-                            </td>
-                        </tr>
-                    `;
-                });
-
-            } catch (err) {
-                console.error(err);
-            }
-        }
+        const safe = (v) => (v === null || v === undefined ? "" : v);
 
         /* =========================
-           CREAR CONTRATO
+           CARGAR
         ========================= */
-        async function asignarPerfil() {
+        async function cargar() {
+            const res = await fetch(`${BASE_URL}/api/contratos`, {
+                headers: getAuthHeaders()
+            });
 
-            try {
-                const [empresasRes, perfilesRes] = await Promise.all([
-                    fetch(`${BASE_URL}/api/empresas`, { headers: getAuthHeaders() }),
-                    fetch(`${BASE_URL}/api/perfiles`, { headers: getAuthHeaders() })
-                ]);
+            const data = await res.json();
 
-                const empresas = await empresasRes.json();
-                const perfiles = await perfilesRes.json();
+            const tbody = document.getElementById("tabla");
+            tbody.innerHTML = "";
 
-                const box = document.createElement("div");
-                box.style.position = "fixed";
-                box.style.top = "50%";
-                box.style.left = "50%";
-                box.style.transform = "translate(-50%, -50%)";
-                box.style.background = "#fff";
-                box.style.padding = "20px";
-                box.style.zIndex = "9999";
+            const unicos = [...new Map(data.map(c => [c.ID, c])).values()];
 
-                box.innerHTML = `
-                    <h3>Crear contrato</h3>
+            unicos.forEach(c => {
 
-                    <label>Empresa</label>
-                    <select id="empresaId">
-                        ${empresas.map(e => `
-                            <option value="${e.EMPRESA_ID}">
-                                ${e.NOMBRE}
-                            </option>
-                        `).join("")}
-                    </select>
+                const estado = (c.ESTADO || "").toUpperCase();
 
-                    <br><br>
+                tbody.innerHTML += `
+        <tr>
+            <td>${safe(c.ID)}</td>
+            <td>${safe(c.EMPRESA_NOMBRE)}</td>
+            <td>${safe(c.PERFIL_NOMBRE)}</td>
+            <td>${safe(c.ESTADO)}</td>
+            <td>${safe(c.FECHA_ENVIO)}</td>
 
-                    <label>Perfil</label>
-                    <select id="perfilId">
-                        ${perfiles.map(p => `
-                            <option value="${p.ID}">
-                                ${p.NOMBRE}
-                            </option>
-                        `).join("")}
-                    </select>
+            <td>
+                ${c.ARCHIVO_ENVIADO_ID
+                        ? `<a href="${BASE_URL}/api/archivos/${c.ARCHIVO_ENVIADO_ID}" target="_blank">📄 PDF</a>`
+                        : "Sin PDF"}
+            </td>
 
-                    <br><br>
-
-                    <button id="btnCrear">Crear contrato</button>
-                    <button id="btnCerrar">Cerrar</button>
-                `;
-
-                document.body.appendChild(box);
-
-                document.getElementById("btnCrear").onclick = async () => {
-
-                    const empresaId = Number(document.getElementById("empresaId").value);
-                    const perfilId = Number(document.getElementById("perfilId").value);
-
-                    const res = await fetch(`${BASE_URL}/api/contratos/crear`, {
-                        method: "POST",
-                        headers: getAuthHeaders(),
-                        body: JSON.stringify({ empresaId, perfilId })
-                    });
-
-                    const data = await res.json();
-
-                    if (!res.ok) {
-                        alert(data.error || "Error creando contrato");
-                        return;
-                    }
-
-                    alert("Contrato creado ✔");
-                    document.body.removeChild(box);
-                    cargar();
-                };
-
-                document.getElementById("btnCerrar").onclick = () => {
-                    document.body.removeChild(box);
-                };
-
-            } catch (err) {
-                console.error(err);
-            }
+            <td>
+                ${c.TOKEN
+                        ? `<a href="${BASE_URL}/firma/${c.TOKEN}" target="_blank">✍️ Firmar</a>`
+                        : ""}
+            </td>
+        </tr>`;
+            });
         }
 
         cargar();
     </script>
 
 </body>
+
 </html>
