@@ -9,7 +9,7 @@ const { enviarContratoEmail } = require("./email.service");
 
 
 /* =========================
-   NORMALIZADOR
+   NORMALIZADOR DB
 ========================= */
 function toArray(r) {
   if (!r) return [];
@@ -21,7 +21,7 @@ function toArray(r) {
 
 
 /* =========================
-   LISTAR USUARIO
+   LISTAR POR USUARIO
 ========================= */
 async function listarPorUsuario(usuarioId) {
   if (!usuarioId) throw new Error("usuarioId requerido");
@@ -35,7 +35,10 @@ async function listarPorUsuario(usuarioId) {
       p.NOMBRE AS PERFIL_NOMBRE,
       c.ESTADO,
       c.FECHA_ENVIO,
-      c.TOKEN
+      c.FECHA_FIRMA,
+      c.TOKEN,
+      c.ARCHIVO_ENVIADO_ID,
+      c.ARCHIVO_FIRMADO_ID
     FROM CONTRATOS_MANTENIMIENTO c
     INNER JOIN USUARIOS_PERFILES up ON up.PERFIL_ID = c.PERFIL_ID
     LEFT JOIN EMPRESAS e ON e.EMPRESA_ID = c.EMPRESA_ID
@@ -44,10 +47,7 @@ async function listarPorUsuario(usuarioId) {
     ORDER BY c.ID DESC
   `, [usuarioId]);
 
-  const data = toArray(r);
-
-  // 🔥 FIX: asegurar token nunca null
-  return data.map(c => ({
+  return toArray(r).map(c => ({
     ...c,
     TOKEN: c.TOKEN || null
   }));
@@ -55,7 +55,7 @@ async function listarPorUsuario(usuarioId) {
 
 
 /* =========================
-   LISTAR EMPRESA
+   LISTAR POR EMPRESA
 ========================= */
 async function listarPorEmpresa(empresaId) {
   const id = Number(empresaId);
@@ -73,9 +73,9 @@ async function listarPorEmpresa(empresaId) {
 
 
 /* =========================
-   CREAR CONTRATO (🔥 FIX TOKEN)
+   CREAR CONTRATO (PDF + TOKEN + HASH)
 ========================= */
-async function crearContrato(empresaId, perfilId) {
+async function crearContrato(empresaId, perfilId, usuarioId = null) {
 
   const empresa = await db.query(
     `SELECT * FROM EMPRESAS WHERE EMPRESA_ID = ?`,
@@ -97,17 +97,39 @@ async function crearContrato(empresaId, perfilId) {
     time: Date.now()
   });
 
-  if (!token) throw new Error("Error generando token");
+  const hashContrato = generarHash({
+    empresaId,
+    perfilId,
+    token
+  });
+
+  // 🔥 PDF inicial
+  const pdf = await generarPDFContrato({
+    contratoId: 0,
+    empresaId,
+    perfilId,
+    hash: hashContrato
+  });
 
   await db.query(`
     INSERT INTO CONTRATOS_MANTENIMIENTO
-    (EMPRESA_ID, PERFIL_ID, ESTADO, TOKEN, FECHA_ENVIO)
-    VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+    (
+      EMPRESA_ID,
+      PERFIL_ID,
+      ESTADO,
+      TOKEN,
+      HASH_CONTRATO,
+      ARCHIVO_ENVIADO_ID,
+      FECHA_ENVIO
+    )
+    VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
   `, [
     empresaId,
     perfilId,
     ESTADOS_CONTRATO.PENDIENTE,
-    token
+    token,
+    hashContrato,
+    pdf.fileName
   ]);
 
   const contrato = await db.query(`
@@ -117,18 +139,34 @@ async function crearContrato(empresaId, perfilId) {
   `, [token]);
 
   const c = contrato?.[0];
+
   if (!c) throw new Error("Error creando contrato");
+
+  // Email
+  if (empresa?.[0]?.EMAIL) {
+    try {
+      await enviarContratoEmail({
+        to: empresa[0].EMAIL,
+        contratoId: c.ID,
+        linkFirma: `http://localhost:3000/firma/${token}`,
+        pdfPath: pdf.filePath
+      });
+    } catch (e) {
+      console.error("EMAIL ERROR:", e.message);
+    }
+  }
 
   return {
     ok: true,
     contratoId: c.ID,
-    token: c.TOKEN
+    token,
+    hash: hashContrato
   };
 }
 
 
 /* =========================
-   FIRMA POR TOKEN (🔥 PROTEGIDO)
+   FIRMA POR TOKEN (SaaS FLOW REAL)
 ========================= */
 async function firmarContratoToken({
   token,
@@ -137,9 +175,7 @@ async function firmarContratoToken({
   userAgent
 }) {
 
-  if (!token || token === "null" || token === "undefined") {
-    throw new Error("Token inválido");
-  }
+  if (!token) throw new Error("Token inválido");
 
   const r = await db.query(`
     SELECT *
@@ -151,50 +187,51 @@ async function firmarContratoToken({
 
   if (!c) throw new Error("Contrato no existe");
 
-  // 🔥 AUTO FIX si hay contratos viejos sin token
-  if (!c.TOKEN) {
-    throw new Error("Contrato sin token (regenera contratos)");
-  }
-
   if (c.ESTADO === ESTADOS_CONTRATO.BLOQUEADO) {
-    throw new Error("Contrato ya firmado o bloqueado");
+    throw new Error("Contrato ya firmado");
   }
 
-  const hash = generarHash({
+  // 🔥 HASH FIRMA
+  const hashFirma = generarHash({
     contratoId: c.ID,
-    empresaId: c.EMPRESA_ID,
-    perfilId: c.PERFIL_ID,
     usuarioId,
     ip,
     userAgent,
-    timestamp: Date.now()
+    time: Date.now()
   });
+
+  // 🔥 AQUÍ podrías generar PDF firmado real después (hook listo)
+  const archivoFirmadoId = null;
 
   await db.query(`
     UPDATE CONTRATOS_MANTENIMIENTO
     SET
       USUARIO_FIRMA_ID = ?,
       FECHA_FIRMA = CURRENT_TIMESTAMP,
+      FECHA_RECEPCION = CURRENT_TIMESTAMP,
+
       IP_FIRMA = ?,
       USER_AGENT = ?,
+
+      HASH_FIRMADO = ?,
       HASH_CONTRATO = ?,
+
+      ARCHIVO_FIRMADO_ID = ?,
+
       ESTADO = ?
     WHERE ID = ?
   `, [
     usuarioId,
     ip,
     userAgent,
-    hash,
-    ESTADOS_CONTRATO.FIRMADO,
-    c.ID
-  ]);
 
-  await db.query(`
-    UPDATE CONTRATOS_MANTENIMIENTO
-    SET ESTADO = ?
-    WHERE ID = ?
-  `, [
+    hashFirma,
+    hashFirma,
+
+    archivoFirmadoId,
+
     ESTADOS_CONTRATO.BLOQUEADO,
+
     c.ID
   ]);
 
@@ -202,7 +239,7 @@ async function firmarContratoToken({
     ok: true,
     contratoId: c.ID,
     estado: ESTADOS_CONTRATO.BLOQUEADO,
-    hash
+    hash: hashFirma
   };
 }
 
