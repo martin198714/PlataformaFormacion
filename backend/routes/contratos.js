@@ -6,47 +6,34 @@ const contratosController = require("../controllers/contratosController");
 const { authMiddleware } = require("../middlewares/auth");
 
 /* =========================
-   CONTRATOS BASE
+   CONTRATOS
 ========================= */
 
-// LISTAR MIS CONTRATOS
 router.get("/", authMiddleware, contratosController.listar);
 
-// LISTAR POR EMPRESA
 router.get("/empresa/:empresaId", authMiddleware, contratosController.listarPorEmpresa);
 
-// CREAR CONTRATO
+router.get("/:id", authMiddleware, contratosController.verContrato);
+
 router.post("/crear", authMiddleware, contratosController.crear);
 
 /* =========================
-   VER CONTRATO (DETALLE)
+   FIRMA AUTH (PDF SUBIDO)
 ========================= */
-router.get("/:id", authMiddleware, contratosController.verContrato);
+router.post(
+  "/firmar/:id",
+  authMiddleware,
+  contratosController.firmar
+);
 
 /* =========================
-   FIRMA AUTH (UPLOAD PDF)
+   FIRMA POR TOKEN (PÚBLICO)
 ========================= */
-router.post("/firmar/:id", authMiddleware, contratosController.firmar);
+router.get("/firma/:token", contratosController.verContratoPorToken);
 
 /* =========================
    FIRMA REAL POR TOKEN (POST)
 ========================= */
 router.post("/firmar/token/:token", contratosController.firmarPorToken);
-
-/* =========================
-   🔥 FIRMA FRONTEND (HTML)
-   ESTE ES EL QUE TE FALTABA BIEN
-========================= */
-router.get("/firma/:token", (req, res) => {
-  const token = req.params.token;
-
-  if (!token) {
-    return res.status(400).send("Token inválido");
-  }
-
-  return res.sendFile(
-    path.join(__dirname, "../public/firma.html")
-  );
-});
 
 module.exports = router;
