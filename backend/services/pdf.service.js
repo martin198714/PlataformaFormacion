@@ -100,4 +100,107 @@ async function generarPDFContrato({ contratoId, empresaId, perfilId, hash }) {
   }
 }
 
-module.exports = { generarPDFContrato };
+/* =========================
+   APLICAR FIRMA AL PDF
+========================= */
+async function aplicarFirmaPDF({
+  pdfPath,
+  contratoId,
+  usuarioId,
+  hash,
+  ip
+}) {
+  try {
+
+    if (!fs.existsSync(pdfPath)) {
+      throw new Error("PDF no encontrado");
+    }
+
+    const pdfBytes = fs.readFileSync(pdfPath);
+
+    const pdfDoc = await PDFDocument.load(pdfBytes);
+
+    const page = pdfDoc.getPages()[0];
+
+    const font = await pdfDoc.embedFont(
+      StandardFonts.HelveticaBold
+    );
+
+    const fechaFirma = new Date().toLocaleString("es-ES");
+
+    page.drawText("DOCUMENTO FIRMADO ELECTRÓNICAMENTE", {
+      x: 50,
+      y: 250,
+      size: 14,
+      font,
+      color: rgb(0, 0.5, 0)
+    });
+
+    page.drawText(`Contrato: ${contratoId}`, {
+      x: 50,
+      y: 225,
+      size: 10,
+      font
+    });
+
+    page.drawText(`Usuario firma: ${usuarioId}`, {
+      x: 50,
+      y: 210,
+      size: 10,
+      font
+    });
+
+    page.drawText(`Fecha firma: ${fechaFirma}`, {
+      x: 50,
+      y: 195,
+      size: 10,
+      font
+    });
+
+    page.drawText(`IP: ${ip}`, {
+      x: 50,
+      y: 180,
+      size: 10,
+      font
+    });
+
+    page.drawText(`HASH: ${hash}`, {
+      x: 50,
+      y: 165,
+      size: 8,
+      font
+    });
+
+    const firmadoBytes = await pdfDoc.save();
+
+    const firmadoPath = pdfPath.replace(
+      ".pdf",
+      "_firmado.pdf"
+    );
+
+    fs.writeFileSync(
+      firmadoPath,
+      firmadoBytes
+    );
+
+    return {
+      ok: true,
+      firmadoPath,
+      firmadoNombre: path.basename(firmadoPath)
+    };
+
+  } catch (err) {
+
+    console.error(
+      "ERROR FIRMA PDF:",
+      err.message
+    );
+
+    throw err;
+  }
+}
+
+module.exports = {
+  generarPDFContrato,
+  aplicarFirmaPDF
+};
