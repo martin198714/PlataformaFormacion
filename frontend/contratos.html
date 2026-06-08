@@ -103,9 +103,6 @@
     <script>
         const BASE_URL = "http://localhost:3000";
 
-        /* =========================
-           TOKEN HEADERS
-        ========================= */
         function getAuthHeaders() {
             const token = localStorage.getItem("token");
 
@@ -116,7 +113,7 @@
         }
 
         /* =========================
-           CARGAR CONTRATOS (SIN DUPLICADOS)
+           CARGAR MIS CONTRATOS
         ========================= */
         async function cargar() {
 
@@ -125,41 +122,52 @@
                     headers: getAuthHeaders()
                 });
 
-                if (res.status === 401) {
-                    alert("No autenticado");
+                if (!res.ok) {
+                    alert("No autorizado");
                     return;
                 }
 
                 const data = await res.json();
 
-                const tbody = document.getElementById('tabla');
-                tbody.innerHTML = '';
+                const tbody = document.getElementById("tabla");
+                tbody.innerHTML = "";
 
-                // 🔥 ELIMINAR DUPLICADOS POR ID
-                const unicos = Array.from(
-                    new Map(data.map(c => [c.ID, c])).values()
-                );
+                const unicos = [...new Map(data.map(c => [c.ID, c])).values()];
 
                 unicos.forEach(c => {
 
+                    const estado = (c.ESTADO || "").toUpperCase();
+
                     const estadoClass =
-                        c.ESTADO === 'FIRMADO'
-                            ? 'estado-firmado'
-                            : 'estado-pendiente';
+                        estado === "FIRMADO"
+                            ? "text-success"
+                            : "text-warning";
 
                     tbody.innerHTML += `
-                    <tr>
-                        <td>${c.ID}</td>
-                        <td>${c.PERFIL_ID}</td>
-                        <td class="${estadoClass}">${c.ESTADO}</td>
-                        <td>${c.FECHA_ENVIO || ''}</td>
-                        <td>
-                            ${c.ARCHIVO_ENVIADO_ID
-                            ? `<a href="/api/archivos/${c.ARCHIVO_ENVIADO_ID}" target="_blank">📄 Ver</a>`
-                            : 'Sin archivo'}
-                        </td>
-                    </tr>
-                `;
+                <tr>
+                    <td>${c.ID}</td>
+
+                    <td>${c.PERFIL_NOMBRE || c.PERFIL_ID}</td>
+
+                    <td class="${estadoClass}">
+                        ${c.ESTADO}
+                    </td>
+
+                    <td>${c.FECHA_ENVIO || ""}</td>
+
+                    <td>
+                        ${c.ARCHIVO_ENVIADO_ID
+                            ? `<a href="${BASE_URL}/api/archivos/${c.ARCHIVO_ENVIADO_ID}" target="_blank">📄 PDF</a>`
+                            : "Esperando PDF"}
+                    </td>
+
+                    <td>
+                        ${c.TOKEN
+                            ? `<a href="${BASE_URL}/firma/${c.TOKEN}" target="_blank">✍️ Firmar</a>`
+                            : ""}
+                    </td>
+                </tr>
+            `;
                 });
 
             } catch (err) {
@@ -168,9 +176,6 @@
             }
         }
 
-        /* =========================
-           INIT
-        ========================= */
         cargar();
     </script>
 </body>

@@ -114,7 +114,7 @@
         }
 
         /* =========================
-           CARGAR CONTRATOS
+           CARGAR CONTRATOS (ADMIN)
         ========================= */
         async function cargar() {
             try {
@@ -124,18 +124,12 @@
 
                 if (!res.ok) {
                     const err = await res.text();
-                    console.error("BACKEND ERROR:", err);
+                    console.error(err);
                     alert("Error cargando contratos");
                     return;
                 }
 
                 const data = await res.json();
-
-                if (!Array.isArray(data)) {
-                    console.error("RESPUESTA NO ARRAY:", data);
-                    alert("Error en datos del servidor");
-                    return;
-                }
 
                 const tbody = document.getElementById("tabla");
                 tbody.innerHTML = "";
@@ -158,20 +152,29 @@
                     <td>${c.EMPRESA_NOMBRE || c.EMPRESA_ID}</td>
                     <td>${c.PERFIL_NOMBRE || c.PERFIL_ID}</td>
 
-                    <td class="${estadoClass}">${c.ESTADO}</td>
+                    <td class="${estadoClass}">
+                        ${c.ESTADO}
+                    </td>
+
                     <td>${c.FECHA_ENVIO || ""}</td>
 
                     <td>
-                        <button onclick="firmar('${c.TOKEN}')">
-                            ✔ Firmar
-                        </button>
+                        ${c.ARCHIVO_ENVIADO_ID
+                            ? `<a href="${BASE_URL}/api/archivos/${c.ARCHIVO_ENVIADO_ID}" target="_blank">📄 PDF</a>`
+                            : "Sin PDF"}
+                    </td>
+
+                    <td>
+                        ${c.TOKEN
+                            ? `<a href="${BASE_URL}/firma/${c.TOKEN}" target="_blank">✍️ Link firma</a>`
+                            : ""}
                     </td>
                 </tr>
             `;
                 });
 
             } catch (err) {
-                console.error("ERROR CARGAR:", err);
+                console.error(err);
                 alert("Error cargando contratos");
             }
         }
@@ -197,7 +200,6 @@
                 box.style.transform = "translate(-50%, -50%)";
                 box.style.background = "#fff";
                 box.style.padding = "20px";
-                box.style.border = "1px solid #ccc";
                 box.style.zIndex = "9999";
 
                 box.innerHTML = `
@@ -249,7 +251,7 @@
                         return;
                     }
 
-                    alert("Contrato creado ✔");
+                    alert("Contrato creado ✔ (email enviado)");
 
                     document.body.removeChild(box);
                     cargar();
@@ -261,16 +263,16 @@
 
             } catch (err) {
                 console.error(err);
-                alert("Error conectando con el servidor");
+                alert("Error servidor");
             }
         }
 
         /* =========================
-           FIRMAR CONTRATO
+           FIRMA
         ========================= */
         async function firmar(token) {
 
-            if (!token || token === "null" || token === "undefined") {
+            if (!token) {
                 alert("Token inválido");
                 return;
             }
@@ -284,7 +286,7 @@
                 const data = await res.json();
 
                 if (!res.ok) {
-                    alert(data.error || data.detalle || "Error al firmar");
+                    alert(data.error || "Error firma");
                     return;
                 }
 
@@ -293,15 +295,11 @@
 
             } catch (err) {
                 console.error(err);
-                alert("Error conectando con el servidor");
+                alert("Error conexión");
             }
         }
 
-        /* =========================
-           INIT
-        ========================= */
         cargar();
-
     </script>
 </body>
 
