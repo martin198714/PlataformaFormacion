@@ -46,4 +46,28 @@ router.post(
   contratosController.firmarPorToken
 );
 
+router.get("/firma/:token", async (req, res) => {
+  const token = req.params.token;
+
+  try {
+    const contrato = await contratosController.verPorToken(token);
+
+    if (!contrato) {
+      return res.status(404).send("Contrato no encontrado");
+    }
+
+    if (contrato.ESTADO === "BLOQUEADO") {
+      return res.send("Este contrato ya está firmado");
+    }
+
+    return res.sendFile(
+      path.join(__dirname, "../public/firma.html")
+    );
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error servidor");
+  }
+});
+
 module.exports = router;
