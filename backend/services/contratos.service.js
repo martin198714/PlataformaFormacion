@@ -186,10 +186,28 @@ async function verContrato(id) {
   return toArray(r)[0] || null;
 }
 
+/* =========================
+   OBTENER CONTRATO POR TOKEN
+========================= */
+async function obtenerPorToken(token) {
+  if (!token) throw new Error("Token inválido");
+
+  const r = await db.query(`
+    SELECT *
+    FROM CONTRATOS_MANTENIMIENTO
+    WHERE TOKEN = ?
+  `, [token]);
+
+  const data = toArray(r);
+
+  return data[0] || null;
+}
+
 module.exports = {
   listarPorUsuario,
   listarPorEmpresa,
   crearContrato,
   firmarContratoToken,
-  verContrato
+  verContrato,
+  obtenerPorToken
 };

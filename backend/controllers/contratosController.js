@@ -197,6 +197,32 @@ exports.verContrato = async (req, res) => {
   }
 };
 
+/* =========================
+   OBTENER CONTRATO POR TOKEN (PÚBLICO)
+========================= */
+exports.verContratoPorToken = async (req, res) => {
+  try {
+    const token = req.params.token;
+
+    if (!token) {
+      return res.status(400).json({ error: "Token inválido" });
+    }
+
+    const contrato = await contratosService.obtenerPorToken(token);
+
+    if (!contrato) {
+      return res.status(404).json({ error: "Contrato no encontrado" });
+    }
+
+    res.json(contrato);
+
+  } catch (err) {
+    res.status(500).json({
+      error: "Error al obtener contrato por token",
+      detalle: err.message,
+    });
+  }
+};
 
 /* =========================
    🔥 NUEVO: OBTENER AUDITORÍA
