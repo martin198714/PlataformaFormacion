@@ -1,36 +1,24 @@
 const express = require("express");
 const router = express.Router();
-const path = require("path"); 
+const path = require("path");
 
 const contratosController = require("../controllers/contratosController");
 const { authMiddleware } = require("../middlewares/auth");
 
-// =========================
-// CONTRATOS
-// =========================
+/* =========================
+   CONTRATOS
+========================= */
 
 router.get("/", authMiddleware, contratosController.listar);
 
-router.get(
-  "/empresa/:empresaId",
-  authMiddleware,
-  contratosController.listarPorEmpresa
-);
+router.get("/empresa/:empresaId", authMiddleware, contratosController.listarPorEmpresa);
 
-router.get(
-  "/:id",
-  authMiddleware,
-  contratosController.verContrato
-);
+router.get("/:id", authMiddleware, contratosController.verContrato);
 
-router.post(
-  "/crear",
-  authMiddleware,
-  contratosController.crear
-);
+router.post("/crear", authMiddleware, contratosController.crear);
 
 /* =========================
-   FIRMA NORMAL (AUTH)
+   FIRMA AUTH (PDF SUBIDO)
 ========================= */
 router.post(
   "/firmar/:id",
@@ -39,36 +27,13 @@ router.post(
 );
 
 /* =========================
-   FIRMA POR TOKEN (🔥 SaaS REAL)
-   👉 ESTE ES EL IMPORTANTE
+   FIRMA POR TOKEN (PÚBLICO)
 ========================= */
-router.post(
-  "/firmar/token/:token",
-  contratosController.firmarPorToken
-);
+router.get("/firma/:token", contratosController.verContratoPorToken);
 
-router.get("/firma/:token", async (req, res) => {
-  const token = req.params.token;
-
-  try {
-    const contrato = await contratosController.verPorToken(token);
-
-    if (!contrato) {
-      return res.status(404).send("Contrato no encontrado");
-    }
-
-    if (contrato.ESTADO === "BLOQUEADO") {
-      return res.send("Este contrato ya está firmado");
-    }
-
-    return res.sendFile(
-      path.join(__dirname, "../public/firma.html")
-    );
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error servidor");
-  }
-});
+/* =========================
+   FIRMA REAL POR TOKEN (POST)
+========================= */
+router.post("/firmar/token/:token", contratosController.firmarPorToken);
 
 module.exports = router;

@@ -1,21 +1,19 @@
 const contratosService = require("../services/contratos.service");
 const { ESTADOS_CONTRATO } = require("../utils/estadosContrato");
 
-
 /* =========================
    LISTAR MIS CONTRATOS
 ========================= */
 exports.listar = async (req, res) => {
   try {
     const usuarioId = req.user?.id;
-
     if (!usuarioId) {
       return res.status(401).json({ error: "No autenticado" });
     }
 
     const datos = await contratosService.listarPorUsuario(usuarioId);
-
     res.json(datos);
+
   } catch (error) {
     res.status(500).json({
       error: "Error al listar contratos",
@@ -24,7 +22,6 @@ exports.listar = async (req, res) => {
   }
 };
 
-
 /* =========================
    LISTAR POR EMPRESA
 ========================= */
@@ -32,13 +29,13 @@ exports.listarPorEmpresa = async (req, res) => {
   try {
     const empresaId = Number(req.params.empresaId);
 
-    if (!empresaId || isNaN(empresaId)) {
+    if (isNaN(empresaId)) {
       return res.status(400).json({ error: "Empresa inválida" });
     }
 
     const datos = await contratosService.listarPorEmpresa(empresaId);
-
     res.json(datos);
+
   } catch (err) {
     res.status(500).json({
       error: "Error al listar contratos",
@@ -46,7 +43,6 @@ exports.listarPorEmpresa = async (req, res) => {
     });
   }
 };
-
 
 /* =========================
    CREAR CONTRATO
@@ -61,12 +57,8 @@ exports.crear = async (req, res) => {
       return res.status(401).json({ error: "No autenticado" });
     }
 
-    if (!empresaId || isNaN(empresaId)) {
-      return res.status(400).json({ error: "empresaId inválido" });
-    }
-
-    if (!perfilId || isNaN(perfilId)) {
-      return res.status(400).json({ error: "perfilId inválido" });
+    if (isNaN(empresaId) || isNaN(perfilId)) {
+      return res.status(400).json({ error: "IDs inválidos" });
     }
 
     const result = await contratosService.crearContrato(
@@ -88,9 +80,8 @@ exports.crear = async (req, res) => {
   }
 };
 
-
 /* =========================
-   FIRMAR CONTRATO (FLUJO SaaS REAL)
+   FIRMAR CONTRATO (UPLOAD PDF)
 ========================= */
 exports.firmar = async (req, res) => {
   try {
@@ -101,7 +92,7 @@ exports.firmar = async (req, res) => {
       return res.status(401).json({ error: "No autenticado" });
     }
 
-    if (!contratoId || isNaN(contratoId)) {
+    if (isNaN(contratoId)) {
       return res.status(400).json({ error: "Contrato inválido" });
     }
 
@@ -131,31 +122,23 @@ exports.firmar = async (req, res) => {
   }
 };
 
+/* =========================
+   FIRMAR POR TOKEN (PUBLICO)
+========================= */
 exports.firmarPorToken = async (req, res) => {
   try {
     const token = req.params.token;
-    const usuarioId = req.user?.id || null;
-
-    const ip =
-      req.headers["x-forwarded-for"] ||
-      req.connection.remoteAddress;
-
-    const userAgent = req.headers["user-agent"];
-
-    if (!token) {
-      return res.status(400).json({ error: "Token inválido" });
-    }
 
     const result = await contratosService.firmarContratoToken({
       token,
-      usuarioId,
-      ip,
-      userAgent
+      usuarioId: req.user?.id || null,
+      ip: req.headers["x-forwarded-for"] || req.connection.remoteAddress,
+      userAgent: req.headers["user-agent"]
     });
 
     res.json({
       ok: true,
-      estado: "BLOQUEADO",
+      estado: ESTADOS_CONTRATO.BLOQUEADO,
       result
     });
 
@@ -174,7 +157,7 @@ exports.verContrato = async (req, res) => {
   try {
     const id = Number(req.params.id);
 
-    if (!id || isNaN(id)) {
+    if (isNaN(id)) {
       return res.status(400).json({ error: "ID inválido" });
     }
 
@@ -198,7 +181,7 @@ exports.verContrato = async (req, res) => {
 };
 
 /* =========================
-   OBTENER CONTRATO POR TOKEN (PÚBLICO)
+   VER CONTRATO POR TOKEN
 ========================= */
 exports.verContratoPorToken = async (req, res) => {
   try {
@@ -225,14 +208,13 @@ exports.verContratoPorToken = async (req, res) => {
 };
 
 /* =========================
-   🔥 NUEVO: OBTENER AUDITORÍA
-   (te faltaba en el controlador)
+   🔥 AUDITORÍA (INTACTA)
 ========================= */
 exports.obtenerAuditoria = async (req, res) => {
   try {
     const contratoId = Number(req.params.id);
 
-    if (!contratoId || isNaN(contratoId)) {
+    if (isNaN(contratoId)) {
       return res.status(400).json({ error: "ID inválido" });
     }
 

@@ -6,7 +6,6 @@ const { generarHash } = require("../utils/hash");
 const { generarPDFContrato } = require("./pdf.service");
 const { enviarContratoEmail } = require("./email.service");
 
-
 function toArray(r) {
   if (!r) return [];
   if (Array.isArray(r)) return r;
@@ -42,13 +41,12 @@ async function listarPorUsuario(usuarioId) {
   return toArray(r);
 }
 
-
 /* =========================
    LISTAR EMPRESA
 ========================= */
 async function listarPorEmpresa(empresaId) {
   const id = Number(empresaId);
-  if (!id) throw new Error("empresaId inválido");
+  if (isNaN(id)) throw new Error("empresaId inválido");
 
   const r = await db.query(`
     SELECT *
@@ -60,11 +58,10 @@ async function listarPorEmpresa(empresaId) {
   return toArray(r);
 }
 
-
 /* =========================
    CREAR CONTRATO (PDF + EMAIL + TOKEN)
 ========================= */
-async function crearContrato(empresaId, perfilId) {
+async function crearContrato(empresaId, perfilId, usuarioId) {
 
   const token = generarHash({
     empresaId,
@@ -78,7 +75,6 @@ async function crearContrato(empresaId, perfilId) {
     token
   });
 
-  // PDF primero
   const pdf = await generarPDFContrato({
     contratoId: 0,
     empresaId,
@@ -100,21 +96,20 @@ async function crearContrato(empresaId, perfilId) {
   ]);
 
   const r = await db.query(`
-    SELECT FIRST 1 *
+    SELECT *
     FROM CONTRATOS_MANTENIMIENTO
     WHERE TOKEN = ?
   `, [token]);
 
   return {
     ok: true,
-    contrato: r?.[0],
+    contrato: toArray(r)[0],
     token
   };
 }
 
-
 /* =========================
-   FIRMA (PRO REAL - 1 SOLO UPDATE)
+   FIRMA POR TOKEN (SaaS REAL)
 ========================= */
 async function firmarContratoToken({
   token,
@@ -172,6 +167,46 @@ async function firmarContratoToken({
   };
 }
 
+/* =========================
+   FIRMAR (UPLOAD PDF)
+   🔥 ESTO ES LO QUE TE FALTABA
+========================= */
+async function marcarFirmado(contratoId, archivoFirmado, usuarioId) {
+
+  const r = await db.query(`
+    SELECT *
+    FROM CONTRATOS_MANTENIMIENTO
+    WHERE ID = ?
+  `, [contratoId]);
+
+  const c = toArray(r)[0];
+
+  if (!c) throw new Error("Contrato no encontrado");
+
+  if (c.ESTADO === ESTADOS_CONTRATO.BLOQUEADO) {
+    throw new Error("Contrato ya firmado");
+  }
+
+  await db.query(`
+    UPDATE CONTRATOS_MANTENIMIENTO
+    SET
+      ARCHIVO_FIRMADO_ID = ?,
+      USUARIO_FIRMA_ID = ?,
+      FECHA_FIRMA = CURRENT_TIMESTAMP,
+      ESTADO = ?
+    WHERE ID = ?
+  `, [
+    archivoFirmado.filename || archivoFirmado.fileName,
+    usuarioId,
+    ESTADOS_CONTRATO.BLOQUEADO,
+    contratoId
+  ]);
+
+  return {
+    ok: true,
+    contratoId
+  };
+}
 
 /* =========================
    VER CONTRATO
@@ -187,7 +222,7 @@ async function verContrato(id) {
 }
 
 /* =========================
-   OBTENER CONTRATO POR TOKEN
+   OBTENER POR TOKEN
 ========================= */
 async function obtenerPorToken(token) {
   if (!token) throw new Error("Token inválido");
@@ -198,9 +233,7 @@ async function obtenerPorToken(token) {
     WHERE TOKEN = ?
   `, [token]);
 
-  const data = toArray(r);
-
-  return data[0] || null;
+  return toArray(r)[0] || null;
 }
 
 module.exports = {
@@ -208,6 +241,7 @@ module.exports = {
   listarPorEmpresa,
   crearContrato,
   firmarContratoToken,
+  marcarFirmado,        // 🔥 IMPORTANTE (AHORA YA FUNCIONA CON TU CONTROLADOR)
   verContrato,
   obtenerPorToken
 };
