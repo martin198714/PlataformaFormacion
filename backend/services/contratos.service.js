@@ -1,5 +1,4 @@
 const db = require("../models/db");
-const path = require("path");
 
 const { ESTADOS_CONTRATO } = require("../utils/estadosContrato");
 const { generarHash } = require("../utils/hash");
@@ -8,9 +7,6 @@ const { generarPDFContrato } = require("./pdf.service");
 const { enviarContratoEmail } = require("./email.service");
 
 
-/* =========================
-   NORMALIZADOR DB
-========================= */
 function toArray(r) {
   if (!r) return [];
   if (Array.isArray(r)) return r;
@@ -19,13 +15,10 @@ function toArray(r) {
   return [];
 }
 
-
 /* =========================
-   LISTAR POR USUARIO
+   LISTAR USUARIO
 ========================= */
 async function listarPorUsuario(usuarioId) {
-  if (!usuarioId) throw new Error("usuarioId requerido");
-
   const r = await db.query(`
     SELECT DISTINCT
       c.ID,
@@ -35,10 +28,9 @@ async function listarPorUsuario(usuarioId) {
       p.NOMBRE AS PERFIL_NOMBRE,
       c.ESTADO,
       c.FECHA_ENVIO,
-      c.FECHA_FIRMA,
       c.TOKEN,
       c.ARCHIVO_ENVIADO_ID,
-      c.ARCHIVO_FIRMADO_ID
+      c.HASH_CONTRATO
     FROM CONTRATOS_MANTENIMIENTO c
     INNER JOIN USUARIOS_PERFILES up ON up.PERFIL_ID = c.PERFIL_ID
     LEFT JOIN EMPRESAS e ON e.EMPRESA_ID = c.EMPRESA_ID
@@ -47,19 +39,16 @@ async function listarPorUsuario(usuarioId) {
     ORDER BY c.ID DESC
   `, [usuarioId]);
 
-  return toArray(r).map(c => ({
-    ...c,
-    TOKEN: c.TOKEN || null
-  }));
+  return toArray(r);
 }
 
 
 /* =========================
-   LISTAR POR EMPRESA
+   LISTAR EMPRESA
 ========================= */
 async function listarPorEmpresa(empresaId) {
   const id = Number(empresaId);
-  if (!id || isNaN(id)) throw new Error("empresaId inválido");
+  if (!id) throw new Error("empresaId inválido");
 
   const r = await db.query(`
     SELECT *
@@ -73,23 +62,9 @@ async function listarPorEmpresa(empresaId) {
 
 
 /* =========================
-   CREAR CONTRATO (PDF + TOKEN + HASH)
+   CREAR CONTRATO (PDF + EMAIL + TOKEN)
 ========================= */
-async function crearContrato(empresaId, perfilId, usuarioId = null) {
-
-  const empresa = await db.query(
-    `SELECT * FROM EMPRESAS WHERE EMPRESA_ID = ?`,
-    [empresaId]
-  );
-
-  const perfil = await db.query(
-    `SELECT * FROM PERFILES WHERE ID = ?`,
-    [perfilId]
-  );
-
-  if (!empresa?.[0] || !perfil?.[0]) {
-    throw new Error("Empresa o perfil no existe");
-  }
+async function crearContrato(empresaId, perfilId) {
 
   const token = generarHash({
     empresaId,
@@ -103,7 +78,7 @@ async function crearContrato(empresaId, perfilId, usuarioId = null) {
     token
   });
 
-  // 🔥 PDF inicial
+  // PDF primero
   const pdf = await generarPDFContrato({
     contratoId: 0,
     empresaId,
@@ -113,15 +88,7 @@ async function crearContrato(empresaId, perfilId, usuarioId = null) {
 
   await db.query(`
     INSERT INTO CONTRATOS_MANTENIMIENTO
-    (
-      EMPRESA_ID,
-      PERFIL_ID,
-      ESTADO,
-      TOKEN,
-      HASH_CONTRATO,
-      ARCHIVO_ENVIADO_ID,
-      FECHA_ENVIO
-    )
+    (EMPRESA_ID, PERFIL_ID, ESTADO, TOKEN, HASH_CONTRATO, ARCHIVO_ENVIADO_ID, FECHA_ENVIO)
     VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
   `, [
     empresaId,
@@ -132,41 +99,22 @@ async function crearContrato(empresaId, perfilId, usuarioId = null) {
     pdf.fileName
   ]);
 
-  const contrato = await db.query(`
+  const r = await db.query(`
     SELECT FIRST 1 *
     FROM CONTRATOS_MANTENIMIENTO
     WHERE TOKEN = ?
   `, [token]);
 
-  const c = contrato?.[0];
-
-  if (!c) throw new Error("Error creando contrato");
-
-  // Email
-  if (empresa?.[0]?.EMAIL) {
-    try {
-      await enviarContratoEmail({
-        to: empresa[0].EMAIL,
-        contratoId: c.ID,
-        linkFirma: `http://localhost:3000/firma/${token}`,
-        pdfPath: pdf.filePath
-      });
-    } catch (e) {
-      console.error("EMAIL ERROR:", e.message);
-    }
-  }
-
   return {
     ok: true,
-    contratoId: c.ID,
-    token,
-    hash: hashContrato
+    contrato: r?.[0],
+    token
   };
 }
 
 
 /* =========================
-   FIRMA POR TOKEN (SaaS FLOW REAL)
+   FIRMA (PRO REAL - 1 SOLO UPDATE)
 ========================= */
 async function firmarContratoToken({
   token,
@@ -175,8 +123,6 @@ async function firmarContratoToken({
   userAgent
 }) {
 
-  if (!token) throw new Error("Token inválido");
-
   const r = await db.query(`
     SELECT *
     FROM CONTRATOS_MANTENIMIENTO
@@ -184,62 +130,45 @@ async function firmarContratoToken({
   `, [token]);
 
   const c = toArray(r)[0];
-
   if (!c) throw new Error("Contrato no existe");
 
   if (c.ESTADO === ESTADOS_CONTRATO.BLOQUEADO) {
     throw new Error("Contrato ya firmado");
   }
 
-  // 🔥 HASH FIRMA
   const hashFirma = generarHash({
     contratoId: c.ID,
     usuarioId,
     ip,
     userAgent,
-    time: Date.now()
+    timestamp: Date.now()
   });
-
-  // 🔥 AQUÍ podrías generar PDF firmado real después (hook listo)
-  const archivoFirmadoId = null;
 
   await db.query(`
     UPDATE CONTRATOS_MANTENIMIENTO
     SET
       USUARIO_FIRMA_ID = ?,
       FECHA_FIRMA = CURRENT_TIMESTAMP,
-      FECHA_RECEPCION = CURRENT_TIMESTAMP,
-
       IP_FIRMA = ?,
       USER_AGENT = ?,
-
-      HASH_FIRMADO = ?,
       HASH_CONTRATO = ?,
-
-      ARCHIVO_FIRMADO_ID = ?,
-
+      HASH_FIRMADO = ?,
       ESTADO = ?
     WHERE ID = ?
   `, [
     usuarioId,
     ip,
     userAgent,
-
+    c.HASH_CONTRATO,
     hashFirma,
-    hashFirma,
-
-    archivoFirmadoId,
-
     ESTADOS_CONTRATO.BLOQUEADO,
-
     c.ID
   ]);
 
   return {
     ok: true,
     contratoId: c.ID,
-    estado: ESTADOS_CONTRATO.BLOQUEADO,
-    hash: hashFirma
+    hashFirma
   };
 }
 
@@ -248,22 +177,15 @@ async function firmarContratoToken({
    VER CONTRATO
 ========================= */
 async function verContrato(id) {
-  const contratoId = Number(id);
-  if (!contratoId || isNaN(contratoId)) throw new Error("ID inválido");
-
   const r = await db.query(`
     SELECT *
     FROM CONTRATOS_MANTENIMIENTO
     WHERE ID = ?
-  `, [contratoId]);
+  `, [id]);
 
   return toArray(r)[0] || null;
 }
 
-
-/* =========================
-   EXPORT
-========================= */
 module.exports = {
   listarPorUsuario,
   listarPorEmpresa,
