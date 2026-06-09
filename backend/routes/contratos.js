@@ -1,39 +1,41 @@
 const express = require("express");
 const router = express.Router();
-const path = require("path");
 
 const contratosController = require("../controllers/contratosController");
 const { authMiddleware } = require("../middlewares/auth");
 
 /* =========================
-   CONTRATOS
+   CONTRATOS (PROTEGIDO)
 ========================= */
 
 router.get("/", authMiddleware, contratosController.listar);
 
 router.get("/empresa/:empresaId", authMiddleware, contratosController.listarPorEmpresa);
 
-router.get("/:id", authMiddleware, contratosController.verContrato);
-
 router.post("/crear", authMiddleware, contratosController.crear);
 
 /* =========================
-   FIRMA AUTH (PDF SUBIDO)
+   FIRMA PDF SUBIDO
 ========================= */
-router.post(
-  "/firmar/:id",
-  authMiddleware,
-  contratosController.firmar
-);
+
+router.post("/firmar/:id", authMiddleware, contratosController.firmar);
 
 /* =========================
-   FIRMA POR TOKEN (PÚBLICO)
+   VER CONTRATO (PROTEGIDO)
 ========================= */
+
+router.get("/:id", authMiddleware, contratosController.verContrato);
+
+/* =========================
+   FIRMA POR TOKEN (PÚBLICO - LINK EMAIL)
+========================= */
+
 router.get("/firma/:token", contratosController.verContratoPorToken);
 
 /* =========================
-   FIRMA REAL POR TOKEN (POST)
+   FIRMA FINAL POR TOKEN
 ========================= */
+
 router.post("/firmar/token/:token", contratosController.firmarPorToken);
 
 module.exports = router;

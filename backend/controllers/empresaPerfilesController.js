@@ -1,8 +1,16 @@
 const auto = require("../services/automatizadorContratos");
 const db = require("../models/db");
 
+function toArray(r) {
+  if (!r) return [];
+  if (Array.isArray(r)) return r;
+  if (Array.isArray(r?.rows)) return r.rows;
+  if (Array.isArray(r?.data)) return r.data;
+  return [];
+}
+
 /* =========================
-   ASIGNAR PERFIL + GENERAR CONTRATO
+   ASIGNAR PERFIL + CONTRATO
 ========================= */
 exports.asignarPerfil = async (req, res) => {
   try {
@@ -14,27 +22,21 @@ exports.asignarPerfil = async (req, res) => {
        VALIDACIONES
     ========================= */
     if (!creadoPor) {
-      return res.status(401).json({
-        error: "No autenticado"
-      });
+      return res.status(401).json({ error: "No autenticado" });
     }
 
-    if (!empresaId || isNaN(empresaId)) {
-      return res.status(400).json({
-        error: "empresaId inválido"
-      });
+    if (isNaN(empresaId) || empresaId <= 0) {
+      return res.status(400).json({ error: "empresaId inválido" });
     }
 
-    if (!perfilId || isNaN(perfilId)) {
-      return res.status(400).json({
-        error: "perfilId inválido"
-      });
+    if (isNaN(perfilId) || perfilId <= 0) {
+      return res.status(400).json({ error: "perfilId inválido" });
     }
 
     /* =========================
        EVITAR DUPLICADOS
     ========================= */
-    const existe = await db.query(
+    const existeRaw = await db.query(
       `
       SELECT FIRST 1 1
       FROM EMPRESA_PERFILES
@@ -43,7 +45,9 @@ exports.asignarPerfil = async (req, res) => {
       [empresaId, perfilId]
     );
 
-    if (existe?.length > 0) {
+    const existe = toArray(existeRaw);
+
+    if (existe.length > 0) {
       return res.status(409).json({
         error: "La empresa ya tiene este perfil asignado"
       });
@@ -69,7 +73,7 @@ exports.asignarPerfil = async (req, res) => {
       creadoPor
     );
 
-    if (!contrato?.contratoId) {
+    if (!contrato?.contratoId && !contrato?.token) {
       throw new Error("Error al generar contrato automático");
     }
 

@@ -1,14 +1,19 @@
 const db = require("../models/db");
-const fs = require("fs");
-const path = require("path");
-const crypto = require("crypto");
 
 const { generarHash } = require("../utils/hash");
 const { generarPDFContrato } = require("./pdf.service");
 const { enviarContratoEmail } = require("./email.service");
 
+function toArray(r) {
+  if (!r) return [];
+  if (Array.isArray(r)) return r;
+  if (Array.isArray(r?.rows)) return r.rows;
+  if (Array.isArray(r?.data)) return r.data;
+  return [];
+}
+
 /* =========================
-   GENERAR CONTRATO AUTOMÁTICO (PRO FULL FLOW)
+   GENERAR CONTRATO AUTOMÁTICO
 ========================= */
 async function generarContratoAutomatico(empresaId, perfilId, creadoPor) {
 
@@ -19,20 +24,25 @@ async function generarContratoAutomatico(empresaId, perfilId, creadoPor) {
   const perfil = Number(perfilId);
   const user = Number(creadoPor);
 
-  if (!empresa || isNaN(empresa)) throw new Error("empresaId inválido");
-  if (!perfil || isNaN(perfil)) throw new Error("perfilId inválido");
-  if (!user || isNaN(user)) throw new Error("CREADO_POR es obligatorio");
+  if (isNaN(empresa)) throw new Error("empresaId inválido");
+  if (isNaN(perfil)) throw new Error("perfilId inválido");
+  if (isNaN(user)) throw new Error("creadoPor es obligatorio");
 
   // =========================
   // 0. EVITAR DUPLICADOS
   // =========================
-  const existe = await db.query(`
+  const existeRaw = await db.query(
+    `
     SELECT FIRST 1 ID
     FROM CONTRATOS_MANTENIMIENTO
     WHERE EMPRESA_ID = ? AND PERFIL_ID = ?
-  `, [empresa, perfil]);
+  `,
+    [empresa, perfil]
+  );
 
-  if (existe?.length > 0) {
+  const existe = toArray(existeRaw);
+
+  if (existe.length > 0) {
     return {
       contratoId: existe[0].ID,
       duplicado: true
@@ -40,23 +50,22 @@ async function generarContratoAutomatico(empresaId, perfilId, creadoPor) {
   }
 
   // =========================
-  // 1. GENERAR ID FIREBIRD
+  // 1. GENERAR ID
   // =========================
-  const idRes = await db.query(`
+  const idRes = await db.query(
+    `
     SELECT GEN_ID(GEN_CONTRATOS, 1) AS ID
     FROM RDB$DATABASE
-  `);
+  `
+  );
 
   const contratoId = idRes?.[0]?.ID;
-
-  if (!contratoId) {
-    throw new Error("No se pudo generar ID del contrato");
-  }
+  if (!contratoId) throw new Error("No se pudo generar ID del contrato");
 
   // =========================
-  // 2. GENERAR HASH (INTEGRIDAD)
+  // 2. HASH CONTRATO
   // =========================
-  const hash = generarHash({
+  const hashContrato = generarHash({
     contratoId,
     empresaId: empresa,
     perfilId: perfil,
@@ -64,13 +73,13 @@ async function generarContratoAutomatico(empresaId, perfilId, creadoPor) {
   });
 
   // =========================
-  // 3. GENERAR PDF REAL
+  // 3. PDF
   // =========================
   const pdf = await generarPDFContrato({
     contratoId,
     empresaId: empresa,
     perfilId: perfil,
-    hash
+    hash: hashContrato
   });
 
   if (!pdf?.fileName) {
@@ -78,7 +87,7 @@ async function generarContratoAutomatico(empresaId, perfilId, creadoPor) {
   }
 
   // =========================
-  // 4. TOKEN DE FIRMA (🔥 FIX CRÍTICO)
+  // 4. TOKEN FIRMA
   // =========================
   const token = generarHash({
     contratoId,
@@ -87,42 +96,48 @@ async function generarContratoAutomatico(empresaId, perfilId, creadoPor) {
     time: Date.now()
   });
 
-  if (!token) {
-    throw new Error("No se pudo generar token");
-  }
+  if (!token) throw new Error("No se pudo generar token");
 
   // =========================
-  // 5. LINK DE FIRMA (COHERENTE CON FRONTEND)
+  // 5. LINK FIRMA (CONFIGURABLE)
   // =========================
-  const linkFirma = `http://localhost:3000/firma.html?token=${token}`;
+  const BASE_URL = process.env.FRONTEND_URL || "http://localhost:3000";
+  const linkFirma = `${BASE_URL}/firma.html?token=${token}`;
 
   // =========================
-  // 6. INSERT CONTRATO (🔥 AHORA CON TOKEN)
+  // 6. INSERT
   // =========================
-  await db.query(`
+  await db.query(
+    `
     INSERT INTO CONTRATOS_MANTENIMIENTO
-    (ID, EMPRESA_ID, PERFIL_ID, HASH, TOKEN, ARCHIVO_ENVIADO_ID, ESTADO)
-    VALUES (?, ?, ?, ?, ?, ?, 'PENDIENTE')
-  `, [
-    contratoId,
-    empresa,
-    perfil,
-    hash,
-    token,
-    pdf.fileName
-  ]);
+    (ID, EMPRESA_ID, PERFIL_ID, HASH_CONTRATO, TOKEN, ARCHIVO_ENVIADO_ID, ESTADO)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `,
+    [
+      contratoId,
+      empresa,
+      perfil,
+      hashContrato,
+      token,
+      pdf.fileName,
+      "PENDIENTE"
+    ]
+  );
 
   // =========================
-  // 7. OBTENER EMAIL EMPRESA (FIX EMPRESA_ID)
+  // 7. EMAIL EMPRESA
   // =========================
-  const emailRes = await db.query(`
+  const emailRes = await db.query(
+    `
     SELECT EMAIL FROM EMPRESAS WHERE EMPRESA_ID = ?
-  `, [empresa]);
+  `,
+    [empresa]
+  );
 
   const email = emailRes?.[0]?.EMAIL;
 
   // =========================
-  // 8. ENVIAR EMAIL AUTOMÁTICO
+  // 8. ENVIAR EMAIL
   // =========================
   if (email) {
     try {
@@ -132,8 +147,8 @@ async function generarContratoAutomatico(empresaId, perfilId, creadoPor) {
         contratoId,
         linkFirma
       });
-    } catch (e) {
-      console.error("EMAIL ERROR:", e.message);
+    } catch (err) {
+      console.error("EMAIL ERROR:", err.message);
     }
   }
 
@@ -142,7 +157,7 @@ async function generarContratoAutomatico(empresaId, perfilId, creadoPor) {
   // =========================
   return {
     contratoId,
-    hash,
+    hash: hashContrato,
     token,
     pdf: pdf.fileName,
     linkFirma

@@ -2,7 +2,7 @@ const contratosService = require("../services/contratos.service");
 const { ESTADOS_CONTRATO } = require("../utils/estadosContrato");
 
 /* =========================
-   UTIL SAFE (evita null en frontend)
+   SAFE
 ========================= */
 function safe(value) {
   return value === null || value === undefined ? "" : value;
@@ -14,22 +14,24 @@ function normalizeContrato(c) {
   return {
     ...c,
 
-    // 🔥 FIX NULL FRONT
     EMPRESA_ID: safe(c.EMPRESA_ID),
     PERFIL_ID: safe(c.PERFIL_ID),
     ESTADO: safe(c.ESTADO),
+
     TOKEN: safe(c.TOKEN || c.TOKEN_FIRMA),
 
     ARCHIVO_ENVIADO_ID: safe(c.ARCHIVO_ENVIADO_ID),
     ARCHIVO_FIRMADO_ID: safe(c.ARCHIVO_FIRMADO_ID),
+
     FECHA_ENVIO: safe(c.FECHA_ENVIO),
     FECHA_FIRMA: safe(c.FECHA_FIRMA),
+
     USUARIO_FIRMA_ID: safe(c.USUARIO_FIRMA_ID),
   };
 }
 
 /* =========================
-   LISTAR MIS CONTRATOS
+   LISTAR
 ========================= */
 exports.listar = async (req, res) => {
   try {
@@ -38,7 +40,7 @@ exports.listar = async (req, res) => {
 
     const datos = await contratosService.listarPorUsuario(usuarioId);
 
-    res.json(datos.map(normalizeContrato));
+    res.json((datos || []).map(normalizeContrato));
 
   } catch (error) {
     res.status(500).json({
@@ -49,7 +51,7 @@ exports.listar = async (req, res) => {
 };
 
 /* =========================
-   LISTAR POR EMPRESA
+   LISTAR EMPRESA
 ========================= */
 exports.listarPorEmpresa = async (req, res) => {
   try {
@@ -60,7 +62,7 @@ exports.listarPorEmpresa = async (req, res) => {
 
     const datos = await contratosService.listarPorEmpresa(empresaId);
 
-    res.json(datos.map(normalizeContrato));
+    res.json((datos || []).map(normalizeContrato));
 
   } catch (err) {
     res.status(500).json({
@@ -71,7 +73,7 @@ exports.listarPorEmpresa = async (req, res) => {
 };
 
 /* =========================
-   CREAR CONTRATO
+   CREAR (FIX CRÍTICO)
 ========================= */
 exports.crear = async (req, res) => {
   try {
@@ -92,8 +94,8 @@ exports.crear = async (req, res) => {
 
     res.json({
       ok: true,
-      contrato: normalizeContrato(result.contrato),
-      token: result.token
+      token: result.token,
+      contrato: null // 🔥 FIX: el service no devuelve contrato
     });
 
   } catch (err) {
@@ -105,7 +107,7 @@ exports.crear = async (req, res) => {
 };
 
 /* =========================
-   FIRMAR (UPLOAD PDF)
+   FIRMAR PDF
 ========================= */
 exports.firmar = async (req, res) => {
   try {
@@ -137,18 +139,20 @@ exports.firmar = async (req, res) => {
 };
 
 /* =========================
-   FIRMAR POR TOKEN (FIX DEFINITIVO)
+   FIRMAR TOKEN (FIX IP)
 ========================= */
 exports.firmarPorToken = async (req, res) => {
   try {
     const token = req.params.token;
-
     if (!token) return res.status(400).json({ error: "Token inválido" });
 
     const result = await contratosService.firmarContratoToken({
       token,
       usuarioId: req.user?.id || null,
-      ip: req.headers["x-forwarded-for"] || req.connection.remoteAddress,
+      ip:
+        req.headers["x-forwarded-for"] ||
+        req.socket?.remoteAddress ||
+        "",
       userAgent: req.headers["user-agent"]
     });
 
@@ -179,7 +183,8 @@ exports.verContrato = async (req, res) => {
 
     res.json(normalizeContrato({
       ...contrato,
-      estado_definido: ESTADOS_CONTRATO[contrato.ESTADO] || contrato.ESTADO
+      estado_definido:
+        ESTADOS_CONTRATO?.[contrato.ESTADO] || contrato.ESTADO
     }));
 
   } catch (err) {
@@ -212,7 +217,7 @@ exports.verContratoPorToken = async (req, res) => {
 };
 
 /* =========================
-   AUDITORÍA (INTACTA)
+   AUDITORÍA
 ========================= */
 exports.obtenerAuditoria = async (req, res) => {
   try {
