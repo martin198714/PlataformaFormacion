@@ -36,28 +36,8 @@ async function getPhpVersion() {
 }
 
 // =========================
-// 🧠 DETECTORES
+// 🧠 DETECTORES (ARREGLADOS)
 // =========================
-
-function isVersionQuery(prompt) {
-  const p = prompt.toLowerCase();
-
-  return (
-    p.includes("versión") ||
-    p.includes("version") ||
-    p.includes("latest") ||
-    p.includes("última") ||
-    p.includes("actual") ||
-    p.includes("angular") ||
-    p.includes("react") ||
-    p.includes("node") ||
-    p.includes("spring") ||
-    p.includes("php") ||
-    p.includes("kotlin") ||
-    p.includes("android") ||
-    p.includes("java")
-  );
-}
 
 function isDefinitionQuery(prompt) {
   const p = prompt.toLowerCase();
@@ -68,8 +48,42 @@ function isDefinitionQuery(prompt) {
     p.includes("what is") ||
     p.startsWith("defin") ||
     p.includes("explica") ||
-    p.includes("explicame")
+    p.includes("explicame") ||
+    p.includes("dime qué es")
   );
+}
+
+// SOLO versión real (SIN keywords peligrosas como "java")
+function isVersionQuery(prompt) {
+  const p = prompt.toLowerCase();
+
+  const versionKeywords = [
+    "versión",
+    "version",
+    "última versión",
+    "ultima version",
+    "latest version",
+    "actual version"
+  ];
+
+  return versionKeywords.some(k => p.includes(k));
+}
+
+// 🔥 híbrido: definición + versión en una sola pregunta
+function isHybridQuery(prompt) {
+  const p = prompt.toLowerCase();
+
+  const hasDefinition =
+    p.includes("qué es") ||
+    p.includes("que es") ||
+    p.includes("what is");
+
+  const hasVersion =
+    p.includes("versión") ||
+    p.includes("version") ||
+    p.includes("última");
+
+  return hasDefinition && hasVersion;
 }
 
 // =========================
@@ -77,14 +91,14 @@ function isDefinitionQuery(prompt) {
 // =========================
 
 const definitions = {
-  java: "Java es un lenguaje de programación orientado a objetos, muy usado en backend, sistemas empresariales y Android.",
+  java: "Java es un lenguaje de programación orientado a objetos, usado en backend, sistemas empresariales y Android.",
   angular: "Angular es un framework frontend basado en TypeScript creado por Google.",
-  react: "React es una librería de JavaScript para construir interfaces de usuario basada en componentes.",
+  react: "React es una librería de JavaScript para interfaces de usuario basada en componentes.",
   node: "Node.js es un entorno de ejecución de JavaScript en el servidor.",
   php: "PHP es un lenguaje backend muy usado en desarrollo web.",
-  spring: "Spring Boot es un framework de Java para crear aplicaciones backend.",
+  spring: "Spring Boot es un framework de Java para aplicaciones backend.",
   kotlin: "Kotlin es un lenguaje moderno muy usado en Android.",
-  android: "Android es un sistema operativo móvil basado en Linux desarrollado por Google.",
+  android: "Android es un sistema operativo móvil basado en Linux.",
   javascript: "JavaScript es el lenguaje principal del desarrollo web moderno.",
   powerbi: "Power BI es una herramienta de Microsoft para análisis y visualización de datos."
 };
@@ -96,7 +110,7 @@ const definitions = {
 class AIService {
   constructor() {
     this.cache = new Map();
-    this.cacheTTL = 1000 * 60 * 60; // 1 hora
+    this.cacheTTL = 1000 * 60 * 60;
     this.models = ["phi3", "mistral", "llama3"];
   }
 
@@ -185,7 +199,7 @@ class AIService {
     }
 
     if (p.includes("android")) {
-      return `Android: ver https://developer.android.com/studio/releases`;
+      return `Android: https://developer.android.com/studio/releases`;
     }
 
     if (p.includes("java")) {
@@ -226,7 +240,7 @@ class AIService {
   }
 
   // =========================
-  // 🚀 MAIN ENTRY
+  // 🚀 MAIN ENTRY (ARREGLADO)
   // =========================
 
   async preguntar(prompt, contexto = "") {
@@ -235,23 +249,32 @@ class AIService {
     const cached = this.getCache(cacheKey);
     if (cached) return cached;
 
-    // 🔢 VERSIONES
-    if (isVersionQuery(prompt)) {
-      const result = await this.handleVersionQuery(prompt);
+    // 🔥 1. HÍBRIDO (PRIORIDAD MÁXIMA)
+    if (isHybridQuery(prompt)) {
+      const def = await this.handleDefinitionQuery(prompt);
+      const ver = await this.handleVersionQuery(prompt);
+
+      const result = `${def}\n\n📦 Última versión:\n${ver}`;
+
       this.setCache(cacheKey, result);
       return result;
     }
 
-    // 📖 DEFINICIONES
+    // 📖 2. DEFINICIÓN
     if (isDefinitionQuery(prompt)) {
       const result = await this.handleDefinitionQuery(prompt);
       this.setCache(cacheKey, result);
       return result;
     }
 
-    // 🤖 IA NORMAL
-    let lastError = null;
+    // 🔢 3. VERSIÓN
+    if (isVersionQuery(prompt)) {
+      const result = await this.handleVersionQuery(prompt);
+      this.setCache(cacheKey, result);
+      return result;
+    }
 
+    // 🤖 4. IA NORMAL
     for (const model of this.models) {
       try {
         const res = await this.askModel(model, prompt, contexto);
@@ -261,9 +284,7 @@ class AIService {
         this.mejorarEnBackground(prompt, text);
 
         return text;
-      } catch (err) {
-        lastError = err;
-      }
+      } catch {}
     }
 
     return "⚠️ No se pudo generar respuesta en este momento.";
@@ -296,8 +317,7 @@ class AIService {
 
         const cacheKey = this.getCacheKey(prompt, "");
         this.setCache(cacheKey, res.message.content);
-
-      } catch (e) {}
+      } catch {}
     });
   }
 
@@ -306,7 +326,7 @@ class AIService {
   // =========================
 
   async streamPregunta(prompt, contexto = "", onToken) {
-    let modelUsed = this.models[0];
+    const modelUsed = this.models[0];
 
     const stream = await ollama.chat({
       model: modelUsed,
