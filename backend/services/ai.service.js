@@ -2,7 +2,7 @@ const { Ollama } = require("ollama");
 const ollama = new Ollama();
 
 // =========================
-// 🌐 HELPERS VERSIONES REALES
+// 🌐 VERSION HELPERS
 // =========================
 
 async function getNpmVersion(pkg) {
@@ -21,7 +21,7 @@ async function getMavenLatest(groupId, artifactId) {
 async function getGithubLatest(repo) {
   const res = await fetch(`https://api.github.com/repos/${repo}/releases/latest`);
   const data = await res.json();
-  return data.tag_name || data.name;
+  return data.tag_name || data.name || "desconocida";
 }
 
 async function getPhpVersion() {
@@ -36,7 +36,7 @@ async function getPhpVersion() {
 }
 
 // =========================
-// 🧠 DETECTOR DE VERSIONES
+// 🧠 DETECTORES
 // =========================
 
 function isVersionQuery(prompt) {
@@ -50,15 +50,44 @@ function isVersionQuery(prompt) {
     p.includes("actual") ||
     p.includes("angular") ||
     p.includes("react") ||
-    p.includes("java") ||
+    p.includes("node") ||
     p.includes("spring") ||
     p.includes("php") ||
     p.includes("kotlin") ||
     p.includes("android") ||
-    p.includes("javascript") ||
-    p.includes("node")
+    p.includes("java")
   );
 }
+
+function isDefinitionQuery(prompt) {
+  const p = prompt.toLowerCase();
+
+  return (
+    p.includes("qué es") ||
+    p.includes("que es") ||
+    p.includes("what is") ||
+    p.startsWith("defin") ||
+    p.includes("explica") ||
+    p.includes("explicame")
+  );
+}
+
+// =========================
+// 📖 KNOWLEDGE BASE
+// =========================
+
+const definitions = {
+  java: "Java es un lenguaje de programación orientado a objetos, muy usado en backend, sistemas empresariales y Android.",
+  angular: "Angular es un framework frontend basado en TypeScript creado por Google.",
+  react: "React es una librería de JavaScript para construir interfaces de usuario basada en componentes.",
+  node: "Node.js es un entorno de ejecución de JavaScript en el servidor.",
+  php: "PHP es un lenguaje backend muy usado en desarrollo web.",
+  spring: "Spring Boot es un framework de Java para crear aplicaciones backend.",
+  kotlin: "Kotlin es un lenguaje moderno muy usado en Android.",
+  android: "Android es un sistema operativo móvil basado en Linux desarrollado por Google.",
+  javascript: "JavaScript es el lenguaje principal del desarrollo web moderno.",
+  powerbi: "Power BI es una herramienta de Microsoft para análisis y visualización de datos."
+};
 
 // =========================
 // ⚡ AI SERVICE
@@ -68,13 +97,13 @@ class AIService {
   constructor() {
     this.cache = new Map();
     this.cacheTTL = 1000 * 60 * 60; // 1 hora
-
     this.models = ["phi3", "mistral", "llama3"];
   }
 
   // =========================
-  // 🧊 CACHE CON TTL
+  // 💾 CACHE
   // =========================
+
   getCacheKey(prompt, contexto) {
     return `${prompt.trim().toLowerCase()}::${contexto?.trim().toLowerCase() || ""}`;
   }
@@ -99,8 +128,9 @@ class AIService {
   }
 
   // =========================
-  // 🚀 MODELO
+  // 🤖 OLLAMA CALL
   // =========================
+
   async askModel(model, prompt, contexto) {
     return ollama.chat({
       model,
@@ -124,8 +154,9 @@ class AIService {
   }
 
   // =========================
-  // 🌐 VERSION ROUTER REAL
+  // 🔢 VERSION ROUTER
   // =========================
+
   async handleVersionQuery(prompt) {
     const p = prompt.toLowerCase();
 
@@ -145,10 +176,6 @@ class AIService {
       return `Spring Boot (Maven): ${await getMavenLatest("org.springframework.boot", "spring-boot")}`;
     }
 
-    if (p.includes("java")) {
-      return `Java: versión depende del JDK (recomendado LTS: 21 / 17).`;
-    }
-
     if (p.includes("php")) {
       return `PHP: ${await getPhpVersion()}`;
     }
@@ -158,25 +185,66 @@ class AIService {
     }
 
     if (p.includes("android")) {
-      return `Android Studio: ver https://developer.android.com/studio/releases`;
+      return `Android: ver https://developer.android.com/studio/releases`;
+    }
+
+    if (p.includes("java")) {
+      return `Java: versiones LTS recomendadas 17 / 21`;
     }
 
     return "No se pudo determinar versión.";
   }
 
   // =========================
-  // ⚡ TURBO PRINCIPAL
+  // 📖 DEFINITIONS
   // =========================
-  async preguntar(prompt, contexto = "") {
 
+  async handleDefinitionQuery(prompt) {
+    const p = prompt.toLowerCase();
+
+    for (const key of Object.keys(definitions)) {
+      if (p.includes(key)) {
+        return definitions[key];
+      }
+    }
+
+    const res = await ollama.chat({
+      model: "llama3",
+      messages: [
+        {
+          role: "system",
+          content: "Explica de forma clara, sencilla y corta qué es lo que el usuario pregunta."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ]
+    });
+
+    return res.message.content;
+  }
+
+  // =========================
+  // 🚀 MAIN ENTRY
+  // =========================
+
+  async preguntar(prompt, contexto = "") {
     const cacheKey = this.getCacheKey(prompt, contexto);
 
     const cached = this.getCache(cacheKey);
     if (cached) return cached;
 
-    // 🔥 VERSIONES REALES
+    // 🔢 VERSIONES
     if (isVersionQuery(prompt)) {
       const result = await this.handleVersionQuery(prompt);
+      this.setCache(cacheKey, result);
+      return result;
+    }
+
+    // 📖 DEFINICIONES
+    if (isDefinitionQuery(prompt)) {
+      const result = await this.handleDefinitionQuery(prompt);
       this.setCache(cacheKey, result);
       return result;
     }
@@ -190,11 +258,9 @@ class AIService {
         const text = res.message.content;
 
         this.setCache(cacheKey, text);
-
         this.mejorarEnBackground(prompt, text);
 
         return text;
-
       } catch (err) {
         lastError = err;
       }
@@ -204,8 +270,9 @@ class AIService {
   }
 
   // =========================
-  // 🧊 MEJORA EN BACKGROUND
+  // 🧠 BACKGROUND IMPROVEMENT
   // =========================
+
   async mejorarEnBackground(prompt, respuestaRapida) {
     setImmediate(async () => {
       try {
@@ -230,28 +297,19 @@ class AIService {
         const cacheKey = this.getCacheKey(prompt, "");
         this.setCache(cacheKey, res.message.content);
 
-      } catch (e) {
-        // silencioso
-      }
+      } catch (e) {}
     });
   }
 
   // =========================
   // ⚡ STREAMING
   // =========================
+
   async streamPregunta(prompt, contexto = "", onToken) {
-
-    let modelUsed = null;
-
-    for (const model of this.models) {
-      try {
-        modelUsed = model;
-        break;
-      } catch {}
-    }
+    let modelUsed = this.models[0];
 
     const stream = await ollama.chat({
-      model: modelUsed || "phi3",
+      model: modelUsed,
       stream: true,
       options: {
         temperature: 0.3,
