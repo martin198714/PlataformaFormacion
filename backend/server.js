@@ -94,6 +94,7 @@ app.use('/uploads/archivos', express.static(path.join(__dirname, 'uploads/archiv
 app.use('/uploads/videos', express.static(path.join(__dirname, 'uploads/videos')));
 app.use('/uploads/capitulos', express.static(capitulosDir));
 app.use('/uploads/otros', express.static(path.join(__dirname, 'uploads/otros')));
+app.use(express.static(path.join(__dirname, "../frontend")));
 
 
 // ================= STREAM VIDEO =================
