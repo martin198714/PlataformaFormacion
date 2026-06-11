@@ -106,7 +106,8 @@
                 const data = await res.json();
 
                 if (!res.ok) {
-                    document.getElementById("estado").innerText = data.error || "Error";
+                    document.getElementById("estado").innerText =
+                        data.error || "Error cargando contrato";
                     return;
                 }
 
@@ -115,8 +116,27 @@
                 document.getElementById("estado").innerText =
                     "Contrato listo para firma";
 
-                document.getElementById("pdfViewer").src =
-                    `${BASE_URL}/uploads/archivos/${data.ARCHIVO_ENVIADO_ID}`;
+                /* =========================
+                   PDF (PROTEGIDO CONTRA ERRORES)
+                ========================= */
+                const pdfViewer = document.getElementById("pdfViewer");
+
+                if (data.ARCHIVO_ENVIADO_ID) {
+
+                    const file = String(data.ARCHIVO_ENVIADO_ID).trim();
+
+                    // Evita /uploads/archivos/ vacío
+                    if (file !== "") {
+                        pdfViewer.src = `${BASE_URL}/uploads/archivos/${file}`;
+                    } else {
+                        document.getElementById("estado").innerText =
+                            "PDF no válido (nombre vacío)";
+                    }
+
+                } else {
+                    document.getElementById("estado").innerText =
+                        "Este contrato no tiene PDF asociado";
+                }
 
             } catch (err) {
                 console.error(err);
@@ -126,7 +146,7 @@
         }
 
         /* =========================
-           SUBIR FIRMA (PDF)
+           SUBIR FIRMA (PDF FIRMADO)
         ========================= */
         async function subirFirma() {
             try {
@@ -138,10 +158,13 @@
                 const formData = new FormData();
                 formData.append("pdf", file);
 
-                const res = await fetch(`${BASE_URL}/api/contratos/firmar/${contratoId}`, {
-                    method: "POST",
-                    body: formData
-                });
+                const res = await fetch(
+                    `${BASE_URL}/api/contratos/firmar/${contratoId}`,
+                    {
+                        method: "POST",
+                        body: formData
+                    }
+                );
 
                 const data = await res.json();
 
