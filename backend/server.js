@@ -37,10 +37,7 @@ app.use((req, res, next) => {
 // BODY PARSER
 app.use(express.json({ limit: '1000mb' }));
 app.use(express.urlencoded({ limit: '1000mb', extended: true }));
-
-// FRONTEND
-app.use(express.static(path.join(__dirname, 'public')));
-
+app.use(express.static(path.join(__dirname, "../frontend")));
 app.use("/img", express.static(path.join(__dirname, "img")));
 // ================= CREAR CARPETAS =================
 
@@ -94,7 +91,7 @@ app.use('/uploads/archivos', express.static(path.join(__dirname, 'uploads/archiv
 app.use('/uploads/videos', express.static(path.join(__dirname, 'uploads/videos')));
 app.use('/uploads/capitulos', express.static(capitulosDir));
 app.use('/uploads/otros', express.static(path.join(__dirname, 'uploads/otros')));
-app.use(express.static(path.join(__dirname, "../frontend")));
+
 
 
 // ================= STREAM VIDEO =================
