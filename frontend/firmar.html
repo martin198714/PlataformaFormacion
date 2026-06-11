@@ -53,9 +53,8 @@
 
 <body>
 
-    <!-- 🔥 TU NAV / HEADER (NO TOCADO) -->
     <header>
-        <!-- deja tu header aquí -->
+        <!-- TU HEADER -->
     </header>
 
     <div class="container">
@@ -64,10 +63,8 @@
 
         <div id="estado" class="info">Cargando contrato...</div>
 
-        <!-- VISUALIZADOR PDF -->
         <iframe id="pdfViewer"></iframe>
 
-        <!-- SUBIDA FIRMA -->
         <h3>Subir contrato firmado</h3>
 
         <input type="file" id="file" accept="application/pdf" />
@@ -79,25 +76,20 @@
 
     </div>
 
-    <!-- 🔥 TU FOOTER (NO TOCADO) -->
     <footer>
-        <!-- deja tu footer aquí -->
+        <!-- TU FOOTER -->
     </footer>
 
     <script>
+        const BASE_URL = "http://localhost:3000";
+
         let contratoId = null;
         let token = null;
 
-        /* =========================
-           1. TOKEN URL
-        ========================= */
         function getToken() {
             return new URLSearchParams(window.location.search).get("token");
         }
 
-        /* =========================
-           2. CARGAR CONTRATO
-        ========================= */
         async function cargarContrato() {
             try {
                 token = getToken();
@@ -107,7 +99,7 @@
                     return;
                 }
 
-                const res = await fetch(`/api/contratos/firma/${token}`);
+                const res = await fetch(`${BASE_URL}/api/contratos/firma/${token}`);
                 const data = await res.json();
 
                 if (!res.ok) {
@@ -115,14 +107,13 @@
                     return;
                 }
 
-                contratoId = data.ID || data.id;
+                contratoId = data.ID;
 
                 document.getElementById("estado").innerText =
                     "Contrato listo para firma";
 
-                /* 👀 PDF PREVIEW (AJUSTA SI TU PATH ES DISTINTO) */
                 document.getElementById("pdfViewer").src =
-                    `/uploads/${data.ARCHIVO_ENVIADO_ID}`;
+                    `${BASE_URL}/api/archivos/${data.ARCHIVO_ENVIADO_ID}`;
 
             } catch (err) {
                 console.error(err);
@@ -130,30 +121,24 @@
             }
         }
 
-        /* =========================
-           3. SUBIR PDF FIRMADO
-        ========================= */
         async function subirFirma() {
             try {
                 const file = document.getElementById("file").files[0];
 
-                if (!file) {
-                    alert("Selecciona un PDF");
-                    return;
-                }
-
-                if (!contratoId) {
-                    alert("Contrato no cargado");
-                    return;
-                }
+                if (!file) return alert("Selecciona un PDF");
+                if (!contratoId) return alert("Contrato no cargado");
 
                 const formData = new FormData();
                 formData.append("pdf", file);
 
-                const res = await fetch(`/api/contratos/firmar/${contratoId}`, {
+                const res = await fetch(`${BASE_URL}/api/contratos/firmar/${contratoId}`, {
                     method: "POST",
                     body: formData,
-                    credentials: "include"
+                    headers: {
+                        Authorization: localStorage.getItem("token")
+                            ? `Bearer ${localStorage.getItem("token")}`
+                            : ""
+                    }
                 });
 
                 const data = await res.json();
@@ -169,12 +154,9 @@
 
             } catch (err) {
                 console.error(err);
-                document.getElementById("resultado").innerText =
-                    "Error al subir firma";
             }
         }
 
-        /* INIT */
         cargarContrato();
     </script>
 
