@@ -231,6 +231,32 @@ async function obtenerPorToken(token) {
   return toArray(r)[0] || null;
 }
 
+async function marcarFirmadoArchivo({
+  contratoId,
+  usuarioId,
+  archivoFirmado
+}) {
+  await db.query(
+    `
+    UPDATE CONTRATOS_MANTENIMIENTO
+    SET
+      ARCHIVO_FIRMADO_ID = ?,
+      USUARIO_FIRMA_ID = ?,
+      FECHA_FIRMA = CURRENT_TIMESTAMP,
+      ESTADO = ?
+    WHERE ID = ?
+    `,
+    [
+      archivoFirmado,
+      usuarioId,
+      ESTADOS_CONTRATO.FIRMADO,
+      contratoId
+    ]
+  );
+
+  return { ok: true };
+}
+
 module.exports = {
   listarPorUsuario,
   listarPorEmpresa,
@@ -239,4 +265,5 @@ module.exports = {
   marcarFirmado,
   verContrato,
   obtenerPorToken,
+  marcarFirmadoArchivo,
 };

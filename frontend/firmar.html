@@ -3,150 +3,99 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Firma de contrato</title>
-
+    <title>Firma contrato</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-
-    <style>
-        body {
-            background: #f4f6f9;
-            font-family: Arial, sans-serif;
-        }
-
-        .container {
-            max-width: 800px;
-            margin-top: 60px;
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        iframe {
-            width: 100%;
-            height: 600px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-        }
-
-        .btn-firmar {
-            margin-top: 20px;
-        }
-    </style>
 </head>
 
-<body>
+<body class="p-4">
 
-    <div class="container">
+    <h2>Firma de contrato</h2>
 
-        <h2 class="mb-4">Firma de contrato</h2>
+    <div id="info">Cargando...</div>
 
-        <div id="estado" class="mb-3 text-muted">
-            Cargando contrato...
-        </div>
+    <iframe id="pdf" width="100%" height="500"></iframe>
 
-        <iframe id="pdf"></iframe>
+    <hr>
 
-        <button id="btnFirmar" class="btn btn-success btn-firmar">
-            Firmar contrato
-        </button>
+    <h4>Subir contrato firmado</h4>
 
-    </div>
+    <input type="file" id="file" accept="application/pdf">
+    <br><br>
+
+    <button id="btn" class="btn btn-success">
+        Firmar contrato
+    </button>
 
     <script>
-        const BASE_URL = "http://localhost:3000";
 
+        const BASE_URL = "http://localhost:3000";
         const token = new URLSearchParams(location.search).get("token");
 
-        const estado = document.getElementById("estado");
-        const iframe = document.getElementById("pdf");
-        const btnFirmar = document.getElementById("btnFirmar");
+        const info = document.getElementById("info");
+        const pdf = document.getElementById("pdf");
+        const file = document.getElementById("file");
 
-        if (!token) {
-            estado.innerText = "Token inválido";
-            btnFirmar.disabled = true;
-        }
+        let contratoId = null;
 
         /* =========================
            CARGAR CONTRATO
         ========================= */
-        async function cargarContrato() {
-            try {
-                const res = await fetch(
-                    `${BASE_URL}/api/contratos/firma/${token}`
-                );
+        async function cargar() {
 
-                const data = await res.json();
+            const res = await fetch(`${BASE_URL}/api/contratos/firma/${token}`);
+            const data = await res.json();
 
-                if (!res.ok) {
-                    estado.innerText = data.error || "Error cargando contrato";
-                    btnFirmar.disabled = true;
-                    return;
-                }
-
-                estado.innerHTML = `
-        Contrato ID: <b>${data.ID}</b><br>
-        Estado: <b>${data.ESTADO}</b>
-      `;
-
-                if (data.ARCHIVO_ENVIADO_ID) {
-                    iframe.src =
-                        `${BASE_URL}/api/archivos/${data.ARCHIVO_ENVIADO_ID}`;
-                } else {
-                    estado.innerText = "PDF no disponible";
-                    btnFirmar.disabled = true;
-                }
-
-            } catch (err) {
-                console.error(err);
-                estado.innerText = "Error de conexión";
+            if (!res.ok) {
+                info.innerText = data.error;
+                return;
             }
+
+            contratoId = data.ID;
+
+            info.innerHTML =
+                `Contrato #${data.ID} - ${data.ESTADO}`;
+
+            pdf.src =
+                `${BASE_URL}/api/archivos/${data.ARCHIVO_ENVIADO_ID}`;
         }
 
+        cargar();
+
         /* =========================
-           FIRMAR CONTRATO
+           SUBIR FIRMA
         ========================= */
-        btnFirmar.addEventListener("click", async () => {
-            try {
+        document.getElementById("btn").onclick = async () => {
 
-                btnFirmar.disabled = true;
-                btnFirmar.innerText = "Firmando...";
-
-                const res = await fetch(
-                    `${BASE_URL}/api/contratos/firmar/token/${token}`,
-                    {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        }
-                    }
-                );
-
-                const data = await res.json();
-
-                if (!res.ok) {
-                    alert(data.error || "Error al firmar");
-                    btnFirmar.disabled = false;
-                    btnFirmar.innerText = "Firmar contrato";
-                    return;
-                }
-
-                alert("Contrato firmado correctamente ✔");
-
-                estado.innerHTML =
-                    "✔ Contrato firmado correctamente";
-
-                btnFirmar.style.display = "none";
-
-            } catch (err) {
-                console.error(err);
-                alert("Error de red");
-                btnFirmar.disabled = false;
-                btnFirmar.innerText = "Firmar contrato";
+            if (!file.files[0]) {
+                alert("Sube un PDF firmado");
+                return;
             }
-        });
 
-        cargarContrato();
+            const form = new FormData();
+            form.append("pdf", file.files[0]);
+
+            const res = await fetch(
+                `${BASE_URL}/api/contratos/firmar/${contratoId}`,
+                {
+                    method: "POST",
+                    body: form,
+                    headers: {
+                        Authorization: localStorage.getItem("token")
+                    }
+                }
+            );
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                alert(data.error);
+                return;
+            }
+
+            alert("Contrato firmado ✔");
+            location.reload();
+        };
+
     </script>
 
 </body>

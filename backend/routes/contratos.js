@@ -3,6 +3,7 @@ const router = express.Router();
 
 const contratosController = require("../controllers/contratosController");
 const { authMiddleware } = require("../middlewares/auth");
+const upload = require("../middlewares/upload");
 
 /* =========================
    CONTRATOS (PROTEGIDO)
@@ -49,6 +50,7 @@ router.post(
 router.post(
   "/firmar/:id",
   authMiddleware,
+  upload.single("pdf"),
   contratosController.firmar
 );
 

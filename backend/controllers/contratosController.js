@@ -1,5 +1,67 @@
 const contratosService = require("../services/contratos.service");
 const { ESTADOS_CONTRATO } = require("../utils/estadosContrato");
+const { aplicarFirmaPDF } = require("../services/pdf.service");
+
+exports.firmar = async (req, res) => {
+  try {
+
+    const contratoId = Number(req.params.id);
+    const usuarioId = req.user?.id;
+
+    if (!usuarioId) {
+      return res.status(401).json({ error: "No autenticado" });
+    }
+
+    if (isNaN(contratoId)) {
+      return res.status(400).json({ error: "Contrato inválido" });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: "Falta PDF firmado" });
+    }
+
+    /* =========================
+       1. Obtener contrato
+    ========================= */
+    const contrato = await contratosService.verContrato(contratoId);
+
+    if (!contrato) {
+      return res.status(404).json({ error: "Contrato no encontrado" });
+    }
+
+    /* =========================
+       2. Aplicar firma real al PDF
+    ========================= */
+    const firmado = await aplicarFirmaPDF({
+      pdfPath: req.file.path,
+      contratoId,
+      usuarioId,
+      hash: contrato.HASH_CONTRATO,
+      ip: req.ip
+    });
+
+    /* =========================
+       3. Guardar en BD
+    ========================= */
+    await contratosService.marcarFirmadoArchivo({
+      contratoId,
+      usuarioId,
+      archivoFirmado: firmado.firmadoNombre
+    });
+
+    res.json({
+      ok: true,
+      mensaje: "Contrato firmado correctamente",
+      firmado
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      error: "Error al firmar contrato",
+      detalle: err.message
+    });
+  }
+};
 
 /* =========================
    SAFE
@@ -111,29 +173,61 @@ exports.crear = async (req, res) => {
 ========================= */
 exports.firmar = async (req, res) => {
   try {
+
     const contratoId = Number(req.params.id);
     const usuarioId = req.user?.id;
 
-    if (!usuarioId) return res.status(401).json({ error: "No autenticado" });
-    if (isNaN(contratoId)) return res.status(400).json({ error: "Contrato inválido" });
-    if (!req.file) return res.status(400).json({ error: "Falta PDF firmado" });
+    if (!usuarioId) {
+      return res.status(401).json({ error: "No autenticado" });
+    }
 
-    const result = await contratosService.marcarFirmado(
+    if (isNaN(contratoId)) {
+      return res.status(400).json({ error: "Contrato inválido" });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: "Falta PDF firmado" });
+    }
+
+    /* =========================
+       1. Obtener contrato
+    ========================= */
+    const contrato = await contratosService.verContrato(contratoId);
+
+    if (!contrato) {
+      return res.status(404).json({ error: "Contrato no encontrado" });
+    }
+
+    /* =========================
+       2. Aplicar firma real al PDF
+    ========================= */
+    const firmado = await aplicarFirmaPDF({
+      pdfPath: req.file.path,
       contratoId,
-      req.file,
-      usuarioId
-    );
+      usuarioId,
+      hash: contrato.HASH_CONTRATO,
+      ip: req.ip
+    });
+
+    /* =========================
+       3. Guardar en BD
+    ========================= */
+    await contratosService.marcarFirmadoArchivo({
+      contratoId,
+      usuarioId,
+      archivoFirmado: firmado.firmadoNombre
+    });
 
     res.json({
       ok: true,
-      estado: ESTADOS_CONTRATO.BLOQUEADO,
-      result
+      mensaje: "Contrato firmado correctamente",
+      firmado
     });
 
   } catch (err) {
     res.status(500).json({
       error: "Error al firmar contrato",
-      detalle: err.message,
+      detalle: err.message
     });
   }
 };
