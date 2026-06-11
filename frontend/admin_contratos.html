@@ -176,7 +176,7 @@
         }
 
         /* =========================
-           ASIGNAR PERFIL + CONTRATO
+           CREAR CONTRATO (NUEVO FLUJO CORRECTO)
         ========================= */
         async function asignarPerfil() {
 
@@ -229,12 +229,15 @@
 
                 document.body.appendChild(box);
 
+                /* =========================
+                   CREAR CONTRATO REAL
+                ========================= */
                 document.getElementById("btnCrear").onclick = async () => {
 
                     const empresaId = Number(document.getElementById("empresaId").value);
                     const perfilId = Number(document.getElementById("perfilId").value);
 
-                    const res = await fetch(`${BASE_URL}/api/empresa-perfiles/asignar`, {
+                    const res = await fetch(`${BASE_URL}/api/contratos/crear`, {
                         method: "POST",
                         headers: getAuthHeaders(),
                         body: JSON.stringify({ empresaId, perfilId })
@@ -247,7 +250,8 @@
                         return;
                     }
 
-                    alert("Contrato generado y enviado ✔");
+                    alert("Contrato generado y enviado por email ✔");
+
                     document.body.removeChild(box);
                     cargar();
                 };

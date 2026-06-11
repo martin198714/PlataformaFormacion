@@ -65,36 +65,58 @@ async function listarPorEmpresa(empresaId) {
    CREAR CONTRATO
 ========================= */
 async function crearContrato(empresaId, perfilId, usuarioId) {
-  const token = generarHash({ empresaId, perfilId, time: Date.now() });
 
+  const token = generarHash({ empresaId, perfilId, time: Date.now() });
   const hashContrato = generarHash({ empresaId, perfilId, token });
 
-  const pdf = await generarPDFContrato({
-    contratoId: 0,
-    empresaId,
-    perfilId,
-    hash: hashContrato,
-  });
-
-  await db.query(
+  // 1. INSERTAR PRIMERO
+  const result = await db.query(
     `
     INSERT INTO CONTRATOS_MANTENIMIENTO
-    (EMPRESA_ID, PERFIL_ID, ESTADO, TOKEN, HASH_CONTRATO, ARCHIVO_ENVIADO_ID, FECHA_ENVIO)
-    VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-  `,
+    (EMPRESA_ID, PERFIL_ID, ESTADO, TOKEN, HASH_CONTRATO, FECHA_ENVIO)
+    VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    `,
     [
       empresaId,
       perfilId,
       ESTADOS_CONTRATO.PENDIENTE,
       token,
-      hashContrato,
-      pdf.fileName,
+      hashContrato
     ]
+  );
+
+  const contratoId = result.insertId || result.lastInsertId;
+
+  if (!contratoId) {
+    throw new Error("No se pudo obtener el ID del contrato");
+  }
+
+  // 2. GENERAR PDF CON ID REAL
+  const pdf = await generarPDFContrato({
+    contratoId,
+    empresaId,
+    perfilId,
+    hash: hashContrato,
+  });
+
+  if (!pdf || !pdf.fileName) {
+    throw new Error("Datos insuficientes para generar PDF");
+  }
+
+  // 3. ACTUALIZAR CONTRATO CON PDF
+  await db.query(
+    `
+    UPDATE CONTRATOS_MANTENIMIENTO
+    SET ARCHIVO_ENVIADO_ID = ?
+    WHERE CONTRATO_ID = ?
+    `,
+    [pdf.fileName, contratoId]
   );
 
   return {
     ok: true,
-    token,
+    contratoId,
+    token
   };
 }
 
