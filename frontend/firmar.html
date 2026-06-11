@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Firma de contrato</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+
+    <style>
+        body {
+            background: #f4f6f9;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 800px;
+            margin-top: 60px;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .btn-firmar {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h2 class="mb-4">Firma de contrato</h2>
+
+        <div id="estado" class="mb-3 text-muted">
+            Cargando contrato...
+        </div>
+
+        <iframe id="pdf"></iframe>
+
+        <button id="btnFirmar" class="btn btn-success btn-firmar">
+            Firmar contrato
+        </button>
+
+    </div>
+
+    <script>
+        const BASE_URL = "http://localhost:3000";
+
+        const token = new URLSearchParams(location.search).get("token");
+
+        const estado = document.getElementById("estado");
+        const iframe = document.getElementById("pdf");
+        const btnFirmar = document.getElementById("btnFirmar");
+
+        if (!token) {
+            estado.innerText = "Token inválido";
+            btnFirmar.disabled = true;
+        }
+
+        /* =========================
+           CARGAR CONTRATO
+        ========================= */
+        async function cargarContrato() {
+            try {
+                const res = await fetch(
+                    `${BASE_URL}/api/contratos/firma/${token}`
+                );
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    estado.innerText = data.error || "Error cargando contrato";
+                    btnFirmar.disabled = true;
+                    return;
+                }
+
+                estado.innerHTML = `
+        Contrato ID: <b>${data.ID}</b><br>
+        Estado: <b>${data.ESTADO}</b>
+      `;
+
+                if (data.ARCHIVO_ENVIADO_ID) {
+                    iframe.src =
+                        `${BASE_URL}/api/archivos/${data.ARCHIVO_ENVIADO_ID}`;
+                } else {
+                    estado.innerText = "PDF no disponible";
+                    btnFirmar.disabled = true;
+                }
+
+            } catch (err) {
+                console.error(err);
+                estado.innerText = "Error de conexión";
+            }
+        }
+
+        /* =========================
+           FIRMAR CONTRATO
+        ========================= */
+        btnFirmar.addEventListener("click", async () => {
+            try {
+
+                btnFirmar.disabled = true;
+                btnFirmar.innerText = "Firmando...";
+
+                const res = await fetch(
+                    `${BASE_URL}/api/contratos/firmar/token/${token}`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        }
+                    }
+                );
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    alert(data.error || "Error al firmar");
+                    btnFirmar.disabled = false;
+                    btnFirmar.innerText = "Firmar contrato";
+                    return;
+                }
+
+                alert("Contrato firmado correctamente ✔");
+
+                estado.innerHTML =
+                    "✔ Contrato firmado correctamente";
+
+                btnFirmar.style.display = "none";
+
+            } catch (err) {
+                console.error(err);
+                alert("Error de red");
+                btnFirmar.disabled = false;
+                btnFirmar.innerText = "Firmar contrato";
+            }
+        });
+
+        cargarContrato();
+    </script>
+
+</body>
+
+</html>

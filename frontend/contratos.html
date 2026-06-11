@@ -143,31 +143,29 @@
                             : "text-warning";
 
                     tbody.innerHTML += `
-                        <tr>
-                            <td>${c.ID}</td>
-                            <td>${c.PERFIL_NOMBRE || c.PERFIL_ID}</td>
+                <tr>
+                    <td>${c.ID}</td>
+                    <td>${c.PERFIL_NOMBRE || c.PERFIL_ID}</td>
 
-                            <td class="${estadoClass}">
-                                ${c.ESTADO}
-                            </td>
+                    <td class="${estadoClass}">
+                        ${c.ESTADO}
+                    </td>
 
-                            <td>${c.FECHA_ENVIO || ""}</td>
+                    <td>${c.FECHA_ENVIO || ""}</td>
 
-                            <td>
-                                ${c.ARCHIVO_ENVIADO_ID
-                                    ? `<a href="${BASE_URL}/api/archivos/${c.ARCHIVO_ENVIADO_ID}" target="_blank">📄 PDF</a>`
-                                    : "Esperando PDF"}
-                            </td>
+                    <td>
+                        ${c.ARCHIVO_ENVIADO_ID
+                            ? `<a href="${BASE_URL}/api/archivos/${c.ARCHIVO_ENVIADO_ID}" target="_blank">📄 PDF</a>`
+                            : "Pendiente PDF"}
+                    </td>
 
-                            <td>
-                                ${
-                                    c.TOKEN
-                                        ? `<a href="${BASE_URL}/api/contratos/firma/${c.TOKEN}" target="_blank">✍️ Firmar</a>`
-                                        : ""
-                                }
-                            </td>
-                        </tr>
-                    `;
+                    <td>
+                        ${c.TOKEN
+                            ? `<a href="firma.html?token=${c.TOKEN}" target="_blank">✍️ Firmar</a>`
+                            : ""}
+                    </td>
+                </tr>
+            `;
                 });
 
             } catch (err) {

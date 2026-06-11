@@ -144,30 +144,30 @@
                             : "text-warning";
 
                     tbody.innerHTML += `
-                        <tr>
-                            <td>${c.ID}</td>
-                            <td>${c.EMPRESA_NOMBRE || c.EMPRESA_ID}</td>
-                            <td>${c.PERFIL_NOMBRE || c.PERFIL_ID}</td>
+                <tr>
+                    <td>${c.ID}</td>
+                    <td>${c.EMPRESA_NOMBRE || c.EMPRESA_ID}</td>
+                    <td>${c.PERFIL_NOMBRE || c.PERFIL_ID}</td>
 
-                            <td class="${estadoClass}">
-                                ${c.ESTADO}
-                            </td>
+                    <td class="${estadoClass}">
+                        ${c.ESTADO}
+                    </td>
 
-                            <td>${c.FECHA_ENVIO || ""}</td>
+                    <td>${c.FECHA_ENVIO || ""}</td>
 
-                            <td>
-                                ${c.ARCHIVO_ENVIADO_ID
-                                    ? `<a href="${BASE_URL}/api/archivos/${c.ARCHIVO_ENVIADO_ID}" target="_blank">📄 PDF</a>`
-                                    : "Sin PDF"}
-                            </td>
+                    <td>
+                        ${c.ARCHIVO_ENVIADO_ID
+                            ? `<a href="${BASE_URL}/api/archivos/${c.ARCHIVO_ENVIADO_ID}" target="_blank">📄 PDF</a>`
+                            : "Sin PDF"}
+                    </td>
 
-                            <td>
-                                ${c.TOKEN
-                                    ? `<a href="${BASE_URL}/api/contratos/firma/${c.TOKEN}" target="_blank">✍️ Firmar</a>`
-                                    : ""}
-                            </td>
-                        </tr>
-                    `;
+                    <td>
+                        ${c.TOKEN
+                            ? `<a href="firma.html?token=${c.TOKEN}" target="_blank">✍️ Firma cliente</a>`
+                            : ""}
+                    </td>
+                </tr>
+            `;
                 });
 
             } catch (err) {
@@ -176,7 +176,7 @@
         }
 
         /* =========================
-           CREAR CONTRATO
+           ASIGNAR PERFIL + CONTRATO
         ========================= */
         async function asignarPerfil() {
 
@@ -199,33 +199,33 @@
                 box.style.zIndex = "9999";
 
                 box.innerHTML = `
-                    <h3>Crear contrato</h3>
+            <h3>Crear contrato</h3>
 
-                    <label>Empresa</label>
-                    <select id="empresaId">
-                        ${empresas.map(e => `
-                            <option value="${e.EMPRESA_ID}">
-                                ${e.NOMBRE}
-                            </option>
-                        `).join("")}
-                    </select>
+            <label>Empresa</label>
+            <select id="empresaId">
+                ${empresas.map(e => `
+                    <option value="${e.EMPRESA_ID}">
+                        ${e.NOMBRE}
+                    </option>
+                `).join("")}
+            </select>
 
-                    <br><br>
+            <br><br>
 
-                    <label>Perfil</label>
-                    <select id="perfilId">
-                        ${perfiles.map(p => `
-                            <option value="${p.ID}">
-                                ${p.NOMBRE}
-                            </option>
-                        `).join("")}
-                    </select>
+            <label>Perfil</label>
+            <select id="perfilId">
+                ${perfiles.map(p => `
+                    <option value="${p.ID}">
+                        ${p.NOMBRE}
+                    </option>
+                `).join("")}
+            </select>
 
-                    <br><br>
+            <br><br>
 
-                    <button id="btnCrear">Crear contrato</button>
-                    <button id="btnCerrar">Cerrar</button>
-                `;
+            <button id="btnCrear">Crear contrato</button>
+            <button id="btnCerrar">Cerrar</button>
+        `;
 
                 document.body.appendChild(box);
 
@@ -234,7 +234,7 @@
                     const empresaId = Number(document.getElementById("empresaId").value);
                     const perfilId = Number(document.getElementById("perfilId").value);
 
-                    const res = await fetch(`${BASE_URL}/api/contratos/crear`, {
+                    const res = await fetch(`${BASE_URL}/api/empresa-perfiles/asignar`, {
                         method: "POST",
                         headers: getAuthHeaders(),
                         body: JSON.stringify({ empresaId, perfilId })
@@ -247,7 +247,7 @@
                         return;
                     }
 
-                    alert("Contrato creado ✔");
+                    alert("Contrato generado y email enviado ✔");
                     document.body.removeChild(box);
                     cargar();
                 };
@@ -265,4 +265,5 @@
     </script>
 
 </body>
+
 </html>

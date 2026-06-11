@@ -8,34 +8,58 @@ const { authMiddleware } = require("../middlewares/auth");
    CONTRATOS (PROTEGIDO)
 ========================= */
 
-router.get("/", authMiddleware, contratosController.listar);
+router.get(
+  "/",
+  authMiddleware,
+  contratosController.listar
+);
 
-router.get("/empresa/:empresaId", authMiddleware, contratosController.listarPorEmpresa);
+router.get(
+  "/empresa/:empresaId",
+  authMiddleware,
+  contratosController.listarPorEmpresa
+);
 
-router.post("/crear", authMiddleware, contratosController.crear);
+router.post(
+  "/crear",
+  authMiddleware,
+  contratosController.crear
+);
+
+/* =========================
+   FIRMA POR TOKEN (PÚBLICO)
+   IMPORTANTE:
+   Debe ir antes de "/:id"
+========================= */
+
+router.get(
+  "/firma/:token",
+  contratosController.verContratoPorToken
+);
+
+router.post(
+  "/firmar/token/:token",
+  contratosController.firmarPorToken
+);
 
 /* =========================
    FIRMA PDF SUBIDO
 ========================= */
 
-router.post("/firmar/:id", authMiddleware, contratosController.firmar);
+router.post(
+  "/firmar/:id",
+  authMiddleware,
+  contratosController.firmar
+);
 
 /* =========================
    VER CONTRATO (PROTEGIDO)
 ========================= */
 
-router.get("/:id", authMiddleware, contratosController.verContrato);
-
-/* =========================
-   FIRMA POR TOKEN (PÚBLICO - LINK EMAIL)
-========================= */
-
-router.get("/firma/:token", contratosController.verContratoPorToken);
-
-/* =========================
-   FIRMA FINAL POR TOKEN
-========================= */
-
-router.post("/firmar/token/:token", contratosController.firmarPorToken);
+router.get(
+  "/:id",
+  authMiddleware,
+  contratosController.verContrato
+);
 
 module.exports = router;
