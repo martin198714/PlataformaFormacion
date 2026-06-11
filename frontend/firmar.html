@@ -90,6 +90,9 @@
             return new URLSearchParams(window.location.search).get("token");
         }
 
+        /* =========================
+           CARGAR CONTRATO POR TOKEN
+        ========================= */
         async function cargarContrato() {
             try {
                 token = getToken();
@@ -113,14 +116,18 @@
                     "Contrato listo para firma";
 
                 document.getElementById("pdfViewer").src =
-                    `${BASE_URL}/uploads/${data.ARCHIVO_ENVIADO_ID}`;
+                    `${BASE_URL}/uploads/archivos/${data.ARCHIVO_ENVIADO_ID}`;
 
             } catch (err) {
                 console.error(err);
-                document.getElementById("estado").innerText = "Error cargando contrato";
+                document.getElementById("estado").innerText =
+                    "Error cargando contrato";
             }
         }
 
+        /* =========================
+           SUBIR FIRMA (PDF)
+        ========================= */
         async function subirFirma() {
             try {
                 const file = document.getElementById("file").files[0];

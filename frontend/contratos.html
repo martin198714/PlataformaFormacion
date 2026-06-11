@@ -104,6 +104,7 @@
 
     <script>
         const BASE_URL = "http://localhost:3000";
+        const FRONTEND_URL = "http://127.0.0.1:5500";
 
         function getAuthHeaders() {
             const token = localStorage.getItem("token");
@@ -155,13 +156,13 @@
 
                     <td>
                         ${c.ARCHIVO_ENVIADO_ID
-                            ? `<a href="${BASE_URL}/api/archivos/${c.ARCHIVO_ENVIADO_ID}" target="_blank">📄 PDF</a>`
-                            : "Pendiente PDF"}
+                            ? `<a href="${BASE_URL}/uploads/archivos/${c.ARCHIVO_ENVIADO_ID}" target="_blank">📄 PDF</a>`
+                            : "Pendiente"}
                     </td>
 
                     <td>
                         ${c.TOKEN
-                            ? `<a href="http://127.0.0.1:5500/frontend/firmar.html?token=${c.TOKEN}" target="_blank">✍️ Firmar</a>`
+                            ? `<a href="${FRONTEND_URL}/firmar.html?token=${c.TOKEN}" target="_blank">✍️ Firmar</a>`
                             : ""}
                     </td>
                 </tr>

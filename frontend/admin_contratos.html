@@ -103,6 +103,7 @@
 
     <script>
         const BASE_URL = "http://localhost:3000";
+        const FRONTEND_URL = "http://127.0.0.1:5500";
 
         function getAuthHeaders() {
             const token = localStorage.getItem("token");
@@ -139,9 +140,7 @@
                     const estado = (c.ESTADO || "").toUpperCase();
 
                     const estadoClass =
-                        estado === "FIRMADO"
-                            ? "text-success"
-                            : "text-warning";
+                        estado === "FIRMADO" ? "text-success" : "text-warning";
 
                     tbody.innerHTML += `
                 <tr>
@@ -157,13 +156,13 @@
 
                     <td>
                         ${c.ARCHIVO_ENVIADO_ID
-                            ? `<a href="${BASE_URL}/api/archivos/${c.ARCHIVO_ENVIADO_ID}" target="_blank">📄 PDF</a>`
+                            ? `<a href="${BASE_URL}/uploads/archivos/${c.ARCHIVO_ENVIADO_ID}" target="_blank">📄 PDF</a>`
                             : "Sin PDF"}
                     </td>
 
                     <td>
                         ${c.TOKEN
-                            ? `<a href="http://127.0.0.1:5500/frontend/firmar.html?token=${c.TOKEN}" target="_blank">✍️ Firma cliente</a>`
+                            ? `<a href="${FRONTEND_URL}/firmar.html?token=${c.TOKEN}" target="_blank">✍️ Firmar</a>`
                             : ""}
                     </td>
                 </tr>
@@ -172,6 +171,7 @@
 
             } catch (err) {
                 console.error(err);
+                alert("Error cargando contratos");
             }
         }
 
@@ -247,7 +247,7 @@
                         return;
                     }
 
-                    alert("Contrato generado y email enviado ✔");
+                    alert("Contrato generado y enviado ✔");
                     document.body.removeChild(box);
                     cargar();
                 };
@@ -263,7 +263,6 @@
 
         cargar();
     </script>
-
 </body>
 
 </html>
