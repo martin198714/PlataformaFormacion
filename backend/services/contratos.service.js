@@ -2,6 +2,7 @@ const db = require("../models/db");
 const { ESTADOS_CONTRATO } = require("../utils/estadosContrato");
 const { generarHash } = require("../utils/hash");
 const { generarPDFContrato } = require("./pdf.service");
+const nodemailer = require("nodemailer");
 
 function toArray(r) {
   if (!r) return [];
@@ -66,10 +67,17 @@ async function listarPorEmpresa(empresaId) {
 ========================= */
 async function crearContrato(empresaId, perfilId, usuarioId) {
 
+  // 🔹 1. obtener empresa (IMPORTANTE PARA EMAIL)
+  const empresa = await getEmpresaById(empresaId);
+
+  if (!empresa || !empresa.EMAIL) {
+    throw new Error("Empresa sin email válido");
+  }
+
   const token = generarHash({ empresaId, perfilId, time: Date.now() });
   const hashContrato = generarHash({ empresaId, perfilId, token });
 
-  // 1. INSERTAR PRIMERO
+  // 🔹 2. crear contrato primero
   const result = await db.query(
     `
     INSERT INTO CONTRATOS_MANTENIMIENTO
@@ -85,13 +93,13 @@ async function crearContrato(empresaId, perfilId, usuarioId) {
     ]
   );
 
-  const contratoId = result.insertId || result.lastInsertId;
+  const contratoId = result.insertId || result[0]?.insertId;
 
   if (!contratoId) {
-    throw new Error("No se pudo obtener el ID del contrato");
+    throw new Error("No se pudo obtener contratoId");
   }
 
-  // 2. GENERAR PDF CON ID REAL
+  // 🔹 3. generar PDF con ID real
   const pdf = await generarPDFContrato({
     contratoId,
     empresaId,
@@ -100,18 +108,26 @@ async function crearContrato(empresaId, perfilId, usuarioId) {
   });
 
   if (!pdf || !pdf.fileName) {
-    throw new Error("Datos insuficientes para generar PDF");
+    throw new Error("Error generando PDF");
   }
 
-  // 3. ACTUALIZAR CONTRATO CON PDF
+  // 🔹 4. actualizar contrato con PDF
   await db.query(
     `
     UPDATE CONTRATOS_MANTENIMIENTO
     SET ARCHIVO_ENVIADO_ID = ?
-    WHERE CONTRATO_ID = ?
+    WHERE ID = ?
     `,
     [pdf.fileName, contratoId]
   );
+
+  // 🔥 5. ENVIAR EMAIL (AQUÍ ESTÁ LO QUE TE FALTABA)
+  await enviarEmailContrato({
+    to: empresa.EMAIL,
+    empresaNombre: empresa.NOMBRE,
+    token,
+    contratoId
+  });
 
   return {
     ok: true,
