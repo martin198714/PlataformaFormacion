@@ -107,13 +107,13 @@
                     return;
                 }
 
-                contratoId = data.ID;
+                contratoId = data.ID || data.id;
 
                 document.getElementById("estado").innerText =
                     "Contrato listo para firma";
 
                 document.getElementById("pdfViewer").src =
-                    `${BASE_URL}/api/archivos/${data.ARCHIVO_ENVIADO_ID}`;
+                    `${BASE_URL}/uploads/${data.ARCHIVO_ENVIADO_ID}`;
 
             } catch (err) {
                 console.error(err);
@@ -133,12 +133,7 @@
 
                 const res = await fetch(`${BASE_URL}/api/contratos/firmar/${contratoId}`, {
                     method: "POST",
-                    body: formData,
-                    headers: {
-                        Authorization: localStorage.getItem("token")
-                            ? `Bearer ${localStorage.getItem("token")}`
-                            : ""
-                    }
+                    body: formData
                 });
 
                 const data = await res.json();
@@ -150,7 +145,7 @@
                 }
 
                 document.getElementById("resultado").innerText =
-                    "Contrato firmado correctamente ✔";
+                    "Contrato firmado ✔";
 
             } catch (err) {
                 console.error(err);
