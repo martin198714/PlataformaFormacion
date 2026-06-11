@@ -21,15 +21,27 @@ const {
 } = require("../controllers/videosController");
 
 /* =========================
+   CONTRATOS CONTROLLER (AÑADIDO)
+========================= */
+const contratosController = require("../controllers/contratosController");
+const { authMiddleware } = require("../middlewares/auth");
+
+/* =========================
    DIRECTORIOS
 ========================= */
 const base = path.join(__dirname, "..", "uploads");
+
 const archivosDir = path.join(base, "archivos");
 const videosDir = path.join(base, "videos");
 const capitulosDir = path.join(base, "capitulos");
 const tempDir = path.join(base, "temp");
 
-[archivosDir, videosDir, capitulosDir, tempDir].forEach((d) => {
+/* 🔥 NUEVO: contratos firmados */
+const contratosDir = path.join(base, "contratos");
+const firmadosDir = path.join(base, "firmados");
+
+[archivosDir, videosDir, capitulosDir, tempDir, contratosDir, firmadosDir]
+.forEach((d) => {
   if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
 });
 
@@ -103,6 +115,18 @@ const uploadCapitulo = multer({
 });
 
 /* =========================
+   🔥 NUEVO: CONTRATOS UPLOAD (PDF FIRMADO)
+========================= */
+const uploadContrato = multer({
+  storage: storage(firmadosDir),
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === "application/pdf") cb(null, true);
+    else cb(new Error("Solo se permiten PDFs"));
+  }
+});
+
+/* =========================
    MIDDLEWARE USER FIX
 ========================= */
 function ensureUser(req, res, next) {
@@ -147,7 +171,7 @@ router.delete("/videos/:videoId", deleteVideo);
 ========================= */
 router.get("/capitulos", getChapters);
 
-/* CHUNKS (PROGRESS BAR) */
+/* CHUNKS */
 router.post(
   "/capitulos/simple",
   ensureUser,
@@ -157,7 +181,7 @@ router.post(
   }
 );
 
-/* UPLOAD MASIVO TRADICIONAL */
+/* UPLOAD MASIVO */
 router.post(
   "/videos/:videoId/capitulos",
   ensureUser,
@@ -179,6 +203,7 @@ router.post(
       if (!res.headersSent) {
         res.json({ ok: true, message: "Subida completada" });
       }
+
     } catch (err) {
       res.status(500).json({ error: "Error subiendo capítulos" });
     }
@@ -206,5 +231,17 @@ router.post("/capitulo/:chapterId/play", playChapter);
 ========================= */
 router.delete("/capitulos/cleanup-file", cleanupFile);
 router.delete("/capitulos/cleanup-temp", cleanupTemp);
+
+/* =========================
+   🔥 CONTRATOS (NUEVO FLUJO FIRMA)
+========================= */
+
+/* SUBIR PDF FIRMADO */
+router.post(
+  "/contratos/firmar/:id",
+  ensureUser,
+  uploadContrato.single("pdf"),
+  contratosController.firmar
+);
 
 module.exports = router;
