@@ -2,69 +2,8 @@ const contratosService = require("../services/contratos.service");
 const { ESTADOS_CONTRATO } = require("../utils/estadosContrato");
 const { aplicarFirmaPDF } = require("../services/pdf.service");
 
-exports.firmar = async (req, res) => {
-  try {
-
-    const contratoId = Number(req.params.id);
-    const usuarioId = req.user?.id;
-
-    if (!usuarioId) {
-      return res.status(401).json({ error: "No autenticado" });
-    }
-
-    if (isNaN(contratoId)) {
-      return res.status(400).json({ error: "Contrato inválido" });
-    }
-
-    if (!req.file) {
-      return res.status(400).json({ error: "Falta PDF firmado" });
-    }
-
-    /* =========================
-       1. Obtener contrato
-    ========================= */
-    const contrato = await contratosService.verContrato(contratoId);
-
-    if (!contrato) {
-      return res.status(404).json({ error: "Contrato no encontrado" });
-    }
-
-    /* =========================
-       2. Aplicar firma real al PDF
-    ========================= */
-    const firmado = await aplicarFirmaPDF({
-      pdfPath: req.file.path,
-      contratoId,
-      usuarioId,
-      hash: contrato.HASH_CONTRATO,
-      ip: req.ip
-    });
-
-    /* =========================
-       3. Guardar en BD
-    ========================= */
-    await contratosService.marcarFirmadoArchivo({
-      contratoId,
-      usuarioId,
-      archivoFirmado: firmado.firmadoNombre
-    });
-
-    res.json({
-      ok: true,
-      mensaje: "Contrato firmado correctamente",
-      firmado
-    });
-
-  } catch (err) {
-    res.status(500).json({
-      error: "Error al firmar contrato",
-      detalle: err.message
-    });
-  }
-};
-
 /* =========================
-   SAFE
+   UTIL
 ========================= */
 function safe(value) {
   return value === null || value === undefined ? "" : value;
@@ -75,19 +14,14 @@ function normalizeContrato(c) {
 
   return {
     ...c,
-
     EMPRESA_ID: safe(c.EMPRESA_ID),
     PERFIL_ID: safe(c.PERFIL_ID),
     ESTADO: safe(c.ESTADO),
-
     TOKEN: safe(c.TOKEN || c.TOKEN_FIRMA),
-
     ARCHIVO_ENVIADO_ID: safe(c.ARCHIVO_ENVIADO_ID),
     ARCHIVO_FIRMADO_ID: safe(c.ARCHIVO_FIRMADO_ID),
-
     FECHA_ENVIO: safe(c.FECHA_ENVIO),
     FECHA_FIRMA: safe(c.FECHA_FIRMA),
-
     USUARIO_FIRMA_ID: safe(c.USUARIO_FIRMA_ID),
   };
 }
@@ -103,11 +37,10 @@ exports.listar = async (req, res) => {
     const datos = await contratosService.listarPorUsuario(usuarioId);
 
     res.json((datos || []).map(normalizeContrato));
-
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({
       error: "Error al listar contratos",
-      detalle: error.message,
+      detalle: err.message,
     });
   }
 };
@@ -125,7 +58,6 @@ exports.listarPorEmpresa = async (req, res) => {
     const datos = await contratosService.listarPorEmpresa(empresaId);
 
     res.json((datos || []).map(normalizeContrato));
-
   } catch (err) {
     res.status(500).json({
       error: "Error al listar contratos",
@@ -135,7 +67,7 @@ exports.listarPorEmpresa = async (req, res) => {
 };
 
 /* =========================
-   CREAR (FIX CRÍTICO)
+   CREAR CONTRATO
 ========================= */
 exports.crear = async (req, res) => {
   try {
@@ -156,109 +88,14 @@ exports.crear = async (req, res) => {
 
     res.json({
       ok: true,
-      token: result.token,
-      contrato: null // 🔥 FIX: el service no devuelve contrato
+      contratoId: result?.contratoId || null,
+      token: result?.token || null,
+      linkFirma: result?.linkFirma || null,
     });
 
   } catch (err) {
     res.status(500).json({
       error: "Error al crear contrato",
-      detalle: err.message,
-    });
-  }
-};
-
-/* =========================
-   FIRMAR PDF
-========================= */
-exports.firmar = async (req, res) => {
-  try {
-
-    const contratoId = Number(req.params.id);
-    const usuarioId = req.user?.id;
-
-    if (!usuarioId) {
-      return res.status(401).json({ error: "No autenticado" });
-    }
-
-    if (isNaN(contratoId)) {
-      return res.status(400).json({ error: "Contrato inválido" });
-    }
-
-    if (!req.file) {
-      return res.status(400).json({ error: "Falta PDF firmado" });
-    }
-
-    /* =========================
-       1. Obtener contrato
-    ========================= */
-    const contrato = await contratosService.verContrato(contratoId);
-
-    if (!contrato) {
-      return res.status(404).json({ error: "Contrato no encontrado" });
-    }
-
-    /* =========================
-       2. Aplicar firma real al PDF
-    ========================= */
-    const firmado = await aplicarFirmaPDF({
-      pdfPath: req.file.path,
-      contratoId,
-      usuarioId,
-      hash: contrato.HASH_CONTRATO,
-      ip: req.ip
-    });
-
-    /* =========================
-       3. Guardar en BD
-    ========================= */
-    await contratosService.marcarFirmadoArchivo({
-      contratoId,
-      usuarioId,
-      archivoFirmado: firmado.firmadoNombre
-    });
-
-    res.json({
-      ok: true,
-      mensaje: "Contrato firmado correctamente",
-      firmado
-    });
-
-  } catch (err) {
-    res.status(500).json({
-      error: "Error al firmar contrato",
-      detalle: err.message
-    });
-  }
-};
-
-/* =========================
-   FIRMAR TOKEN (FIX IP)
-========================= */
-exports.firmarPorToken = async (req, res) => {
-  try {
-    const token = req.params.token;
-    if (!token) return res.status(400).json({ error: "Token inválido" });
-
-    const result = await contratosService.firmarContratoToken({
-      token,
-      usuarioId: req.user?.id || null,
-      ip:
-        req.headers["x-forwarded-for"] ||
-        req.socket?.remoteAddress ||
-        "",
-      userAgent: req.headers["user-agent"]
-    });
-
-    res.json({
-      ok: true,
-      estado: ESTADOS_CONTRATO.BLOQUEADO,
-      result
-    });
-
-  } catch (err) {
-    res.status(500).json({
-      error: "Error en firma por token",
       detalle: err.message,
     });
   }
@@ -275,12 +112,13 @@ exports.verContrato = async (req, res) => {
     const contrato = await contratosService.verContrato(id);
     if (!contrato) return res.status(404).json({ error: "Contrato no encontrado" });
 
-    res.json(normalizeContrato({
-      ...contrato,
-      estado_definido:
-        ESTADOS_CONTRATO?.[contrato.ESTADO] || contrato.ESTADO
-    }));
-
+    res.json(
+      normalizeContrato({
+        ...contrato,
+        estado_definido:
+          ESTADOS_CONTRATO?.[contrato.ESTADO] || contrato.ESTADO,
+      })
+    );
   } catch (err) {
     res.status(500).json({
       error: "Error al obtener contrato",
@@ -290,7 +128,7 @@ exports.verContrato = async (req, res) => {
 };
 
 /* =========================
-   VER POR TOKEN
+   VER POR TOKEN (PÚBLICO)
 ========================= */
 exports.verContratoPorToken = async (req, res) => {
   try {
@@ -301,10 +139,84 @@ exports.verContratoPorToken = async (req, res) => {
     if (!contrato) return res.status(404).json({ error: "Contrato no encontrado" });
 
     res.json(normalizeContrato(contrato));
-
   } catch (err) {
     res.status(500).json({
       error: "Error al obtener contrato por token",
+      detalle: err.message,
+    });
+  }
+};
+
+/* =========================
+   FIRMAR PDF SUBIDO
+========================= */
+exports.firmar = async (req, res) => {
+  try {
+    const contratoId = Number(req.params.id);
+    const usuarioId = req.user?.id;
+
+    if (!usuarioId) return res.status(401).json({ error: "No autenticado" });
+    if (isNaN(contratoId)) return res.status(400).json({ error: "Contrato inválido" });
+    if (!req.file) return res.status(400).json({ error: "Falta PDF firmado" });
+
+    const contrato = await contratosService.verContrato(contratoId);
+    if (!contrato) return res.status(404).json({ error: "Contrato no encontrado" });
+
+    const firmado = await aplicarFirmaPDF({
+      pdfPath: req.file.path,
+      contratoId,
+      usuarioId,
+      hash: contrato.HASH_CONTRATO,
+      ip: req.ip,
+    });
+
+    await contratosService.marcarFirmadoArchivo({
+      contratoId,
+      usuarioId,
+      archivoFirmado: firmado.firmadoNombre,
+    });
+
+    res.json({
+      ok: true,
+      mensaje: "Contrato firmado correctamente",
+      firmado,
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      error: "Error al firmar contrato",
+      detalle: err.message,
+    });
+  }
+};
+
+/* =========================
+   FIRMAR POR TOKEN
+========================= */
+exports.firmarPorToken = async (req, res) => {
+  try {
+    const token = req.params.token;
+    if (!token) return res.status(400).json({ error: "Token inválido" });
+
+    const result = await contratosService.firmarContratoToken({
+      token,
+      usuarioId: req.user?.id || null,
+      ip:
+        req.headers["x-forwarded-for"] ||
+        req.socket?.remoteAddress ||
+        "",
+      userAgent: req.headers["user-agent"],
+    });
+
+    res.json({
+      ok: true,
+      estado: ESTADOS_CONTRATO.FIRMADO,
+      result,
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      error: "Error en firma por token",
       detalle: err.message,
     });
   }
