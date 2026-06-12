@@ -5,14 +5,10 @@ const contratosController = require("../controllers/contratosController");
 const { authMiddleware } = require("../middlewares/auth");
 
 /* =========================
-   CONTRATOS (PROTEGIDO)
+   CONTRATOS PROTEGIDOS
 ========================= */
 
-router.get(
-  "/",
-  authMiddleware,
-  contratosController.listar
-);
+router.get("/", authMiddleware, contratosController.listar);
 
 router.get(
   "/empresa/:empresaId",
@@ -20,30 +16,26 @@ router.get(
   contratosController.listarPorEmpresa
 );
 
-router.post(
-  "/crear",
-  authMiddleware,
-  contratosController.crear
-);
+router.post("/crear", authMiddleware, contratosController.crear);
 
 /* =========================
-   FIRMA POR TOKEN (PÚBLICO)
-   IMPORTANTE:
-   Debe ir antes de "/:id"
+   TOKEN (PÚBLICO)
 ========================= */
 
+// VER CONTRATO
 router.get(
-  "/firma/:token",
+  "/token/:token",
   contratosController.verContratoPorToken
 );
 
+// FIRMAR CONTRATO
 router.post(
-  "/firmar/token/:token",
+  "/token/:token/firmar",
   contratosController.firmarPorToken
 );
 
 /* =========================
-   FIRMA PDF SUBIDO
+   FIRMA PDF SUBIDO (ADMIN)
 ========================= */
 
 router.post(
@@ -53,7 +45,7 @@ router.post(
 );
 
 /* =========================
-   VER CONTRATO (PROTEGIDO)
+   DETALLE CONTRATO
 ========================= */
 
 router.get(
