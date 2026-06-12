@@ -59,19 +59,34 @@
 
     <div class="container">
 
-        <h2>Firma de contrato</h2>
+        <h2>📄 Firma de contrato</h2>
 
         <div id="estado" class="info">Cargando contrato...</div>
 
-        <iframe id="pdfViewer"></iframe>
+        <!-- =========================
+         VISOR PDF
+    ========================= -->
+        <iframe id="pdfViewer" style="width:100%; height:500px; border:1px solid #ccc; border-radius:8px;"></iframe>
 
+        <!-- fallback -->
+        <p id="pdfError" style="color:red; display:none;">
+            ⚠ No se pudo cargar el PDF del contrato
+        </p>
+
+        <!-- =========================
+         SUBIR FIRMA
+    ========================= -->
         <h3>Subir contrato firmado</h3>
 
         <input type="file" id="file" accept="application/pdf" />
-        <br>
 
-        <button class="btn" onclick="subirFirma()">Firmar contrato</button>
+        <br><br>
 
+        <button class="btn" onclick="subirFirma()">
+            ✔ Firmar contrato
+        </button>
+
+        <!-- resultado -->
         <div id="resultado" class="info"></div>
 
     </div>
@@ -83,9 +98,12 @@
     <script>
         const BASE_URL = "http://localhost:3000";
 
-        let contratoId = null;
         let token = null;
+        let contrato = null;
 
+        /* =========================
+           OBTENER TOKEN URL
+        ========================= */
         function getToken() {
             return new URLSearchParams(window.location.search).get("token");
         }
@@ -98,65 +116,66 @@
                 token = getToken();
 
                 if (!token) {
-                    document.getElementById("estado").innerText = "Token no válido";
+                    document.getElementById("estado").innerText = "❌ Token no válido";
                     return;
                 }
 
-                const res = await fetch(`${BASE_URL}/api/contratos/firma/${token}`);
+                const res = await fetch(
+                    `${BASE_URL}/api/contratos/firma/${token}`
+                );
+
                 const data = await res.json();
 
                 if (!res.ok) {
                     document.getElementById("estado").innerText =
-                        data.error || "Error cargando contrato";
+                        data.error || "❌ Contrato no encontrado";
                     return;
                 }
 
-                contratoId = data.ID || data.id;
+                contrato = data;
 
                 document.getElementById("estado").innerText =
-                    "Contrato listo para firma";
+                    "✔ Contrato listo para firma";
 
                 /* =========================
-                   PDF (FIX REAL)
+                   MOSTRAR PDF
                 ========================= */
                 const pdfViewer = document.getElementById("pdfViewer");
 
-                // 🔥 AQUÍ ESTÁ EL FIX IMPORTANTE
                 const fileName =
                     data.FICHERO_NOMBRE ||
                     data.fileName ||
-                    data.ARCHIVO_NOMBRE ||
-                    null;
+                    data.ARCHIVO_NOMBRE;
 
-                if (fileName && fileName !== "") {
+                if (fileName) {
                     pdfViewer.src = `${BASE_URL}/uploads/contratos/${fileName}`;
                 } else {
                     document.getElementById("estado").innerText =
-                        "Este contrato no tiene PDF asociado";
+                        "⚠ Este contrato no tiene PDF asociado";
                 }
 
             } catch (err) {
                 console.error(err);
                 document.getElementById("estado").innerText =
-                    "Error cargando contrato";
+                    "❌ Error cargando contrato";
             }
         }
 
         /* =========================
-           SUBIR FIRMA (PDF FIRMADO)
+           FIRMAR CONTRATO
         ========================= */
         async function subirFirma() {
             try {
                 const file = document.getElementById("file").files[0];
 
                 if (!file) return alert("Selecciona un PDF");
-                if (!contratoId) return alert("Contrato no cargado");
+                if (!token) return alert("Token no válido");
 
                 const formData = new FormData();
                 formData.append("pdf", file);
 
                 const res = await fetch(
-                    `${BASE_URL}/api/contratos/firmar/${contratoId}`,
+                    `${BASE_URL}/api/contratos/firmar/token/${token}`,
                     {
                         method: "POST",
                         body: formData
@@ -167,18 +186,26 @@
 
                 if (!res.ok) {
                     document.getElementById("resultado").innerText =
-                        data.error || "Error al firmar";
+                        data.error || "❌ Error al firmar";
                     return;
                 }
 
                 document.getElementById("resultado").innerText =
-                    "Contrato firmado ✔";
+                    "✔ Contrato firmado correctamente";
+
+                document.getElementById("estado").innerText =
+                    "✔ Firma completada";
 
             } catch (err) {
                 console.error(err);
+                document.getElementById("resultado").innerText =
+                    "❌ Error inesperado";
             }
         }
 
+        /* =========================
+           INICIALIZAR
+        ========================= */
         cargarContrato();
     </script>
 

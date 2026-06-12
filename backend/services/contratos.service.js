@@ -3,6 +3,7 @@ const { ESTADOS_CONTRATO } = require("../utils/estadosContrato");
 const { generarHash } = require("../utils/hash");
 const { generarPDFContrato } = require("./pdf.service");
 const nodemailer = require("nodemailer");
+const { v4: uuidv4 } = require("uuid");
 
 /* =========================
    NORMALIZADOR DB
@@ -70,9 +71,6 @@ async function listarPorEmpresa(empresaId) {
 ========================= */
 async function crearContrato(empresaId, perfilId, usuarioId) {
   try {
-    /* =========================
-       1. EMPRESA
-    ========================= */
     const empresaRes = await db.query(
       "SELECT * FROM EMPRESAS WHERE EMPRESA_ID = ?",
       [empresaId]
@@ -81,9 +79,6 @@ async function crearContrato(empresaId, perfilId, usuarioId) {
     const empresa = toArray(empresaRes)[0];
     if (!empresa) throw new Error("Empresa no encontrada");
 
-    /* =========================
-       2. PERFIL
-    ========================= */
     const perfilRes = await db.query(
       "SELECT * FROM PERFILES WHERE ID = ?",
       [perfilId]
@@ -92,9 +87,6 @@ async function crearContrato(empresaId, perfilId, usuarioId) {
     const perfil = toArray(perfilRes)[0];
     if (!perfil) throw new Error("Perfil no encontrado");
 
-    /* =========================
-       3. USUARIOS DEL PERFIL
-    ========================= */
     const usuariosRes = await db.query(
       `
       SELECT u.USUARIO_ID, u.EMAIL, u.NOMBRE_COMPLETO
@@ -112,13 +104,9 @@ async function crearContrato(empresaId, perfilId, usuarioId) {
     }
 
     /* =========================
-       4. TOKENS
+       TOKEN SEGURO
     ========================= */
-    const token = generarHash({
-      empresaId,
-      perfilId,
-      time: Date.now(),
-    });
+    const token = uuidv4();
 
     const hashContrato = generarHash({
       empresaId,
@@ -126,9 +114,6 @@ async function crearContrato(empresaId, perfilId, usuarioId) {
       token,
     });
 
-    /* =========================
-       5. INSERT (FIX FIREBIRD SIN RETURNING)
-    ========================= */
     await db.query(
       `
       INSERT INTO CONTRATOS_MANTENIMIENTO
@@ -138,7 +123,6 @@ async function crearContrato(empresaId, perfilId, usuarioId) {
       [empresaId, perfilId, "PENDIENTE", token, hashContrato]
     );
 
-    // 🔥 RECUPERAR ID DE FORMA SEGURA
     const idRes = await db.query(
       `
       SELECT FIRST 1 ID
@@ -150,14 +134,8 @@ async function crearContrato(empresaId, perfilId, usuarioId) {
     );
 
     const contratoId = toArray(idRes)[0]?.ID;
+    if (!contratoId) throw new Error("No se pudo obtener ID");
 
-    if (!contratoId) {
-      throw new Error("No se pudo obtener ID del contrato");
-    }
-
-    /* =========================
-       6. PDF
-    ========================= */
     const pdf = await generarPDFContrato({
       contratoId,
       empresaId,
@@ -165,14 +143,9 @@ async function crearContrato(empresaId, perfilId, usuarioId) {
       hash: hashContrato,
     });
 
-    if (!pdf?.fileName) {
-      throw new Error("Error generando PDF");
-    }
+    if (!pdf?.fileName) throw new Error("Error generando PDF");
 
-    /* =========================
-       7. GUARDAR ARCHIVO
-    ========================= */
-    const archivoInsert = await db.query(
+    await db.query(
       `
       INSERT INTO ARCHIVOS
       (TITULO, URL, FICHERO_NOMBRE, CREADO_POR, DESCRIPCION)
@@ -187,7 +160,6 @@ async function crearContrato(empresaId, perfilId, usuarioId) {
       ]
     );
 
-    // 🔥 RECUPERAR ID ARCHIVO (MISMO FIX)
     const archivoRes = await db.query(
       `
       SELECT FIRST 1 ARCHIVO_ID
@@ -199,14 +171,8 @@ async function crearContrato(empresaId, perfilId, usuarioId) {
     );
 
     const archivoId = toArray(archivoRes)[0]?.ARCHIVO_ID;
+    if (!archivoId) throw new Error("No se pudo guardar archivo");
 
-    if (!archivoId) {
-      throw new Error("No se pudo guardar archivo");
-    }
-
-    /* =========================
-       8. UPDATE CONTRATO
-    ========================= */
     await db.query(
       `
       UPDATE CONTRATOS_MANTENIMIENTO
@@ -216,9 +182,6 @@ async function crearContrato(empresaId, perfilId, usuarioId) {
       [archivoId, contratoId]
     );
 
-    /* =========================
-       9. EMAILS
-    ========================= */
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -230,66 +193,33 @@ async function crearContrato(empresaId, perfilId, usuarioId) {
     const linkFirma = `http://127.0.0.1:5500/frontend/firmar.html?token=${token}`;
 
     for (const u of usuarios) {
-      try {
-        await transporter.sendMail({
-          from: '"Plataforma Formación" <no-reply@plataforma.com>',
-          to: u.EMAIL,
-          subject: "📄 Contrato pendiente de firma",
-          html: `
-            <h2>Hola ${u.NOMBRE_COMPLETO}</h2>
-            <p>Se te ha asignado un contrato del perfil <b>${perfil.NOMBRE}</b></p>
-            <p>
-              <a href="${linkFirma}">
-                👉 Firmar contrato
-              </a>
-            </p>
-            <p><b>ID contrato:</b> ${contratoId}</p>
-          `,
-          attachments: [
-            {
-              filename: pdf.fileName,
-              path: pdf.filePath,
-            },
-          ],
-        });
-      } catch (e) {
-        console.error("❌ Error email:", u.EMAIL, e.message);
-      }
+      await transporter.sendMail({
+        from: '"Plataforma" <no-reply@plataforma.com>',
+        to: u.EMAIL,
+        subject: "Contrato pendiente de firma",
+        html: `
+          <h2>Hola ${u.NOMBRE_COMPLETO}</h2>
+          <p>Tienes un contrato pendiente</p>
+          <a href="${linkFirma}">Firmar contrato</a>
+        `,
+        attachments: [
+          {
+            filename: pdf.fileName,
+            path: pdf.filePath,
+          },
+        ],
+      });
     }
 
-    /* =========================
-       10. RESPUESTA FINAL
-    ========================= */
-    return {
-      ok: true,
-      contratoId,
-      token,
-    };
-
+    return { ok: true, contratoId, token };
   } catch (err) {
-    console.error("💥 ERROR crearContrato:", err);
+    console.error(err);
     throw err;
   }
 }
 
 /* =========================
-   VER CONTRATO
-========================= */
-async function verContrato(id) {
-  const r = await db.query(
-    `
-    SELECT *
-    FROM CONTRATOS_MANTENIMIENTO
-    WHERE ID = ?
-  `,
-    [id]
-  );
-
-  return toArray(r)[0] || null;
-}
-
-/* =========================
-   TOKEN
+   OBTENER POR TOKEN
 ========================= */
 async function obtenerPorToken(token) {
   if (!token) throw new Error("Token inválido");
@@ -303,13 +233,16 @@ async function obtenerPorToken(token) {
     [token]
   );
 
-  return toArray(r)[0] || null;
+  const contrato = toArray(r)[0];
+  if (!contrato) throw new Error("Contrato no encontrado");
+
+  return contrato;
 }
 
 /* =========================
-   FIRMA TOKEN
+   FIRMA CONTRATO
 ========================= */
-async function firmarContratoToken({ token, usuarioId, ip, userAgent }) {
+async function firmarContratoToken({ token, ip, userAgent }) {
   const r = await db.query(
     `
     SELECT FIRST 1 *
@@ -322,16 +255,12 @@ async function firmarContratoToken({ token, usuarioId, ip, userAgent }) {
   const c = toArray(r)[0];
   if (!c) throw new Error("Contrato no existe");
 
-  if (
-    c.ESTADO === ESTADOS_CONTRATO.FIRMADO ||
-    c.ESTADO === ESTADOS_CONTRATO.BLOQUEADO
-  ) {
+  if (c.ESTADO === ESTADOS_CONTRATO.FIRMADO) {
     throw new Error("Contrato ya firmado");
   }
 
   const hashFirma = generarHash({
     contratoId: c.ID,
-    usuarioId,
     ip,
     userAgent,
     timestamp: Date.now(),
@@ -341,7 +270,6 @@ async function firmarContratoToken({ token, usuarioId, ip, userAgent }) {
     `
     UPDATE CONTRATOS_MANTENIMIENTO
     SET
-      USUARIO_FIRMA_ID = ?,
       FECHA_FIRMA = CURRENT_TIMESTAMP,
       IP_FIRMA = ?,
       USER_AGENT = ?,
@@ -349,7 +277,7 @@ async function firmarContratoToken({ token, usuarioId, ip, userAgent }) {
       HASH_FIRMADO = ?
     WHERE ID = ?
   `,
-    [usuarioId, ip, userAgent, ESTADOS_CONTRATO.FIRMADO, hashFirma, c.ID]
+    [ip, userAgent, ESTADOS_CONTRATO.FIRMADO, hashFirma, c.ID]
   );
 
   return {
@@ -366,7 +294,6 @@ module.exports = {
   listarPorUsuario,
   listarPorEmpresa,
   crearContrato,
-  firmarContratoToken,
-  verContrato,
   obtenerPorToken,
+  firmarContratoToken,
 };
