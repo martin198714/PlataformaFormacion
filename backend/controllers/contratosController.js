@@ -155,37 +155,47 @@ exports.firmar = async (req, res) => {
     const contratoId = Number(req.params.id);
     const usuarioId = req.user?.id;
 
-    if (!usuarioId) return res.status(401).json({ error: "No autenticado" });
-    if (isNaN(contratoId)) return res.status(400).json({ error: "Contrato inválido" });
-    if (!req.file) return res.status(400).json({ error: "Falta PDF firmado" });
+    if (!usuarioId) {
+      return res.status(401).json({ error: "No autenticado" });
+    }
+
+    if (isNaN(contratoId)) {
+      return res.status(400).json({ error: "Contrato inválido" });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: "Falta PDF firmado" });
+    }
 
     const contrato = await contratosService.verContrato(contratoId);
-    if (!contrato) return res.status(404).json({ error: "Contrato no encontrado" });
 
-    const firmado = await aplicarFirmaPDF({
-      pdfPath: req.file.path,
-      contratoId,
-      usuarioId,
-      hash: contrato.HASH_CONTRATO,
-      ip: req.ip,
-    });
+    if (!contrato) {
+      return res.status(404).json({ error: "Contrato no encontrado" });
+    }
+
+    // 👇 ESTO ES LO IMPORTANTE
+    const archivoFirmado = req.file.filename; // solo nombre
+    const rutaFirmado = req.file.path; // ruta completa
 
     await contratosService.marcarFirmadoArchivo({
       contratoId,
       usuarioId,
-      archivoFirmado: firmado.firmadoNombre,
+      archivoFirmado,
+      rutaFirmado
     });
 
     res.json({
       ok: true,
       mensaje: "Contrato firmado correctamente",
-      firmado,
+      archivo: archivoFirmado,
+      ruta: rutaFirmado
     });
 
   } catch (err) {
+    console.error(err);
     res.status(500).json({
       error: "Error al firmar contrato",
-      detalle: err.message,
+      detalle: err.message
     });
   }
 };

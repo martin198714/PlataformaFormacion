@@ -21,9 +21,11 @@ const {
 } = require("../controllers/videosController");
 
 /* =========================
-   CONTRATOS CONTROLLER (AÑADIDO)
+   CONTRATOS CONTROLLER
 ========================= */
 const contratosController = require("../controllers/contratosController");
+
+/* ⚠️ IMPORTANTE: si lo usas en otros endpoints, deja authMiddleware */
 const { authMiddleware } = require("../middlewares/auth");
 
 /* =========================
@@ -36,10 +38,11 @@ const videosDir = path.join(base, "videos");
 const capitulosDir = path.join(base, "capitulos");
 const tempDir = path.join(base, "temp");
 
-/* 🔥 NUEVO: contratos firmados */
+/* 🔥 CONTRATOS */
 const contratosDir = path.join(base, "contratos");
 const firmadosDir = path.join(base, "firmados");
 
+/* CREAR CARPETAS SI NO EXISTEN */
 [archivosDir, videosDir, capitulosDir, tempDir, contratosDir, firmadosDir]
 .forEach((d) => {
   if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
@@ -70,7 +73,7 @@ const allowedVideos = [
 ];
 
 /* =========================
-   MULTER STORAGE
+   STORAGE GENERAL
 ========================= */
 const storage = (folder) =>
   multer.diskStorage({
@@ -85,7 +88,7 @@ const storage = (folder) =>
   });
 
 /* =========================
-   MEMORY UPLOAD (CHUNKS)
+   MEMORY UPLOAD
 ========================= */
 const memoryStorage = multer.memoryStorage();
 const uploadMemory = multer({ storage: memoryStorage });
@@ -115,10 +118,10 @@ const uploadCapitulo = multer({
 });
 
 /* =========================
-   🔥 NUEVO: CONTRATOS UPLOAD (PDF FIRMADO)
+   🔥 PDF FIRMADOS (IMPORTANTE)
 ========================= */
 const uploadContrato = multer({
-  storage: storage(firmadosDir),
+  storage: storage(firmadosDir),   // 👈 GUARDA AQUÍ
   limits: { fileSize: 20 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (file.mimetype === "application/pdf") cb(null, true);
@@ -181,67 +184,28 @@ router.post(
   }
 );
 
-/* UPLOAD MASIVO */
-router.post(
-  "/videos/:videoId/capitulos",
-  ensureUser,
-  uploadCapitulo.array("capitulos", 50),
-  async (req, res) => {
-    try {
-      for (const file of req.files) {
-        await createChapter({
-          ...req,
-          file,
-          params: req.params,
-          body: {
-            ...req.body,
-            titulo: file.originalname
-          }
-        }, res);
-      }
-
-      if (!res.headersSent) {
-        res.json({ ok: true, message: "Subida completada" });
-      }
-
-    } catch (err) {
-      res.status(500).json({ error: "Error subiendo capítulos" });
-    }
-  }
-);
-
 /* =========================
-   CAPÍTULO INDIVIDUAL
-========================= */
-router.put(
-  "/capitulo/:chapterId",
-  ensureUser,
-  uploadCapitulo.single("capitulo"),
-  async (req, res) => {
-    await updateChapter(req, res);
-  }
-);
-
-router.delete("/capitulo/:chapterId", deleteChapter);
-
-router.post("/capitulo/:chapterId/play", playChapter);
-
-/* =========================
-   LIMPIEZA
-========================= */
-router.delete("/capitulos/cleanup-file", cleanupFile);
-router.delete("/capitulos/cleanup-temp", cleanupTemp);
-
-/* =========================
-   🔥 CONTRATOS (NUEVO FLUJO FIRMA)
+   CONTRATOS (🔥 FIRMA CORRECTA)
 ========================= */
 
-/* SUBIR PDF FIRMADO */
+/*
+   ✔ ESTE ES EL ENDPOINT REAL QUE DEBE USAR TU FRONT
+   ✔ GUARDA EN: uploads/firmados
+*/
 router.post(
   "/contratos/firmar/:id",
   ensureUser,
   uploadContrato.single("pdf"),
-  contratosController.firmar
+  async (req, res, next) => {
+    try {
+      // aquí llega el archivo YA GUARDADO en uploads/firmados
+      console.log("📁 PDF firmado guardado en:", req.file.path);
+
+      await contratosController.firmar(req, res);
+    } catch (err) {
+      next(err);
+    }
+  }
 );
 
 module.exports = router;

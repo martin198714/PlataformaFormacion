@@ -218,6 +218,30 @@ async function crearContrato(empresaId, perfilId, usuarioId) {
   }
 }
 
+async function marcarFirmadoArchivo({ contratoId, usuarioId, archivoFirmado, rutaFirmado }) {
+  await db.query(
+    `
+    UPDATE CONTRATOS_MANTENIMIENTO
+    SET 
+      ESTADO = ?,
+      FECHA_FIRMA = CURRENT_TIMESTAMP,
+      USUARIO_FIRMA_ID = ?,
+      ARCHIVO_FIRMADO = ?,
+      RUTA_FIRMADO = ?
+    WHERE ID = ?
+    `,
+    [
+      ESTADOS_CONTRATO.FIRMADO,
+      usuarioId,
+      archivoFirmado,
+      rutaFirmado,
+      contratoId
+    ]
+  );
+
+  return true;
+}
+
 /* =========================
    OBTENER POR TOKEN
 ========================= */
@@ -294,6 +318,7 @@ module.exports = {
   listarPorUsuario,
   listarPorEmpresa,
   crearContrato,
+  marcarFirmadoArchivo,
   obtenerPorToken,
   firmarContratoToken,
 };
