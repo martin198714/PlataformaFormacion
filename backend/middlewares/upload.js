@@ -196,14 +196,25 @@ router.post(
   "/contratos/firmar/:id",
   ensureUser,
   uploadContrato.single("pdf"),
-  async (req, res, next) => {
+  async (req, res) => {
     try {
-      // aquí llega el archivo YA GUARDADO en uploads/firmados
-      console.log("📁 PDF firmado guardado en:", req.file.path);
+      if (!req.file) {
+        return res.status(400).json({ error: "No se recibió PDF" });
+      }
 
-      await contratosController.firmar(req, res);
+      console.log("📄 Archivo recibido:", req.file.filename);
+      console.log("📁 Guardado en:", req.file.path);
+
+      const result = await contratosController.firmar(req, res);
+
+      return result;
+
     } catch (err) {
-      next(err);
+      console.error("❌ ERROR FIRMA:", err);
+      res.status(500).json({
+        error: "Error al firmar contrato",
+        detalle: err.message
+      });
     }
   }
 );
