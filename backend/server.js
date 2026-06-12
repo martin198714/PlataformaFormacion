@@ -37,7 +37,10 @@ app.use((req, res, next) => {
 // BODY PARSER
 app.use(express.json({ limit: '1000mb' }));
 app.use(express.urlencoded({ limit: '1000mb', extended: true }));
+
 app.use("/img", express.static(path.join(__dirname, "img")));
+
+
 // ================= CREAR CARPETAS =================
 
 const uploadDirs = [
@@ -45,7 +48,9 @@ const uploadDirs = [
     'uploads/videos',
     'uploads/otros',
     'uploads/capitulos',
-    'uploads/temp'
+    'uploads/temp',
+    'uploads/contratos',   // 🔥 AÑADIDO
+    'uploads/firmados'     // 🔥 AÑADIDO
 ];
 
 uploadDirs.forEach(dir => {
@@ -60,7 +65,6 @@ const capitulosDir = path.join(__dirname, 'uploads/capitulos');
 
 // ================= RUTAS API =================
 
-// 🔥 CURSOS (con debug interno)
 app.use('/api/cursos', (req, res, next) => {
     console.log("📚 entrando en rutas cursos");
     next();
@@ -77,12 +81,15 @@ app.use('/api/soporte', soporteRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/historiales', historialesRoutes);
+
 app.use('/chat', (req, res, next) => {
     console.log("💬 CHAT ROUTE:", req.method, req.url);
     next();
 }, chatRoutes);
+
 app.use("/api/empresas", require("./routes/empresas"));
 app.use("/api/perfiles", require("./routes/perfiles"));
+
 
 // ================= RUTAS ESTÁTICAS =================
 
@@ -91,6 +98,16 @@ app.use('/uploads/videos', express.static(path.join(__dirname, 'uploads/videos')
 app.use('/uploads/capitulos', express.static(capitulosDir));
 app.use('/uploads/otros', express.static(path.join(__dirname, 'uploads/otros')));
 
+// 🔥 FIX IMPORTANTE (CONTRATOS)
+app.use(
+    '/uploads/contratos',
+    express.static(path.join(__dirname, 'uploads/contratos'))
+);
+
+app.use(
+    '/uploads/firmados',
+    express.static(path.join(__dirname, 'uploads/firmados'))
+);
 
 
 // ================= STREAM VIDEO =================
@@ -154,7 +171,7 @@ app.get('/api/videos/listar', (req, res) => {
         res.json(mp4s);
     });
 
-}); 
+});
 
 app.get('/', (req, res) => {
     res.send('API PlataformaFormacion funcionando correctamente')

@@ -4,6 +4,9 @@ const { generarHash } = require("../utils/hash");
 const { generarPDFContrato } = require("./pdf.service");
 const nodemailer = require("nodemailer");
 
+/* =========================
+   NORMALIZADOR DB
+========================= */
 function toArray(r) {
   if (!r) return [];
   if (Array.isArray(r)) return r;
@@ -67,95 +70,94 @@ async function listarPorEmpresa(empresaId) {
 ========================= */
 async function crearContrato(empresaId, perfilId, usuarioId) {
   try {
-    // =========================
-    // 1. EMPRESA
-    // =========================
-    const empresaResult = await db.query(
+    /* =========================
+       1. EMPRESA
+    ========================= */
+    const empresaRes = await db.query(
       "SELECT * FROM EMPRESAS WHERE EMPRESA_ID = ?",
       [empresaId]
     );
 
-    const empresa = empresaResult?.[0]?.[0] || empresaResult?.[0];
-
+    const empresa = toArray(empresaRes)[0];
     if (!empresa) throw new Error("Empresa no encontrada");
 
-    // =========================
-    // 2. PERFIL
-    // =========================
-    const perfilResult = await db.query(
+    /* =========================
+       2. PERFIL
+    ========================= */
+    const perfilRes = await db.query(
       "SELECT * FROM PERFILES WHERE ID = ?",
       [perfilId]
     );
 
-    const perfil = perfilResult?.[0]?.[0] || perfilResult?.[0];
-
+    const perfil = toArray(perfilRes)[0];
     if (!perfil) throw new Error("Perfil no encontrado");
 
-    // =========================
-    // 3. USUARIOS DEL PERFIL
-    // =========================
-    const usersResult = await db.query(
+    /* =========================
+       3. USUARIOS DEL PERFIL
+    ========================= */
+    const usuariosRes = await db.query(
       `
-      SELECT USUARIO_ID, EMAIL, NOMBRE
-      FROM USUARIOS
-      WHERE PERFIL_ID = ?
+      SELECT u.USUARIO_ID, u.EMAIL, u.NOMBRE_COMPLETO
+      FROM USUARIOS u
+      INNER JOIN USUARIOS_PERFILES up ON up.USUARIO_ID = u.USUARIO_ID
+      WHERE up.PERFIL_ID = ?
       `,
       [perfilId]
     );
 
-    const usuarios = usersResult?.[0] || [];
+    const usuarios = toArray(usuariosRes);
 
     if (!usuarios.length) {
-      throw new Error("No hay usuarios con ese perfil");
+      throw new Error("No hay usuarios asignados a ese perfil");
     }
 
-    // =========================
-    // 4. TOKENS
-    // =========================
+    /* =========================
+       4. TOKENS
+    ========================= */
     const token = generarHash({
       empresaId,
       perfilId,
-      time: Date.now()
+      time: Date.now(),
     });
 
     const hashContrato = generarHash({
       empresaId,
       perfilId,
-      token
+      token,
     });
 
-    // =========================
-    // 5. INSERT CONTRATO (FIREBIRD SAFE)
-    // =========================
-    const insertResult = await db.query(
+    /* =========================
+       5. INSERT (FIX FIREBIRD SIN RETURNING)
+    ========================= */
+    await db.query(
       `
       INSERT INTO CONTRATOS_MANTENIMIENTO
       (EMPRESA_ID, PERFIL_ID, ESTADO, TOKEN, HASH_CONTRATO, FECHA_ENVIO)
       VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-      RETURNING ID
       `,
-      [
-        empresaId,
-        perfilId,
-        "PENDIENTE",
-        token,
-        hashContrato
-      ]
+      [empresaId, perfilId, "PENDIENTE", token, hashContrato]
     );
 
-    const contratoId =
-      insertResult?.[0]?.ID ||
-      insertResult?.[0]?.[0]?.ID;
+    // 🔥 RECUPERAR ID DE FORMA SEGURA
+    const idRes = await db.query(
+      `
+      SELECT FIRST 1 ID
+      FROM CONTRATOS_MANTENIMIENTO
+      WHERE TOKEN = ?
+      ORDER BY ID DESC
+      `,
+      [token]
+    );
+
+    const contratoId = toArray(idRes)[0]?.ID;
 
     if (!contratoId) {
       throw new Error("No se pudo obtener ID del contrato");
     }
 
-    console.log("📦 CONTRATO CREADO:", contratoId);
-
-    // =========================
-    // 6. PDF
-    // =========================
+    /* =========================
+       6. PDF
+    ========================= */
     const pdf = await generarPDFContrato({
       contratoId,
       empresaId,
@@ -167,89 +169,101 @@ async function crearContrato(empresaId, perfilId, usuarioId) {
       throw new Error("Error generando PDF");
     }
 
+    /* =========================
+       7. GUARDAR ARCHIVO
+    ========================= */
+    const archivoInsert = await db.query(
+      `
+      INSERT INTO ARCHIVOS
+      (TITULO, URL, FICHERO_NOMBRE, CREADO_POR, DESCRIPCION)
+      VALUES (?, ?, ?, ?, ?)
+      `,
+      [
+        `Contrato ${contratoId}`,
+        pdf.filePath,
+        pdf.fileName,
+        usuarioId,
+        "Contrato generado automáticamente",
+      ]
+    );
+
+    // 🔥 RECUPERAR ID ARCHIVO (MISMO FIX)
+    const archivoRes = await db.query(
+      `
+      SELECT FIRST 1 ARCHIVO_ID
+      FROM ARCHIVOS
+      WHERE CREADO_POR = ?
+      ORDER BY ARCHIVO_ID DESC
+      `,
+      [usuarioId]
+    );
+
+    const archivoId = toArray(archivoRes)[0]?.ARCHIVO_ID;
+
+    if (!archivoId) {
+      throw new Error("No se pudo guardar archivo");
+    }
+
+    /* =========================
+       8. UPDATE CONTRATO
+    ========================= */
     await db.query(
       `
       UPDATE CONTRATOS_MANTENIMIENTO
       SET ARCHIVO_ENVIADO_ID = ?
       WHERE ID = ?
       `,
-      [pdf.fileName, contratoId]
+      [archivoId, contratoId]
     );
 
-    // =========================
-    // 7. EMAIL SETUP
-    // =========================
+    /* =========================
+       9. EMAILS
+    ========================= */
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
+        pass: process.env.EMAIL_PASS,
+      },
     });
 
-    const linkFirma =
-      `http://127.0.0.1:5500/frontend/firmar.html?token=${token}`;
+    const linkFirma = `http://127.0.0.1:5500/frontend/firmar.html?token=${token}`;
 
-    // =========================
-    // 8. ENVÍO A TODOS LOS USUARIOS DEL PERFIL
-    // =========================
     for (const u of usuarios) {
       try {
         await transporter.sendMail({
           from: '"Plataforma Formación" <no-reply@plataforma.com>',
           to: u.EMAIL,
-          subject: "📄 Contrato listo para firma",
+          subject: "📄 Contrato pendiente de firma",
           html: `
-            <h2>Hola ${u.NOMBRE}</h2>
-
-            <p>Se te ha asignado un contrato para el perfil:</p>
-            <b>${perfil.NOMBRE}</b>
-
+            <h2>Hola ${u.NOMBRE_COMPLETO}</h2>
+            <p>Se te ha asignado un contrato del perfil <b>${perfil.NOMBRE}</b></p>
             <p>
               <a href="${linkFirma}">
                 👉 Firmar contrato
               </a>
             </p>
-
             <p><b>ID contrato:</b> ${contratoId}</p>
           `,
           attachments: [
             {
               filename: pdf.fileName,
-              path: pdf.filePath
-            }
-          ]
+              path: pdf.filePath,
+            },
+          ],
         });
-
-        console.log("📩 Email enviado a:", u.EMAIL);
-
-      } catch (emailErr) {
-        console.error("❌ ERROR EMAIL:", u.EMAIL, emailErr.message);
-
-        // marcar fallo pero NO romper flujo
-        await db.query(
-          `UPDATE CONTRATOS_MANTENIMIENTO SET ESTADO = 'ERROR' WHERE ID = ?`,
-          [contratoId]
-        );
+      } catch (e) {
+        console.error("❌ Error email:", u.EMAIL, e.message);
       }
     }
 
-    // =========================
-    // 9. MARCAR ENVIADO
-    // =========================
-    await db.query(
-      `
-      UPDATE CONTRATOS_MANTENIMIENTO
-      SET ESTADO = 'ENVIADO'
-      WHERE ID = ?
-      `,
-      [contratoId]
-    );
-
+    /* =========================
+       10. RESPUESTA FINAL
+    ========================= */
     return {
       ok: true,
       contratoId,
-      token
+      token,
     };
 
   } catch (err) {
@@ -258,107 +272,42 @@ async function crearContrato(empresaId, perfilId, usuarioId) {
   }
 }
 
-async function enviarContratoPorPerfil({ contratoId, perfilId, token, pdf, empresa, perfil }) {
-
-  // =========================
-  // USUARIOS DEL PERFIL
-  // =========================
-  const usersResult = await db.query(
+/* =========================
+   VER CONTRATO
+========================= */
+async function verContrato(id) {
+  const r = await db.query(
     `
-    SELECT EMAIL, NOMBRE
-    FROM USUARIOS
-    WHERE PERFIL_ID = ?
-    `,
-    [perfilId]
+    SELECT *
+    FROM CONTRATOS_MANTENIMIENTO
+    WHERE ID = ?
+  `,
+    [id]
   );
 
-  const usuarios = usersResult?.[0] || [];
-
-  if (!usuarios.length) {
-    throw new Error("No hay usuarios para ese perfil");
-  }
-
-  // =========================
-  // TRANSPORTER
-  // =========================
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    }
-  });
-
-  // =========================
-  // LINK FIRMA
-  // =========================
-  const linkFirma = `http://127.0.0.1:5500/frontend/firmar.html?token=${token}`;
-
-  // =========================
-  // ENVÍO A TODOS
-  // =========================
-  for (const u of usuarios) {
-
-    try {
-
-      await transporter.sendMail({
-        from: '"Plataforma Formación" <no-reply@plataforma.com>',
-        to: u.EMAIL,
-        subject: "📄 Contrato listo para firma",
-        html: `
-          <h2>Hola ${u.NOMBRE}</h2>
-
-          <p>Tienes un contrato asignado al perfil <b>${perfil.NOMBRE}</b></p>
-
-          <p>
-            <a href="${linkFirma}">
-              👉 Firmar contrato
-            </a>
-          </p>
-
-          <p><b>ID contrato:</b> ${contratoId}</p>
-        `,
-        attachments: [
-          {
-            filename: pdf.fileName,
-            path: pdf.filePath
-          }
-        ]
-      });
-
-      console.log("📩 Enviado a:", u.EMAIL);
-
-    } catch (err) {
-      console.error("❌ Error email:", u.EMAIL, err.message);
-
-      await db.query(
-        `
-        UPDATE CONTRATOS_MANTENIMIENTO
-        SET ESTADO = 'ERROR'
-        WHERE CONTRATO_ID = ?
-        `,
-        [contratoId]
-      );
-    }
-  }
-
-  // =========================
-  // MARCAR ENVIADO
-  // =========================
-  await db.query(
-    `
-    UPDATE CONTRATOS_MANTENIMIENTO
-    SET ESTADO = 'ENVIADO'
-    WHERE CONTRATO_ID = ?
-    `,
-    [contratoId]
-  );
-
-  return true;
+  return toArray(r)[0] || null;
 }
 
 /* =========================
-   FIRMA POR TOKEN
+   TOKEN
+========================= */
+async function obtenerPorToken(token) {
+  if (!token) throw new Error("Token inválido");
+
+  const r = await db.query(
+    `
+    SELECT *
+    FROM CONTRATOS_MANTENIMIENTO
+    WHERE TOKEN = ?
+  `,
+    [token]
+  );
+
+  return toArray(r)[0] || null;
+}
+
+/* =========================
+   FIRMA TOKEN
 ========================= */
 async function firmarContratoToken({ token, usuarioId, ip, userAgent }) {
   const r = await db.query(
@@ -411,119 +360,13 @@ async function firmarContratoToken({ token, usuarioId, ip, userAgent }) {
 }
 
 /* =========================
-   FIRMA POR PDF SUBIDO
+   EXPORTS
 ========================= */
-async function marcarFirmado(contratoId, archivoFirmado, usuarioId) {
-  const r = await db.query(
-    `
-    SELECT *
-    FROM CONTRATOS_MANTENIMIENTO
-    WHERE ID = ?
-  `,
-    [contratoId]
-  );
-
-  const c = toArray(r)[0];
-  if (!c) throw new Error("Contrato no encontrado");
-
-  if (c.ESTADO === ESTADOS_CONTRATO.BLOQUEADO) {
-    throw new Error("Contrato ya firmado");
-  }
-
-  const archivo =
-    archivoFirmado?.filename ||
-    archivoFirmado?.fileName ||
-    null;
-
-  if (!archivo) throw new Error("Archivo firmado inválido");
-
-  await db.query(
-    `
-    UPDATE CONTRATOS_MANTENIMIENTO
-    SET
-      ARCHIVO_FIRMADO_ID = ?,
-      USUARIO_FIRMA_ID = ?,
-      FECHA_FIRMA = CURRENT_TIMESTAMP,
-      ESTADO = ?
-    WHERE ID = ?
-  `,
-    [archivo, usuarioId, ESTADOS_CONTRATO.BLOQUEADO, contratoId]
-  );
-
-  return {
-    ok: true,
-    contratoId,
-  };
-}
-
-/* =========================
-   VER CONTRATO
-========================= */
-async function verContrato(id) {
-  const r = await db.query(
-    `
-    SELECT *
-    FROM CONTRATOS_MANTENIMIENTO
-    WHERE ID = ?
-  `,
-    [id]
-  );
-
-  return toArray(r)[0] || null;
-}
-
-/* =========================
-   OBTENER POR TOKEN
-========================= */
-async function obtenerPorToken(token) {
-  if (!token) throw new Error("Token inválido");
-
-  const r = await db.query(
-    `
-    SELECT *
-    FROM CONTRATOS_MANTENIMIENTO
-    WHERE TOKEN = ?
-  `,
-    [token]
-  );
-
-  return toArray(r)[0] || null;
-}
-
-async function marcarFirmadoArchivo({
-  contratoId,
-  usuarioId,
-  archivoFirmado
-}) {
-  await db.query(
-    `
-    UPDATE CONTRATOS_MANTENIMIENTO
-    SET
-      ARCHIVO_FIRMADO_ID = ?,
-      USUARIO_FIRMA_ID = ?,
-      FECHA_FIRMA = CURRENT_TIMESTAMP,
-      ESTADO = ?
-    WHERE ID = ?
-    `,
-    [
-      archivoFirmado,
-      usuarioId,
-      ESTADOS_CONTRATO.FIRMADO,
-      contratoId
-    ]
-  );
-
-  return { ok: true };
-}
-
 module.exports = {
   listarPorUsuario,
   listarPorEmpresa,
   crearContrato,
-  enviarContratoPorPerfil,
   firmarContratoToken,
-  marcarFirmado,
   verContrato,
   obtenerPorToken,
-  marcarFirmadoArchivo,
 };

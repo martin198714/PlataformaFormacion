@@ -117,22 +117,19 @@
                     "Contrato listo para firma";
 
                 /* =========================
-                   PDF (PROTEGIDO CONTRA ERRORES)
+                   PDF (FIX REAL)
                 ========================= */
                 const pdfViewer = document.getElementById("pdfViewer");
 
-                if (data.ARCHIVO_ENVIADO_ID) {
+                // 🔥 AQUÍ ESTÁ EL FIX IMPORTANTE
+                const fileName =
+                    data.FICHERO_NOMBRE ||
+                    data.fileName ||
+                    data.ARCHIVO_NOMBRE ||
+                    null;
 
-                    const file = String(data.ARCHIVO_ENVIADO_ID).trim();
-
-                    // Evita /uploads/archivos/ vacío
-                    if (file !== "") {
-                        pdfViewer.src = `${BASE_URL}/uploads/archivos/${file}`;
-                    } else {
-                        document.getElementById("estado").innerText =
-                            "PDF no válido (nombre vacío)";
-                    }
-
+                if (fileName && fileName !== "") {
+                    pdfViewer.src = `${BASE_URL}/uploads/contratos/${fileName}`;
                 } else {
                     document.getElementById("estado").innerText =
                         "Este contrato no tiene PDF asociado";
