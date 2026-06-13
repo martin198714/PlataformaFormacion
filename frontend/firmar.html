@@ -101,16 +101,10 @@
         let token = null;
         let contrato = null;
 
-        /* =========================
-           OBTENER TOKEN URL
-        ========================= */
         function getToken() {
             return new URLSearchParams(window.location.search).get("token");
         }
 
-        /* =========================
-           CARGAR CONTRATO POR TOKEN
-        ========================= */
         async function cargarContrato() {
             try {
                 token = getToken();
@@ -120,10 +114,7 @@
                     return;
                 }
 
-                const res = await fetch(
-                    `${BASE_URL}/api/contratos/firma/${token}`
-                );
-
+                const res = await fetch(`${BASE_URL}/api/contratos/firma/${token}`);
                 const data = await res.json();
 
                 if (!res.ok) {
@@ -137,9 +128,6 @@
                 document.getElementById("estado").innerText =
                     "✔ Contrato listo para firma";
 
-                /* =========================
-                   MOSTRAR PDF
-                ========================= */
                 const pdfViewer = document.getElementById("pdfViewer");
 
                 const fileName =
@@ -161,32 +149,18 @@
             }
         }
 
-        /* =========================
-           FIRMAR CONTRATO
-        ========================= */
         async function subirFirma() {
-
             try {
+                const file = document.getElementById("file").files[0];
 
-                const file =
-                    document.getElementById("file").files[0];
-
-                if (!file) {
-                    alert("Selecciona un PDF firmado");
-                    return;
-                }
-
-                if (!token) {
-                    alert("Token inválido");
-                    return;
-                }
+                if (!file) return alert("Selecciona un PDF firmado");
+                if (!token) return alert("Token inválido");
 
                 const formData = new FormData();
-
-                formData.append("pdf", file);
+                formData.append("pdf", file); // ✔ ESTO ES CORRECTO
 
                 const res = await fetch(
-                    `${BASE_URL}/api/uploads/contratos/firmar/token/${token}`,
+                    `${BASE_URL}/api/contratos/firmar/token/${token}`,
                     {
                         method: "POST",
                         body: formData
@@ -196,9 +170,7 @@
                 const data = await res.json();
 
                 if (!res.ok) {
-                    throw new Error(
-                        data.error || "Error al firmar"
-                    );
+                    throw new Error(data.error || "Error al firmar");
                 }
 
                 document.getElementById("resultado").innerText =
@@ -207,20 +179,15 @@
                 document.getElementById("estado").innerText =
                     "✔ Contrato firmado";
 
-                console.log(data);
+                console.log("RESPUESTA:", data);
 
             } catch (err) {
-
                 console.error(err);
-
                 document.getElementById("resultado").innerText =
                     err.message;
             }
         }
 
-        /* =========================
-           INICIALIZAR
-        ========================= */
         cargarContrato();
     </script>
 

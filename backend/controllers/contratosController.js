@@ -234,46 +234,46 @@ exports.firmarPorToken = async (req, res) => {
 
 exports.firmarPorTokenArchivo = async (req, res) => {
   try {
-
     const token = req.params.token;
 
     if (!token) {
-      return res.status(400).json({
-        error: "Token inválido"
-      });
+      return res.status(400).json({ error: "Token inválido" });
     }
+
+    // 🔥 DEBUG CLAVE
+    console.log("FILE RECIBIDO:", req.file);
 
     if (!req.file) {
       return res.status(400).json({
-        error: "Debe subir un PDF firmado"
+        error: "No ha llegado ningún PDF. Revisa el formData"
       });
     }
 
-    const result =
-      await contratosService.firmarContratoTokenArchivo({
-        token,
-        usuarioId: null,
-        archivoFirmado: req.file.filename,
-        rutaFirmado: req.file.path,
-        ip:
-          req.headers["x-forwarded-for"] ||
-          req.socket.remoteAddress,
-        userAgent: req.headers["user-agent"]
-      });
+    const result = await contratosService.firmarContratoTokenArchivo({
+      token,
+      usuarioId: null,
+      archivoFirmado: req.file.filename,
+      rutaFirmado: req.file.path,
+      ip: req.headers["x-forwarded-for"] || req.socket.remoteAddress,
+      userAgent: req.headers["user-agent"]
+    });
 
-    res.json(result);
+    return res.json({
+      ok: true,
+      mensaje: "Contrato firmado correctamente",
+      archivo: req.file.filename,
+      ruta: req.file.path,
+      result
+    });
 
   } catch (err) {
-
     console.error(err);
-
-    res.status(500).json({
+    return res.status(500).json({
       error: "Error firmando contrato",
       detalle: err.message
     });
   }
 };
-
 /* =========================
    AUDITORÍA
 ========================= */
