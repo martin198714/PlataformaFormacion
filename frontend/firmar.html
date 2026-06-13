@@ -165,17 +165,28 @@
            FIRMAR CONTRATO
         ========================= */
         async function subirFirma() {
-            try {
-                const file = document.getElementById("file").files[0];
 
-                if (!file) return alert("Selecciona un PDF");
-                if (!token) return alert("Token no válido");
+            try {
+
+                const file =
+                    document.getElementById("file").files[0];
+
+                if (!file) {
+                    alert("Selecciona un PDF firmado");
+                    return;
+                }
+
+                if (!token) {
+                    alert("Token inválido");
+                    return;
+                }
 
                 const formData = new FormData();
+
                 formData.append("pdf", file);
 
                 const res = await fetch(
-                    `${BASE_URL}/api/contratos/firmar/token/${token}`,
+                    `${BASE_URL}/api/uploads/contratos/firmar/token/${token}`,
                     {
                         method: "POST",
                         body: formData
@@ -185,21 +196,25 @@
                 const data = await res.json();
 
                 if (!res.ok) {
-                    document.getElementById("resultado").innerText =
-                        data.error || "❌ Error al firmar";
-                    return;
+                    throw new Error(
+                        data.error || "Error al firmar"
+                    );
                 }
 
                 document.getElementById("resultado").innerText =
-                    "✔ Contrato firmado correctamente";
+                    "✔ PDF firmado subido correctamente";
 
                 document.getElementById("estado").innerText =
-                    "✔ Firma completada";
+                    "✔ Contrato firmado";
+
+                console.log(data);
 
             } catch (err) {
+
                 console.error(err);
+
                 document.getElementById("resultado").innerText =
-                    "❌ Error inesperado";
+                    err.message;
             }
         }
 

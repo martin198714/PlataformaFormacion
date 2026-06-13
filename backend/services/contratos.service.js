@@ -311,6 +311,71 @@ async function firmarContratoToken({ token, ip, userAgent }) {
   };
 }
 
+async function firmarContratoTokenArchivo({
+  token,
+  usuarioId,
+  archivoFirmado,
+  rutaFirmado,
+  ip,
+  userAgent
+}) {
+
+  const r = await db.query(
+    `
+    SELECT FIRST 1 *
+    FROM CONTRATOS_MANTENIMIENTO
+    WHERE TOKEN = ?
+    `,
+    [token]
+  );
+
+  const contrato = toArray(r)[0];
+
+  if (!contrato) {
+    throw new Error("Contrato no encontrado");
+  }
+
+  const hashFirma = generarHash({
+    contratoId: contrato.ID,
+    ip,
+    userAgent,
+    archivoFirmado,
+    timestamp: Date.now()
+  });
+
+  await db.query(
+    `
+    UPDATE CONTRATOS_MANTENIMIENTO
+    SET
+      ESTADO = ?,
+      FECHA_FIRMA = CURRENT_TIMESTAMP,
+      USUARIO_FIRMA_ID = ?,
+      ARCHIVO_FIRMADO = ?,
+      RUTA_FIRMADO = ?,
+      HASH_FIRMADO = ?,
+      IP_FIRMA = ?,
+      USER_AGENT = ?
+    WHERE ID = ?
+    `,
+    [
+      ESTADOS_CONTRATO.FIRMADO,
+      usuarioId || null,
+      archivoFirmado,
+      rutaFirmado,
+      hashFirma,
+      ip,
+      userAgent,
+      contrato.ID
+    ]
+  );
+
+  return {
+    ok: true,
+    contratoId: contrato.ID,
+    archivoFirmado
+  };
+}
+
 /* =========================
    EXPORTS
 ========================= */
@@ -321,4 +386,5 @@ module.exports = {
   marcarFirmadoArchivo,
   obtenerPorToken,
   firmarContratoToken,
+  firmarContratoTokenArchivo,
 };

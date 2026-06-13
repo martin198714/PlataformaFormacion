@@ -219,4 +219,14 @@ router.post(
   }
 );
 
+/* =========================
+   FIRMA POR TOKEN (PÚBLICA)
+   GUARDA EN uploads/firmados
+========================= */
+router.post(
+  "/contratos/firmar/token/:token",
+  uploadContrato.single("pdf"),
+  contratosController.firmarPorTokenArchivo
+);
+
 module.exports = router;
