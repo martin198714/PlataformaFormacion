@@ -35,7 +35,7 @@ const verifyCaptcha = async (captcha) => {
           secret,
           response: captcha,
         },
-      }
+      },
     );
 
     return response.data.success;
@@ -84,7 +84,9 @@ exports.register = async (req, res) => {
 
         if (resSel.length > 0) {
           db.detach();
-          return res.status(409).json({ error: "El correo ya está registrado" });
+          return res
+            .status(409)
+            .json({ error: "El correo ya está registrado" });
         }
 
         db.query(
@@ -109,9 +111,9 @@ exports.register = async (req, res) => {
             return res.status(201).json({
               message: "Usuario registrado correctamente",
             });
-          }
+          },
         );
-      }
+      },
     );
   });
 };
@@ -122,46 +124,109 @@ exports.register = async (req, res) => {
 exports.forgotPassword = (req, res) => {
   const { email } = req.body;
 
+  if (!email) {
+    return res.status(400).json({ error: "Email requerido" });
+  }
+
   const token = crypto.randomBytes(32).toString("hex");
 
   getConnection((err, db) => {
     if (err) return res.status(500).json({ error: err.message });
 
-    const sql = `
-      UPDATE USUARIOS
-      SET RESET_TOKEN = ?, RESET_EXPIRY = DATEADD(1 HOUR TO CURRENT_TIMESTAMP)
-      WHERE EMAIL = ?
-    `;
+    // 1. Verificar si el usuario existe (IMPORTANTE para Firebird + seguridad)
+    db.query(
+      "SELECT USUARIO_ID FROM USUARIOS WHERE EMAIL = ?",
+      [email],
+      (errSel, rows) => {
+        if (errSel) {
+          db.detach();
+          return res.status(500).json({ error: errSel.message });
+        }
 
-    db.query(sql, [token, email], (err) => {
-      db.detach();
+        // 🔐 RESPUESTA GENÉRICA (evita enumeración de emails)
+        if (!rows || rows.length === 0) {
+          db.detach();
+          return res.json({
+            message: "Si el correo existe, recibirás un enlace",
+          });
+        }
 
-      if (err) {
-        return res.status(500).json({ error: err.message });
+        // 2. Guardar token + expiración (FIREBIRD 3 CORRECTO)
+        const sql = `
+          UPDATE USUARIOS
+          SET RESET_TOKEN = ?,
+              RESET_EXPIRY = DATEADD(1 HOUR TO CURRENT_TIMESTAMP)
+          WHERE EMAIL = ?
+        `;
+
+        db.query(sql, [token, email], (errUpd) => {
+          db.detach();
+
+          if (errUpd) {
+            return res.status(500).json({ error: errUpd.message });
+          }
+
+          // 3. Link de reset
+          const link = `http://localhost:3000/reset-password.html?token=${token}`;
+
+          // 4. Email bonito y profesional
+          transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: "Recuperación de contraseña",
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width:600px;">
+                <h2 style="color:#333;">Solicitud de cambio de contraseña</h2>
+
+                <p>Hemos recibido una solicitud para restablecer tu contraseña.</p>
+
+                <p>Haz clic en el botón para continuar:</p>
+
+                <a href="${link}" style="
+                  display:inline-block;
+                  padding:12px 18px;
+                  background:#4CAF50;
+                  color:#fff;
+                  text-decoration:none;
+                  border-radius:6px;
+                  font-weight:bold;
+                ">
+                  Cambiar contraseña
+                </a>
+
+                <p style="margin-top:20px; color:#555;">
+                  Si no has solicitado este cambio, puedes ignorar este mensaje.
+                </p>
+
+                <hr style="margin:20px 0;" />
+
+                <small style="color:#999;">
+                  Este enlace expirará en 1 hora por seguridad.
+                </small>
+              </div>
+            `,
+          });
+
+          return res.json({
+            message: "Si el correo existe, recibirás un enlace",
+          });
+        });
       }
-
-      const link = `http://localhost:3000/reset-password.html?token=${token}`;
-
-      transporter.sendMail({
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: "Recuperar contraseña",
-        html: `<h3>Recupera tu contraseña</h3><a href="${link}">${link}</a>`,
-      });
-
-      res.json({ message: "Si el correo existe, recibirás un enlace" });
-    });
+    );
   });
 };
-
 /* =========================
    RESET PASSWORD
 ========================= */
 exports.resetPassword = (req, res) => {
   const { token, newPassword } = req.body;
 
+  if (!token) {
+    return res.status(400).json({ error: "Token requerido" });
+  }
+
   if (!newPassword || newPassword.length < 6) {
-    return res.status(400).json({ error: "Contraseña inválida" });
+    return res.status(400).json({ error: "Contraseña inválida (mínimo 6 caracteres)" });
   }
 
   const hash = bcrypt.hashSync(newPassword, 10);
@@ -169,21 +234,55 @@ exports.resetPassword = (req, res) => {
   getConnection((err, db) => {
     if (err) return res.status(500).json({ error: err.message });
 
-    const sql = `
-      UPDATE USUARIOS
-      SET PASSWORD_HASH = ?, RESET_TOKEN = NULL
+    // 1. Validar token + expiración (FIREBIRD 3)
+    const checkSql = `
+      SELECT USUARIO_ID
+      FROM USUARIOS
       WHERE RESET_TOKEN = ?
+        AND RESET_EXPIRY IS NOT NULL
+        AND RESET_EXPIRY > CURRENT_TIMESTAMP
     `;
 
-    db.query(sql, [hash, token], (err) => {
-      db.detach();
-
-      if (err) {
-        return res.status(500).json({ error: err.message });
+    db.query(checkSql, [token], (errSel, rows) => {
+      if (errSel) {
+        db.detach();
+        return res.status(500).json({ error: errSel.message });
       }
 
-      res.json({
-        message: "Contraseña actualizada correctamente",
+      // ❌ Token inválido o expirado
+      if (!rows || rows.length === 0) {
+        db.detach();
+        return res.status(400).json({
+          error: "Token inválido o expirado",
+        });
+      }
+
+      // 2. Actualizar contraseña
+      const updateSql = `
+        UPDATE USUARIOS
+        SET PASSWORD_HASH = ?,
+            RESET_TOKEN = NULL,
+            RESET_EXPIRY = NULL
+        WHERE RESET_TOKEN = ?
+      `;
+
+      db.query(updateSql, [hash, token], (errUpd, result) => {
+        db.detach();
+
+        if (errUpd) {
+          return res.status(500).json({ error: errUpd.message });
+        }
+
+        // 3. Seguridad extra: comprobar que se actualizó algo
+        if (!result || result.affectedRows === 0) {
+          return res.status(400).json({
+            error: "No se pudo actualizar la contraseña",
+          });
+        }
+
+        return res.json({
+          message: "Contraseña actualizada correctamente",
+        });
       });
     });
   });
@@ -233,7 +332,7 @@ exports.login = (req, res) => {
 
       const passwordOK = bcrypt.compareSync(
         password,
-        String(user.PASSWORD_HASH || "").trim()
+        String(user.PASSWORD_HASH || "").trim(),
       );
 
       if (!passwordOK) {
@@ -241,7 +340,9 @@ exports.login = (req, res) => {
         return res.status(401).json({ error: "Contraseña incorrecta" });
       }
 
-      const rol = String(user.ROL_NOMBRE || "").trim().toLowerCase();
+      const rol = String(user.ROL_NOMBRE || "")
+        .trim()
+        .toLowerCase();
 
       const userId = Number(user.USUARIO_ID);
 
@@ -252,7 +353,6 @@ exports.login = (req, res) => {
       `;
 
       db.query(sqlPerfiles, [userId], (errPerf, resPerf) => {
-
         // 🔥 ERROR REAL MOSTRADO
         if (errPerf) {
           console.error("🔥 ERROR SQL PERFILES:", errPerf);
@@ -262,11 +362,11 @@ exports.login = (req, res) => {
           return res.status(500).json({
             error: "Error SQL en USUARIOS_PERFILES",
             detalle: errPerf.message || errPerf,
-            usuarioId: userId
+            usuarioId: userId,
           });
         }
 
-        const perfiles = (resPerf || []).map(p => Number(p.PERFIL_ID));
+        const perfiles = (resPerf || []).map((p) => Number(p.PERFIL_ID));
 
         const token = jwt.sign(
           {
@@ -276,7 +376,7 @@ exports.login = (req, res) => {
             perfiles,
           },
           JWT_SECRET,
-          { expiresIn: "24h" }
+          { expiresIn: "24h" },
         );
 
         db.detach();
