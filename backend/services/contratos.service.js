@@ -23,24 +23,32 @@ async function listarPorUsuario(usuarioId) {
   const r = await db.query(
     `
     SELECT DISTINCT
-      c.ID,
-      c.EMPRESA_ID,
-      e.NOMBRE AS EMPRESA_NOMBRE,
-      c.PERFIL_ID,
-      p.NOMBRE AS PERFIL_NOMBRE,
-      c.ESTADO,
-      c.FECHA_ENVIO,
-      c.TOKEN,
-      c.ARCHIVO_ENVIADO_ID,
-      c.HASH_CONTRATO
-    FROM CONTRATOS_MANTENIMIENTO c
-    INNER JOIN USUARIOS_PERFILES up ON up.PERFIL_ID = c.PERFIL_ID
-    LEFT JOIN EMPRESAS e ON e.EMPRESA_ID = c.EMPRESA_ID
-    LEFT JOIN PERFILES p ON p.ID = c.PERFIL_ID
-    WHERE up.USUARIO_ID = ?
-    ORDER BY c.ID DESC
+  c.ID,
+  c.EMPRESA_ID,
+  e.NOMBRE AS EMPRESA_NOMBRE,
+  c.PERFIL_ID,
+  p.NOMBRE AS PERFIL_NOMBRE,
+  c.ESTADO,
+  c.FECHA_ENVIO,
+  c.TOKEN,
+  c.ARCHIVO_ENVIADO_ID,
+  c.ARCHIVO_FIRMADO,
+  c.RUTA_FIRMADO,
+  a.FICHERO_NOMBRE,
+  c.HASH_CONTRATO
+FROM CONTRATOS_MANTENIMIENTO c
+INNER JOIN USUARIOS_PERFILES up
+  ON up.PERFIL_ID = c.PERFIL_ID
+LEFT JOIN EMPRESAS e
+  ON e.EMPRESA_ID = c.EMPRESA_ID
+LEFT JOIN PERFILES p
+  ON p.ID = c.PERFIL_ID
+LEFT JOIN ARCHIVOS a
+  ON a.ARCHIVO_ID = c.ARCHIVO_ENVIADO_ID
+WHERE up.USUARIO_ID = ?
+ORDER BY c.ID DESC
   `,
-    [usuarioId]
+    [usuarioId],
   );
 
   return toArray(r);
@@ -60,7 +68,7 @@ async function listarPorEmpresa(empresaId) {
     WHERE EMPRESA_ID = ?
     ORDER BY ID DESC
   `,
-    [id]
+    [id],
   );
 
   return toArray(r);
@@ -73,16 +81,15 @@ async function crearContrato(empresaId, perfilId, usuarioId) {
   try {
     const empresaRes = await db.query(
       "SELECT * FROM EMPRESAS WHERE EMPRESA_ID = ?",
-      [empresaId]
+      [empresaId],
     );
 
     const empresa = toArray(empresaRes)[0];
     if (!empresa) throw new Error("Empresa no encontrada");
 
-    const perfilRes = await db.query(
-      "SELECT * FROM PERFILES WHERE ID = ?",
-      [perfilId]
-    );
+    const perfilRes = await db.query("SELECT * FROM PERFILES WHERE ID = ?", [
+      perfilId,
+    ]);
 
     const perfil = toArray(perfilRes)[0];
     if (!perfil) throw new Error("Perfil no encontrado");
@@ -94,7 +101,7 @@ async function crearContrato(empresaId, perfilId, usuarioId) {
       INNER JOIN USUARIOS_PERFILES up ON up.USUARIO_ID = u.USUARIO_ID
       WHERE up.PERFIL_ID = ?
       `,
-      [perfilId]
+      [perfilId],
     );
 
     const usuarios = toArray(usuariosRes);
@@ -120,7 +127,7 @@ async function crearContrato(empresaId, perfilId, usuarioId) {
       (EMPRESA_ID, PERFIL_ID, ESTADO, TOKEN, HASH_CONTRATO, FECHA_ENVIO)
       VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
       `,
-      [empresaId, perfilId, "PENDIENTE", token, hashContrato]
+      [empresaId, perfilId, "PENDIENTE", token, hashContrato],
     );
 
     const idRes = await db.query(
@@ -130,7 +137,7 @@ async function crearContrato(empresaId, perfilId, usuarioId) {
       WHERE TOKEN = ?
       ORDER BY ID DESC
       `,
-      [token]
+      [token],
     );
 
     const contratoId = toArray(idRes)[0]?.ID;
@@ -157,7 +164,7 @@ async function crearContrato(empresaId, perfilId, usuarioId) {
         pdf.fileName,
         usuarioId,
         "Contrato generado automáticamente",
-      ]
+      ],
     );
 
     const archivoRes = await db.query(
@@ -167,7 +174,7 @@ async function crearContrato(empresaId, perfilId, usuarioId) {
       WHERE CREADO_POR = ?
       ORDER BY ARCHIVO_ID DESC
       `,
-      [usuarioId]
+      [usuarioId],
     );
 
     const archivoId = toArray(archivoRes)[0]?.ARCHIVO_ID;
@@ -179,7 +186,7 @@ async function crearContrato(empresaId, perfilId, usuarioId) {
       SET ARCHIVO_ENVIADO_ID = ?
       WHERE ID = ?
       `,
-      [archivoId, contratoId]
+      [archivoId, contratoId],
     );
 
     const transporter = nodemailer.createTransport({
@@ -218,7 +225,12 @@ async function crearContrato(empresaId, perfilId, usuarioId) {
   }
 }
 
-async function marcarFirmadoArchivo({ contratoId, usuarioId, archivoFirmado, rutaFirmado }) {
+async function marcarFirmadoArchivo({
+  contratoId,
+  usuarioId,
+  archivoFirmado,
+  rutaFirmado,
+}) {
   await db.query(
     `
     UPDATE CONTRATOS_MANTENIMIENTO
@@ -235,8 +247,8 @@ async function marcarFirmadoArchivo({ contratoId, usuarioId, archivoFirmado, rut
       usuarioId,
       archivoFirmado,
       rutaFirmado,
-      contratoId
-    ]
+      contratoId,
+    ],
   );
 
   return true;
@@ -254,7 +266,7 @@ async function obtenerPorToken(token) {
     FROM CONTRATOS_MANTENIMIENTO
     WHERE TOKEN = ?
   `,
-    [token]
+    [token],
   );
 
   const contrato = toArray(r)[0];
@@ -273,7 +285,7 @@ async function firmarContratoToken({ token, ip, userAgent }) {
     FROM CONTRATOS_MANTENIMIENTO
     WHERE TOKEN = ?
   `,
-    [token]
+    [token],
   );
 
   const c = toArray(r)[0];
@@ -301,7 +313,7 @@ async function firmarContratoToken({ token, ip, userAgent }) {
       HASH_FIRMADO = ?
     WHERE ID = ?
   `,
-    [ip, userAgent, ESTADOS_CONTRATO.FIRMADO, hashFirma, c.ID]
+    [ip, userAgent, ESTADOS_CONTRATO.FIRMADO, hashFirma, c.ID],
   );
 
   return {
@@ -317,16 +329,15 @@ async function firmarContratoTokenArchivo({
   archivoFirmado,
   rutaFirmado,
   ip,
-  userAgent
+  userAgent,
 }) {
-
   const r = await db.query(
     `
     SELECT FIRST 1 *
     FROM CONTRATOS_MANTENIMIENTO
     WHERE TOKEN = ?
     `,
-    [token]
+    [token],
   );
 
   const contrato = toArray(r)[0];
@@ -340,7 +351,7 @@ async function firmarContratoTokenArchivo({
     ip,
     userAgent,
     archivoFirmado,
-    timestamp: Date.now()
+    timestamp: Date.now(),
   });
 
   await db.query(
@@ -365,14 +376,14 @@ async function firmarContratoTokenArchivo({
       hashFirma,
       ip,
       userAgent,
-      contrato.ID
-    ]
+      contrato.ID,
+    ],
   );
 
   return {
     ok: true,
     contratoId: contrato.ID,
-    archivoFirmado
+    archivoFirmado,
   };
 }
 

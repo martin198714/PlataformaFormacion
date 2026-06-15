@@ -63,7 +63,6 @@
                     <th>Estado</th>
                     <th>Fecha envío</th>
                     <th>Acciones</th>
-                    <th>Link</th>
                 </tr>
             </thead>
 
@@ -155,15 +154,9 @@
                     <td>${c.FECHA_ENVIO || ""}</td>
 
                     <td>
-                        ${c.ARCHIVO_ENVIADO_ID
-                            ? `<a href="${BASE_URL}/uploads/archivos/${c.ARCHIVO_ENVIADO_ID}" target="_blank">📄 PDF</a>`
-                            : "Pendiente"}
-                    </td>
-
-                    <td>
-                        ${c.TOKEN
-                            ? `<a href="${FRONTEND_URL}/firmar.html?token=${c.TOKEN}" target="_blank">✍️ Firmar</a>`
-                            : ""}
+                        ${c.FICHERO_NOMBRE
+                        ? `<a href="${BASE_URL}/uploads/contratos/${c.FICHERO_NOMBRE}" target="_blank">📄 PDF</a>`
+                        : "Pendiente"}
                     </td>
                 </tr>
             `;
