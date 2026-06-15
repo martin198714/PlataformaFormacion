@@ -7,8 +7,7 @@
 
     <title>Administración de contratos | Ejidosoft Formación</title>
 
-    <meta name="description"
-        content="Panel de administración de contratos de Ejidosoft Formación. Gestiona empresas, perfiles y contratos de forma segura y eficiente.">
+    <meta name="description" content="Panel de administración de contratos de Ejidosoft Formación. Gestiona empresas, perfiles y contratos de forma segura y eficiente.">
 
     <meta name="robots" content="index, follow">
 
@@ -62,31 +61,24 @@
         <button onclick="cargar()" aria-label="Recargar lista de contratos">🔄 Recargar contratos</button>
         <button onclick="asignarPerfil()" aria-label="Crear y asignar nuevo contrato">➕ Asignar perfil</button>
 
-        <div class="table-wrapper">
-            <table aria-describedby="tabla-contratos-desc">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Empresa</th>
+                    <th>Perfil</th>
+                    <th>Estado</th>
+                    <th>Fecha envío</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
 
-                <caption id="tabla-contratos-desc" class="visually-hidden">
-                    Tabla de contratos con empresa, perfil, estado, fecha y documentos asociados
-                </caption>
-
-                <thead>
-                    <tr>
-                        <th scope="col">ID</th>
-                        <th scope="col">Empresa</th>
-                        <th scope="col">Perfil</th>
-                        <th scope="col">Estado</th>
-                        <th scope="col">Fecha envío</th>
-                        <th scope="col">Acción</th>
-                    </tr>
-                </thead>
-
-                <tbody id="tabla"></tbody>
-            </table>
-        </div>
+            <tbody id="tabla"></tbody>
+        </table>
     </section>
 
     <!-- FOOTER -->
-    <footer class="text-center py-3 text-white" role="contentinfo" aria-label="Información de contacto y copyright">
+    <footer class="text-center py-3 text-white" role="contentinfo">
         <div class="container">
             <div class="row">
 
@@ -100,7 +92,7 @@
                 <div class="col-6 col-md-2"></div>
 
                 <div class="col-6 col-md-2">
-                    <img src="img/logo-pie.png" alt="Logo pie Ejidosoft" loading="lazy" />
+                    <img src="img/logo-pie.png" alt="Logo pie Ejidosoft" />
                 </div>
 
                 <div class="col-md-2 footer-contacto ms-auto text-md-end">
@@ -122,10 +114,7 @@
 
         function getAuthHeaders() {
             const token = localStorage.getItem("token");
-            if (!token) {
-                console.warn("Usuario no autenticado");
-            }
-            
+
             return {
                 "Content-Type": "application/json",
                 "Authorization": token ? `Bearer ${token}` : ""
@@ -174,8 +163,8 @@
 
                     <td>
                         ${c.FICHERO_NOMBRE
-                            ? `<a href="${BASE_URL}/uploads/contratos/${c.FICHERO_NOMBRE}" target="_blank" rel="noopener noreferrer" aria-label="Abrir contrato en PDF">📄 PDF</a>`
-                            : "Pendiente"}
+                        ? `<a href="${BASE_URL}/uploads/contratos/${c.FICHERO_NOMBRE}" target="_blank">📄 PDF</a>`
+                        : "Pendiente"}
                     </td>
 
                 </tr>

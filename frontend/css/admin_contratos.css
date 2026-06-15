@@ -56,7 +56,7 @@ button {
 }
 
 /* =========================================================
-   TABLET + MÓVIL (RESPONSIVE REAL SIN SCROLL HORIZONTAL)
+   TABLET + MÓVIL (RESPONSIVE SIN SCROLL HORIZONTAL)
 ========================================================= */
 @media (max-width: 992px) {
 
@@ -82,33 +82,35 @@ button {
         width: 100%;
         max-width: 300px;
         margin: 4px auto;
-        /* antes 10px */
         position: relative;
         top: -8px;
-        /* lo sube ligeramente sin romper layout */
     }
 
     /* =========================
-       TABLA RESPONSIVE REAL
+       TABLA RESPONSIVE
     ========================= */
     .table-wrapper {
         width: 100%;
+        max-width: 100%;
         overflow-x: hidden;
-        /* IMPORTANTE: evita scroll */
     }
 
     table {
         width: 100%;
         table-layout: fixed;
-        /* CLAVE: evita expansión horizontal */
         font-size: 14px;
     }
 
     th,
     td {
-        overflow-wrap: break-word;
+        padding: 6px;
+
+        /* CLAVE: evitar desbordamiento */
+        overflow-wrap: anywhere;
         word-break: break-word;
         white-space: normal;
+        hyphens: auto;
+        max-width: 0;
     }
 }
 
@@ -129,8 +131,12 @@ button {
 
     th,
     td {
-        padding: 6px;
-        overflow-wrap: break-word;
+        padding: 5px;
+
+        overflow-wrap: anywhere;
         word-break: break-word;
+        white-space: normal;
+        hyphens: auto;
+        max-width: 0;
     }
 }
