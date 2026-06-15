@@ -121,99 +121,100 @@ exports.register = async (req, res) => {
 /* =========================
    FORGOT PASSWORD
 ========================= */
-exports.forgotPassword = (req, res) => {
+exports.forgotPassword = async (req, res) => {
   const { email } = req.body;
 
   if (!email) {
     return res.status(400).json({ error: "Email requerido" });
   }
 
-  const token = crypto.randomBytes(32).toString("hex");
+  try {
+    const token = crypto.randomBytes(32).toString("hex");
 
-  getConnection((err, db) => {
-    if (err) return res.status(500).json({ error: err.message });
+    getConnection((err, db) => {
+      if (err) return res.status(500).json({ error: err.message });
 
-    // 1. Verificar si el usuario existe (IMPORTANTE para Firebird + seguridad)
-    db.query(
-      "SELECT USUARIO_ID FROM USUARIOS WHERE EMAIL = ?",
-      [email],
-      (errSel, rows) => {
-        if (errSel) {
-          db.detach();
-          return res.status(500).json({ error: errSel.message });
-        }
-
-        // 🔐 RESPUESTA GENÉRICA (evita enumeración de emails)
-        if (!rows || rows.length === 0) {
-          db.detach();
-          return res.json({
-            message: "Si el correo existe, recibirás un enlace",
-          });
-        }
-
-        // 2. Guardar token + expiración (FIREBIRD 3 CORRECTO)
-        const sql = `
-          UPDATE USUARIOS
-          SET RESET_TOKEN = ?,
-              RESET_EXPIRY = DATEADD(1 HOUR TO CURRENT_TIMESTAMP)
-          WHERE EMAIL = ?
-        `;
-
-        db.query(sql, [token, email], (errUpd) => {
-          db.detach();
-
-          if (errUpd) {
-            return res.status(500).json({ error: errUpd.message });
+      db.query(
+        "SELECT USUARIO_ID FROM USUARIOS WHERE EMAIL = ?",
+        [email],
+        (errSel, rows) => {
+          if (errSel) {
+            db.detach();
+            return res.status(500).json({ error: errSel.message });
           }
 
-          // 3. Link de reset
-          const link = `http://localhost:3000/reset-password.html?token=${token}`;
+          // 🔐 respuesta genérica (seguridad)
+          if (!rows || rows.length === 0) {
+            db.detach();
+            return res.json({
+              message: "Si el correo existe, recibirás un enlace",
+            });
+          }
 
-          // 4. Email bonito y profesional
-          transporter.sendMail({
-            from: process.env.EMAIL_USER,
-            to: email,
-            subject: "Recuperación de contraseña",
-            html: `
-              <div style="font-family: Arial, sans-serif; max-width:600px;">
-                <h2 style="color:#333;">Solicitud de cambio de contraseña</h2>
+          const sql = `
+            UPDATE USUARIOS
+            SET RESET_TOKEN = ?,
+                RESET_EXPIRY = DATEADD(1 HOUR TO CURRENT_TIMESTAMP)
+            WHERE EMAIL = ?
+          `;
 
-                <p>Hemos recibido una solicitud para restablecer tu contraseña.</p>
+          db.query(sql, [token, email], (errUpd) => {
+            db.detach();
 
-                <p>Haz clic en el botón para continuar:</p>
+            if (errUpd) {
+              return res.status(500).json({ error: errUpd.message });
+            }
 
-                <a href="${link}" style="
-                  display:inline-block;
-                  padding:12px 18px;
-                  background:#4CAF50;
-                  color:#fff;
-                  text-decoration:none;
-                  border-radius:6px;
-                  font-weight:bold;
-                ">
-                  Cambiar contraseña
-                </a>
+            const link = `${process.env.FRONTEND_URL}/reset-password.html?token=${token}`;
 
-                <p style="margin-top:20px; color:#555;">
-                  Si no has solicitado este cambio, puedes ignorar este mensaje.
-                </p>
+            transporter.sendMail(
+              {
+                from: process.env.EMAIL_USER,
+                to: email,
+                subject: "Recuperación de contraseña",
+                html: `
+                  <div style="font-family:Arial;max-width:600px;">
+                    <h2>Recuperar contraseña</h2>
 
-                <hr style="margin:20px 0;" />
+                    <p>Hemos recibido una solicitud para cambiar tu contraseña.</p>
 
-                <small style="color:#999;">
-                  Este enlace expirará en 1 hora por seguridad.
-                </small>
-              </div>
-            `,
+                    <a href="${link}" style="
+                      display:inline-block;
+                      padding:12px 18px;
+                      background:#4CAF50;
+                      color:white;
+                      text-decoration:none;
+                      border-radius:6px;
+                      font-weight:bold;
+                    ">
+                      Cambiar contraseña
+                    </a>
+
+                    <p>Si no has solicitado esto, ignora este mensaje.</p>
+
+                    <small>Este enlace expira en 1 hora.</small>
+                  </div>
+                `,
+              },
+              (err, info) => {
+                if (err) {
+                  console.error("❌ Error enviando email reset:", err);
+                } else {
+                  console.log("📩 Reset email enviado:", info.response);
+                }
+              }
+            );
+
+            return res.json({
+              message: "Si el correo existe, recibirás un enlace",
+            });
           });
-
-          return res.json({
-            message: "Si el correo existe, recibirás un enlace",
-          });
-        });
-      }
-    );
-  });
+        }
+      );
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
 };
 /* =========================
    RESET PASSWORD
