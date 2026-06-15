@@ -25,7 +25,83 @@ button {
     z-index: 9999;
 }
 
-.titulo-formulario{
+.titulo-formulario {
     text-align: center;
     transform: translateX(-180px);
+}
+
+/* =========================
+   WRAPPER TABLA (IMPORTANTE)
+========================= */
+.table-wrapper {
+    width: 100%;
+}
+
+/* =========================
+   RESPONSIVE TABLET + MÓVIL
+========================= */
+@media (max-width: 992px) {
+
+    /* Encabezado en columna */
+    .row.align-items-center {
+        flex-direction: column;
+        text-align: center !important;
+    }
+
+    .logo-login {
+        margin-bottom: 10px;
+    }
+
+    /* Título centrado */
+    .titulo-formulario {
+        transform: none;
+        text-align: center;
+        width: 100%;
+    }
+
+    /* Botones centrados y en bloque */
+    section.container button {
+        display: block;
+        width: 100%;
+        max-width: 300px;
+        margin: 10px auto;
+    }
+
+    /* CONTENEDOR TABLA CENTRADO */
+    .table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        display: flex;
+        justify-content: center;
+    }
+
+    table {
+        min-width: 700px;
+        margin: 0 auto;
+    }
+
+    th,
+    td {
+        font-size: 14px;
+    }
+}
+
+/* =========================
+   MÓVIL PEQUEÑO
+========================= */
+@media (max-width: 576px) {
+
+    section.container {
+        text-align: center;
+    }
+
+    th,
+    td {
+        font-size: 12px;
+        padding: 6px;
+    }
+
+    table {
+        min-width: 700px;
+    }
 }
