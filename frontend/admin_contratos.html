@@ -3,8 +3,17 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Admin Contratos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Administración de contratos | Ejidosoft Formación</title>
+
+    <meta name="description"
+        content="Panel de administración de contratos de Ejidosoft Formación. Gestiona empresas, perfiles y contratos de forma segura y eficiente.">
+
+    <meta name="robots" content="index, follow">
+
     <link rel="icon" type="image/webp" href="img/logo.png" />
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
@@ -21,7 +30,7 @@
             </a>
 
             <div class="ms-auto">
-                <a href="admin.html" class="btn btn-warning">
+                <a href="admin.html" class="btn btn-warning" aria-label="Volver al panel de administración">
                     <i class="fa-solid fa-arrow-left"></i>
                     Volver
                 </a>
@@ -49,28 +58,35 @@
         </div>
     </header>
 
-    <section class="container my-5">
-        <button onclick="cargar()">🔄 Recargar contratos</button>
-        <button onclick="asignarPerfil()">➕ Asignar perfil</button>
+    <section class="container my-5" aria-label="Gestión de contratos">
+        <button onclick="cargar()" aria-label="Recargar lista de contratos">🔄 Recargar contratos</button>
+        <button onclick="asignarPerfil()" aria-label="Crear y asignar nuevo contrato">➕ Asignar perfil</button>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Empresa</th>
-                    <th>Perfil</th>
-                    <th>Estado</th>
-                    <th>Fecha envío</th>
-                    <th>Acción</th>
-                </tr>
-            </thead>
+        <div class="table-wrapper">
+            <table aria-describedby="tabla-contratos-desc">
 
-            <tbody id="tabla"></tbody>
-        </table>
+                <caption id="tabla-contratos-desc" class="visually-hidden">
+                    Tabla de contratos con empresa, perfil, estado, fecha y documentos asociados
+                </caption>
+
+                <thead>
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">Empresa</th>
+                        <th scope="col">Perfil</th>
+                        <th scope="col">Estado</th>
+                        <th scope="col">Fecha envío</th>
+                        <th scope="col">Acción</th>
+                    </tr>
+                </thead>
+
+                <tbody id="tabla"></tbody>
+            </table>
+        </div>
     </section>
 
     <!-- FOOTER -->
-    <footer class="text-center py-3 text-white" role="contentinfo">
+    <footer class="text-center py-3 text-white" role="contentinfo" aria-label="Información de contacto y copyright">
         <div class="container">
             <div class="row">
 
@@ -84,7 +100,7 @@
                 <div class="col-6 col-md-2"></div>
 
                 <div class="col-6 col-md-2">
-                    <img src="img/logo-pie.png" alt="Logo pie Ejidosoft" />
+                    <img src="img/logo-pie.png" alt="Logo pie Ejidosoft" loading="lazy" />
                 </div>
 
                 <div class="col-md-2 footer-contacto ms-auto text-md-end">
@@ -106,7 +122,10 @@
 
         function getAuthHeaders() {
             const token = localStorage.getItem("token");
-
+            if (!token) {
+                console.warn("Usuario no autenticado");
+            }
+            
             return {
                 "Content-Type": "application/json",
                 "Authorization": token ? `Bearer ${token}` : ""
@@ -155,8 +174,8 @@
 
                     <td>
                         ${c.FICHERO_NOMBRE
-                        ? `<a href="${BASE_URL}/uploads/contratos/${c.FICHERO_NOMBRE}" target="_blank">📄 PDF</a>`
-                        : "Pendiente"}
+                            ? `<a href="${BASE_URL}/uploads/contratos/${c.FICHERO_NOMBRE}" target="_blank" rel="noopener noreferrer" aria-label="Abrir contrato en PDF">📄 PDF</a>`
+                            : "Pendiente"}
                     </td>
 
                 </tr>
