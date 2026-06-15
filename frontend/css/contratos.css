@@ -33,3 +33,8 @@
     position: relative;
     z-index: 9999;
 }
+
+.titulo-formulario{
+    text-align: center;
+    transform: translateX(-180px);
+}
