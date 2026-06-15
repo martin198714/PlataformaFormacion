@@ -1,48 +1,67 @@
+
+/* =========================
+   TABLA (PANTALLAS GRANDES - SIN CAMBIOS VISUALES)
+========================= */
 table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
 }
 
+/* =========================
+   CELDAS
+========================= */
 th,
 td {
     border: 1px solid #ccc;
     padding: 8px;
 }
 
+/* =========================
+   CABECERA TABLA
+========================= */
 th {
     background: #f0f0f0;
 }
 
+/* =========================
+   BOTONES
+========================= */
 button {
     padding: 6px 10px;
     cursor: pointer;
     margin: 5px;
 }
 
+/* =========================
+   NAVBAR
+========================= */
 .navbar {
     position: relative;
     z-index: 9999;
 }
 
+/* =========================
+   TÍTULO FORMULARIO
+========================= */
 .titulo-formulario {
     text-align: center;
     transform: translateX(-180px);
 }
 
 /* =========================
-   WRAPPER TABLA (IMPORTANTE)
+   WRAPPER TABLA
 ========================= */
 .table-wrapper {
     width: 100%;
 }
 
-/* =========================
-   RESPONSIVE TABLET + MÓVIL
-========================= */
+/* =========================================================
+   TABLET + MÓVIL (RESPONSIVE REAL SIN SCROLL HORIZONTAL)
+========================================================= */
 @media (max-width: 992px) {
 
-    /* Encabezado en columna */
+    /* Layout encabezado */
     .row.align-items-center {
         flex-direction: column;
         text-align: center !important;
@@ -59,7 +78,7 @@ button {
         width: 100%;
     }
 
-    /* Botones centrados y en bloque */
+    /* Botones en bloque */
     section.container button {
         display: block;
         width: 100%;
@@ -67,41 +86,47 @@ button {
         margin: 10px auto;
     }
 
-    /* CONTENEDOR TABLA CENTRADO */
+    /* =========================
+       TABLA RESPONSIVE REAL
+    ========================= */
     .table-wrapper {
         width: 100%;
-        overflow-x: auto;
-        display: flex;
-        justify-content: center;
+        overflow-x: hidden; /* IMPORTANTE: evita scroll */
     }
 
     table {
-        min-width: 700px;
-        margin: 0 auto;
+        width: 100%;
+        table-layout: fixed; /* CLAVE: evita expansión horizontal */
+        font-size: 14px;
     }
 
     th,
     td {
-        font-size: 14px;
+        overflow-wrap: break-word;
+        word-break: break-word;
+        white-space: normal;
     }
 }
 
-/* =========================
-   MÓVIL PEQUEÑO
-========================= */
+/* =========================================================
+   MÓVIL PEQUEÑO (≤576px)
+========================================================= */
 @media (max-width: 576px) {
 
     section.container {
         text-align: center;
     }
 
-    th,
-    td {
+    table {
+        width: 100%;
+        table-layout: fixed;
         font-size: 12px;
-        padding: 6px;
     }
 
-    table {
-        min-width: 700px;
+    th,
+    td {
+        padding: 6px;
+        overflow-wrap: break-word;
+        word-break: break-word;
     }
 }
