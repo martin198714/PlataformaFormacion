@@ -1,7 +1,7 @@
 const db = require("../models/db");
 const { ESTADOS_CONTRATO } = require("../utils/estadosContrato");
 const { generarHash } = require("../utils/hash");
-const { generarPDFContrato } = require("./pdf.service");
+const { generarPDFContrato, verificarPDFFirmado } = require("./pdf.service");
 const nodemailer = require("nodemailer");
 const { v4: uuidv4 } = require("uuid");
 
@@ -346,6 +346,27 @@ async function firmarContratoTokenArchivo({
     throw new Error("Contrato no encontrado");
   }
 
+  /* =========================
+     PROTECCIÓN DOBLE FIRMA
+  ========================= */
+  if (contrato.ESTADO === ESTADOS_CONTRATO.FIRMADO) {
+    throw new Error("Contrato ya firmado");
+  }
+
+  /* =========================
+     VALIDAR FIRMA PDF REAL
+  ========================= */
+  const resultadoFirma = await verificarPDFFirmado(rutaFirmado);
+
+  if (!resultadoFirma.valido) {
+    throw new Error(
+      "El PDF no contiene una firma digital válida (certificado)"
+    );
+  }
+
+  /* =========================
+     HASH DE FIRMA
+  ========================= */
   const hashFirma = generarHash({
     contratoId: contrato.ID,
     ip,
@@ -354,6 +375,9 @@ async function firmarContratoTokenArchivo({
     timestamp: Date.now(),
   });
 
+  /* =========================
+     ACTUALIZAR CONTRATO
+  ========================= */
   await db.query(
     `
     UPDATE CONTRATOS_MANTENIMIENTO
@@ -384,9 +408,9 @@ async function firmarContratoTokenArchivo({
     ok: true,
     contratoId: contrato.ID,
     archivoFirmado,
+    hashFirma,
   };
 }
-
 /* =========================
    EXPORTS
 ========================= */

@@ -200,7 +200,60 @@ async function aplicarFirmaPDF({
   }
 }
 
+/* =========================
+   VALIDAR PDF FIRMADO
+========================= */
+async function verificarPDFFirmado(pdfPath) {
+  try {
+    if (!fs.existsSync(pdfPath)) {
+      throw new Error("PDF no encontrado");
+    }
+
+    const buffer = fs.readFileSync(pdfPath);
+
+    const contenido = buffer.toString("latin1");
+
+    const tieneByteRange =
+      contenido.includes("/ByteRange");
+
+    const tieneContents =
+      contenido.includes("/Contents");
+
+    const tieneAdobe =
+      contenido.includes("Adobe.PPKLite");
+
+    const tieneETSI =
+      contenido.includes("ETSI.CAdES");
+
+    return {
+      valido:
+        tieneByteRange &&
+        tieneContents,
+
+      detalles: {
+        tieneByteRange,
+        tieneContents,
+        tieneAdobe,
+        tieneETSI,
+      },
+    };
+
+  } catch (err) {
+
+    console.error(
+      "ERROR VALIDANDO PDF:",
+      err.message
+    );
+
+    return {
+      valido: false,
+      detalles: null,
+    };
+  }
+}
+
 module.exports = {
   generarPDFContrato,
-  aplicarFirmaPDF
+  aplicarFirmaPDF,
+  verificarPDFFirmado
 };
