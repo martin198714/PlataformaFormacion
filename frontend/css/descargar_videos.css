@@ -1,8 +1,12 @@
+/* =========================
+   ICONOS CARD
+========================= */
+
 .card-icon {
     display: block;
     margin: 0 auto;
-    height: 50px;
-    width: 50px;
+    width: 25px;   /* unificado (tenías 50px duplicado arriba) */
+    height: 25px;
     object-fit: contain;
 }
 
@@ -11,60 +15,28 @@
     line-height: 50px;
 }
 
-.table-desc td {
-    max-width: 300px;
-    word-wrap: break-word;
-}
-
-.titulo-colapsable {
-    cursor: pointer;
-    margin-top: 8px;  /* antes 20px */
-    margin-bottom: 5px;
-}
-
-body {
-    position: relative;
-    min-height: 100vh;
-    overflow-x: hidden;
-    background-color: #f8f9fa;
-    z-index: 0;
-}
-
-/* Marca de agua visible */
-body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    background-image: url("../img/image008.jpg");
-    background-repeat: no-repeat;
-    background-position: center center;
-    background-size: cover;
-    opacity: 0.40;
-    filter: grayscale(20%);
-    z-index: -1; /* 👈 CLAVE */
-    pointer-events: none;
-}
-
-.navbar {
-    position: relative;
-    z-index: 9999;
-}
-
 /* =========================
-   TABLA DESCARGAS (AJUSTE FINO)
+   TABLA DESCARGAS
 ========================= */
 
+.table-desc td {
+    max-width: 300px;
+    word-break: break-word; /* más moderno que word-wrap */
+}
+
+/* tamaño tabla optimizado */
 .table-fixed {
-    font-size: 0.8rem; /* antes 0.75rem */
+    font-size: 0.8rem;
 }
 
 .table-fixed th {
-    font-size: 0.77rem; /* antes 0.72rem */
+    font-size: 0.77rem;
     font-weight: 600;
 }
 
 .table-fixed td {
-    font-size: 0.78rem; /* antes 0.74rem */
+    font-size: 0.78rem;
+    vertical-align: middle;
 }
 
 /* =========================
@@ -79,40 +51,74 @@ body::before {
     align-items: center;
     justify-content: center;
     gap: 4px;
-    min-width: 28px;   /* clave para uniformidad */
+    min-width: 28px;
     min-height: 24px;
 }
-
 
 .table-fixed td .btn i {
     font-size: 0.7rem;
 }
 
-.card-icon {
-    width: 25px;
-    height: 25px;
-    object-fit: contain;
+/* =========================
+   TÍTULOS COLAPSABLES
+========================= */
+
+.titulo-colapsable {
+    cursor: pointer;
+    margin-top: 6px;   /* más compacto aún sin perder separación */
+    margin-bottom: 4px;
+    line-height: 1.2;
 }
 
 /* =========================
-   ANCHO COLUMNAS TABLA DESCARGAS
+   LAYOUT GENERAL
 ========================= */
 
-/* TIPO (1ª columna) MÁS PEQUEÑA */
+body {
+    position: relative;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-color: #f8f9fa;
+    z-index: 0;
+}
+
+/* marca de agua optimizada */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: url("../img/image008.jpg");
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+    opacity: 0.35; /* ligeramente mejor legibilidad */
+    filter: grayscale(20%);
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* navbar encima de todo */
+.navbar {
+    position: relative;
+    z-index: 9999;
+}
+
+/* =========================
+   COLUMNAS TABLA
+========================= */
+
 .table-fixed th:nth-child(1),
 .table-fixed td:nth-child(1) {
     width: 8%;
     text-align: center;
 }
 
-/* DESCRIPCIÓN (2ª columna) MÁS GRANDE */
 .table-fixed th:nth-child(2),
 .table-fixed td:nth-child(2) {
     width: 72%;
     text-align: left;
 }
 
-/* DESCARGA (3ª columna) */
 .table-fixed th:nth-child(3),
 .table-fixed td:nth-child(3) {
     width: 20%;
@@ -120,10 +126,61 @@ body::before {
     white-space: nowrap;
 }
 
-.table-fixed td {
-    vertical-align: middle;
+/* =========================
+   AJUSTE ESPACIADO HEADER → CONTENIDO
+   (sube la tabla y títulos hacia el logo)
+========================= */
+
+main.container {
+    margin-top: 0.5rem !important;  /* antes era mayor */
 }
 
-.table-fixed td .btn i {
-    font-size: 0.7rem;
+/* reduce separación del bloque contenedor */
+#capitulosContainer {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* reduce separación inicial del primer título */
+.titulo-colapsable:first-of-type {
+    margin-top: 2px !important;
+}
+
+/* =========================
+   AJUSTE ESPACIO HEADER → CONTENIDO
+   (MÓVIL + TABLET UNIFICADO)
+========================= */
+
+/* MÓVILES */
+@media (max-width: 768px) {
+
+    main.container {
+        margin-top: 0.2rem !important; /* más arriba aún */
+    }
+
+    #capitulosContainer {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+    }
+
+    .titulo-colapsable {
+        margin-top: 3px;
+    }
+}
+
+/* TABLETS */
+@media (min-width: 769px) and (max-width: 1024px) {
+
+    main.container {
+        margin-top: 0.2rem !important; /* ahora igual que móvil */
+    }
+
+    #capitulosContainer {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+    }
+
+    .titulo-colapsable {
+        margin-top: 4px;
+    }
 }
