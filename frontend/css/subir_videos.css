@@ -85,7 +85,7 @@ body::before {
   .encabezado-login {
     margin-bottom: 0 !important;
     transform: none !important;
-    padding: 15px 0; /* 🔥 menos padding vertical */
+    padding: 15px 0;
     display: block !important;
   }
 
@@ -102,7 +102,7 @@ body::before {
     justify-content: center;
     text-align: center !important;
     width: 100%;
-    row-gap: 0 !important; /* 🔥 clave: elimina separación Bootstrap */
+    row-gap: 0 !important;
   }
 
   .encabezado-login .col-md-4,
@@ -112,23 +112,23 @@ body::before {
     flex: 0 0 100% !important;
     justify-content: center !important;
     transform: none !important;
-    margin: 0 !important; /* 🔥 elimina espacio acumulado */
+    margin: 0 !important;
     padding: 0 !important;
   }
 
-  /* 🔥 LOGO MÁS COMPACTO */
+  /* LOGO */
   .logo-login {
     max-width: 120px;
     height: auto;
-    margin: 0 auto 2px auto !important; /* 🔥 casi sin separación */
+    margin: 0 auto 2px auto !important;
     display: block;
   }
 
-  /* 🔥 TÍTULO MUY CERCANO AL LOGO */
+  /* TÍTULO */
   .titulo-formulario {
     font-size: 1.35rem !important;
     text-align: center;
-    margin: 0 !important; /* 🔥 elimina aire */
+    margin: 0 !important;
     padding: 0 !important;
   }
 
@@ -143,13 +143,14 @@ body::before {
     padding: 0px 0 !important;
   }
 
-  /* 🔥 SUBIDA GLOBAL DEL FORMULARIO */
+  /* PANEL */
   .ui-panel {
     width: 92% !important;
     max-width: 380px;
     margin: -42px auto 0 auto !important;
   }
 
+  /* FOOTER */
   footer .row {
     display: flex !important;
     flex-direction: column !important;
@@ -176,6 +177,19 @@ body::before {
   .ui-panel input,
   .ui-panel button {
     font-size: 0.95rem;
+  }
+
+  /* 🔥 AJUSTE: SUBIR PRIMER LABEL */
+  .ui-panel .text-end {
+    padding-bottom: 0.25rem !important;
+  }
+
+  .ui-panel .p-4 {
+    padding-top: 0.35rem !important;
+  }
+
+  #formSubir .mb-3:first-of-type {
+    margin-top: -6px !important;
   }
 }
 
