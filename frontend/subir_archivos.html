@@ -6,6 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
+  <!-- SEO -->
+  <meta name="description" content="Plataforma de subida de archivos de Ejidosoft Formación. Sube documentos, imágenes y recursos de forma segura." />
+  <meta name="keywords" content="Ejidosoft, subir archivos, formación, plataforma educativa, gestión de documentos" />
+  <meta name="robots" content="index, follow" />
+
   <title>Subir Archivos - Ejidosoft Formación</title>
 
   <link rel="icon" type="image/webp" href="img/logo.png" />
@@ -20,14 +25,16 @@
 <body>
 
   <!-- NAVBAR -->
-  <nav class="navbar navbar-expand-lg" role="navigation">
+  <nav class="navbar navbar-expand-lg" role="navigation" aria-label="Barra de navegación principal">
     <div class="container">
 
-      <a class="navbar-brand d-flex align-items-center text-white" href="index.html"></a>
+      <a class="navbar-brand d-flex align-items-center text-white"
+         href="index.html"
+         aria-label="Ir a la página de inicio de Ejidosoft Formación"></a>
 
       <div class="ms-auto">
-        <a href="admin.html" class="btn btn-warning">
-          <i class="fa-solid fa-arrow-left"></i>
+        <a href="admin.html" class="btn btn-warning" aria-label="Volver al panel de administración">
+          <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
           Volver
         </a>
       </div>
@@ -42,12 +49,14 @@
       <div class="row align-items-center text-center text-md-start">
 
         <div class="col-md-4 mb-4 mb-md-0 d-flex justify-content-center justify-content-md-start">
-          <img src="img/logo.png" class="img-fluid logo-login" />
+          <img src="img/logo.png"
+               class="img-fluid logo-login"
+               alt="Logo de Ejidosoft Formación" />
         </div>
 
         <div class="col-md-8 d-flex align-items-center justify-content-md-start justify-content-center">
           <h1 class="fw-bold titulo-formulario">
-            <i class="fa-solid fa-upload me-2"></i>
+            <i class="fa-solid fa-upload me-2" aria-hidden="true"></i>
             Subir Archivos
           </h1>
         </div>
@@ -58,9 +67,8 @@
   </header>
 
   <!-- MAIN -->
-  <main class="main-upload" role="main">
+  <main class="main-upload" role="main" aria-label="Formulario de subida de archivos">
 
-    <!-- 🔥 SOLO HE AJUSTADO AQUÍ EL ESPACIADO -->
     <section class="login-section py-5">
 
       <div class="container">
@@ -69,42 +77,59 @@
 
           <div class="col-12 col-sm-10 col-md-7 col-lg-5">
 
-            <!-- 🔥 AQUÍ ESTA EL FIX: margen inferior para no tocar footer -->
-            <div class="modal-content border-0 ui-panel shadow-lg mb-5" style="border-radius: 12px;">
+            <div class="modal-content border-0 ui-panel shadow-lg mb-5"
+                 style="border-radius: 12px;"
+                 role="region"
+                 aria-label="Formulario de subida">
 
               <div class="text-end p-3">
-                <a href="admin.html" class="btn-close"></a>
+                <a href="admin.html" class="btn-close" aria-label="Cerrar y volver al panel de administración"></a>
               </div>
 
               <div class="p-4">
-                <form id="formSubir">
+                <form id="formSubir" aria-label="Formulario para subir archivos">
 
                   <div class="mb-3">
-                    <label class="form-label">Selecciona archivos</label>
-                    <input type="file" class="form-control" id="archivos" multiple required />
+                    <label class="form-label" for="archivos">Selecciona archivos</label>
+                    <input type="file"
+                           class="form-control"
+                           id="archivos"
+                           multiple
+                           required
+                           aria-required="true" />
                   </div>
 
                   <div class="mb-3">
-                    <label class="form-label">Título general</label>
-                    <input type="text" class="form-control" id="titulo" required />
+                    <label class="form-label" for="titulo">Título general</label>
+                    <input type="text"
+                           class="form-control"
+                           id="titulo"
+                           required
+                           aria-required="true" />
                   </div>
 
                   <div class="mb-3">
-                    <label class="form-label">Descripción</label>
-                    <input type="text" class="form-control" id="descripcion" required />
+                    <label class="form-label" for="descripcion">Descripción</label>
+                    <input type="text"
+                           class="form-control"
+                           id="descripcion"
+                           required
+                           aria-required="true" />
                   </div>
 
                   <input type="hidden" id="publico" value="true" />
 
-                  <button type="submit" class="btn btn-principal w-100">
-                    <i class="fa-solid fa-upload me-1"></i>
+                  <button type="submit"
+                          class="btn btn-principal w-100"
+                          aria-label="Subir archivos seleccionados">
+                    <i class="fa-solid fa-upload me-1" aria-hidden="true"></i>
                     Subir archivos
                   </button>
 
                 </form>
 
-                <div class="mt-3" id="progresoContainer"></div>
-                <div class="mt-3" id="respuesta"></div>
+                <div class="mt-3" id="progresoContainer" aria-live="polite"></div>
+                <div class="mt-3" id="respuesta" aria-live="polite"></div>
 
               </div>
 
@@ -120,8 +145,11 @@
 
   </main>
 
-  <!-- FOOTER (NO TOCADO, COMPLETO COMO LO TIENES) -->
-  <footer class="text-center py-3 text-white" role="contentinfo">
+  <!-- FOOTER -->
+  <footer class="text-center py-3 text-white"
+          role="contentinfo"
+          aria-label="Pie de página">
+
     <div class="container">
 
       <div class="row">
@@ -136,7 +164,8 @@
         <div class="col-6 col-md-2"></div>
 
         <div class="col-6 col-md-2">
-          <img src="img/logo-pie.png" alt="Logo inferior Ejidosoft Formación" />
+          <img src="img/logo-pie.png"
+               alt="Logo inferior de Ejidosoft Formación" />
         </div>
 
         <div class="col-md-2 footer-contacto ms-auto text-md-end">

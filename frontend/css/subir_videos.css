@@ -74,3 +74,99 @@ body::before {
 .ui-panel .p-4 {
     padding-top: 0.75rem;
 }
+
+/* ===============================
+   FIX COMPLETO MÓVIL + TABLET
+   (LOGO → TÍTULO → FORMULARIO SIN SOLAPES)
+================================= */
+
+@media (max-width: 991.98px) {
+
+  /* 🔥 RESET de efectos que rompen el layout */
+  .encabezado-login {
+    margin-bottom: 0 !important;
+    transform: none !important;
+    padding: 20px 0;
+    display: block !important;
+  }
+
+  main {
+    margin-top: 0 !important;
+    padding-top: 20px;
+  }
+
+  /* 🔥 HEADER EN COLUMNA */
+  .encabezado-login .row {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    width: 100%;
+  }
+
+  .encabezado-login .col-md-4,
+  .encabezado-login .col-md-8 {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 0 0 100% !important;
+    justify-content: center !important;
+    transform: none !important;
+    margin-bottom: 10px;
+  }
+
+  /* 🔥 LOGO */
+  .logo-login {
+    max-width: 120px;
+    height: auto;
+    margin: 0 auto 10px auto;
+    display: block;
+  }
+
+  /* 🔥 TÍTULO */
+  .titulo-formulario {
+    font-size: 1.8rem;
+    text-align: center;
+    margin: 0;
+  }
+
+  /* 🔥 FORMULARIO CENTRADO */
+  .main-upload {
+    min-height: auto !important;
+    padding-top: 20px;
+    padding-bottom: 80px;
+    display: block !important;
+  }
+
+  .login-section {
+    padding: 20px 0 !important;
+  }
+
+  .ui-panel {
+    width: 92% !important;
+    max-width: 380px;
+    margin: 0 auto !important;
+  }
+
+  /* 🔥 FOOTER ORDENADO */
+  footer .row {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    gap: 12px;
+  }
+
+  footer .col-6,
+  footer .col-md-2,
+  footer .footer-contacto {
+    width: 100% !important;
+    max-width: 100% !important;
+    text-align: center !important;
+    margin: 0 !important;
+  }
+
+  footer img {
+    margin: 0 auto;
+    display: block;
+  }
+}
