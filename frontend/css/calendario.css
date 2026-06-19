@@ -108,3 +108,69 @@ main.container {
 main.container > .row {
     margin-top: -25px; /* antes -14px */
 }
+
+/* =========================
+   RESPONSIVE HEADER FIX (MÁS CERCANO AL NAV)
+   ========================= */
+
+/* Tablets */
+@media (max-width: 992px) {
+
+    .encabezado-login {
+        margin-top: -45px; /* 🔥 sube más el bloque */
+        margin-bottom: 3px;
+        padding-top: 0;
+    }
+
+    .encabezado-login img {
+        max-width: 140px;
+        margin-top: -55px; /* 🔥 ahora sí bastante más cerca del nav */
+    }
+
+    .titulo-formulario {
+        font-size: 1.3rem;
+        line-height: 1.1;
+    }
+
+    .encabezado-login .row {
+        text-align: center;
+    }
+
+    /* 🔥 reduce el “empuje” del contenido */
+    main.container > .row {
+        margin-top: -35px;
+    }
+}
+
+/* Móviles */
+@media (max-width: 576px) {
+
+    .encabezado-login {
+        margin-top: -50px; /* 🔥 más compacto aún */
+        margin-bottom: 4px;
+        padding-top: 0;
+    }
+
+    .encabezado-login img {
+        max-width: 110px;
+        margin-top: -60px; /* 🔥 casi pegado al nav */
+    }
+
+    .titulo-formulario {
+        font-size: 1rem;
+        line-height: 1.15;
+        padding: 0 10px;
+    }
+
+    .encabezado-login .col-12 {
+        text-align: center !important;
+    }
+
+    main.container {
+        margin-top: 0;
+    }
+
+    main.container > .row {
+        margin-top: -40px;
+    }
+}
