@@ -32,38 +32,39 @@ body::before {
     padding-top: 1.2rem !important;
 }
 
-/* SOLO el contenido interno, no el modal completo */
+/* SOLO el contenido interno */
 .ui-panel .p-4 {
     padding-top: 0.75rem;
 }
 
 /* ===============================
    FIX COMPLETO MÓVIL + TABLET
-   (LOGO → TÍTULO → FORMULARIO SIN SOLAPES)
+   (LOGO + TÍTULO PERFECTAMENTE CERCANOS)
 ================================= */
 
 @media (max-width: 991.98px) {
 
-  /* 🔥 RESET de efectos que rompen el layout */
   .encabezado-login {
     margin-bottom: 0 !important;
     transform: none !important;
-    padding: 20px 0;
+    padding: 15px 0; /* 🔥 menos padding vertical */
     display: block !important;
   }
 
   main {
     margin-top: 0 !important;
-    padding-top: 20px;
+    padding-top: 5px;
   }
 
-  /* 🔥 HEADER EN COLUMNA */
+  /* HEADER EN COLUMNA SIN ESPACIOS EXTRA */
   .encabezado-login .row {
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
+    justify-content: center;
     text-align: center !important;
     width: 100%;
+    row-gap: 0 !important; /* 🔥 clave: elimina separación Bootstrap */
   }
 
   .encabezado-login .col-md-4,
@@ -73,43 +74,44 @@ body::before {
     flex: 0 0 100% !important;
     justify-content: center !important;
     transform: none !important;
-    margin-bottom: 10px;
+    margin: 0 !important; /* 🔥 elimina espacio acumulado */
+    padding: 0 !important;
   }
 
-  /* 🔥 LOGO */
+  /* 🔥 LOGO MÁS COMPACTO */
   .logo-login {
     max-width: 120px;
     height: auto;
-    margin: 0 auto 10px auto;
+    margin: 0 auto 2px auto !important; /* 🔥 casi sin separación */
     display: block;
   }
 
-  /* 🔥 TÍTULO */
+  /* 🔥 TÍTULO MUY CERCANO AL LOGO */
   .titulo-formulario {
-    font-size: 1.8rem;
+    font-size: 1.35rem !important;
     text-align: center;
-    margin: 0;
+    margin: 0 !important; /* 🔥 elimina aire */
+    padding: 0 !important;
   }
 
-  /* 🔥 FORMULARIO CENTRADO */
+  /* FORMULARIO */
   .main-upload {
     min-height: auto !important;
-    padding-top: 20px;
+    padding-top: 0px !important;
     padding-bottom: 80px;
-    display: block !important;
   }
 
   .login-section {
-    padding: 20px 0 !important;
+    padding: 0px 0 !important;
   }
 
+  /* 🔥 SUBIDA GLOBAL DEL FORMULARIO */
   .ui-panel {
     width: 92% !important;
     max-width: 380px;
-    margin: 0 auto !important;
+    margin: -42px auto 0 auto !important;
   }
 
-  /* 🔥 FOOTER ORDENADO */
   footer .row {
     display: flex !important;
     flex-direction: column !important;
@@ -130,5 +132,28 @@ body::before {
   footer img {
     margin: 0 auto;
     display: block;
+  }
+
+  .ui-panel label,
+  .ui-panel input,
+  .ui-panel button {
+    font-size: 0.95rem;
+  }
+}
+
+/* 🔥 MÓVIL PEQUEÑO */
+@media (max-width: 576px) {
+
+  .titulo-formulario {
+    font-size: 1.2rem !important;
+  }
+
+  .ui-panel {
+    width: 94% !important;
+    margin: -38px auto 0 auto !important;
+  }
+
+  .login-section {
+    padding: 0px 0 !important;
   }
 }
