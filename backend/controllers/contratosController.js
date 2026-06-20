@@ -36,9 +36,9 @@ exports.listar = async (req, res) => {
 
     const datos = await contratosService.listarPorUsuario(usuarioId);
 
-    res.json((datos || []).map(normalizeContrato));
+    return res.json((datos || []).map(normalizeContrato));
   } catch (err) {
-    res.status(500).json({
+    return res.status(500).json({
       error: "Error al listar contratos",
       detalle: err.message,
     });
@@ -57,9 +57,9 @@ exports.listarPorEmpresa = async (req, res) => {
 
     const datos = await contratosService.listarPorEmpresa(empresaId);
 
-    res.json((datos || []).map(normalizeContrato));
+    return res.json((datos || []).map(normalizeContrato));
   } catch (err) {
-    res.status(500).json({
+    return res.status(500).json({
       error: "Error al listar contratos",
       detalle: err.message,
     });
@@ -75,7 +75,10 @@ exports.crear = async (req, res) => {
     const perfilId = Number(req.body.perfilId);
     const usuarioId = req.user?.id;
 
-    if (!usuarioId) return res.status(401).json({ error: "No autenticado" });
+    if (!usuarioId) {
+      return res.status(401).json({ error: "No autenticado" });
+    }
+
     if (isNaN(empresaId) || isNaN(perfilId)) {
       return res.status(400).json({ error: "IDs inválidos" });
     }
@@ -86,7 +89,7 @@ exports.crear = async (req, res) => {
       usuarioId
     );
 
-    res.json({
+    return res.json({
       ok: true,
       contratoId: result?.contratoId || null,
       token: result?.token || null,
@@ -94,7 +97,7 @@ exports.crear = async (req, res) => {
     });
 
   } catch (err) {
-    res.status(500).json({
+    return res.status(500).json({
       error: "Error al crear contrato",
       detalle: err.message,
     });
@@ -107,12 +110,18 @@ exports.crear = async (req, res) => {
 exports.verContrato = async (req, res) => {
   try {
     const id = Number(req.params.id);
-    if (isNaN(id)) return res.status(400).json({ error: "ID inválido" });
+
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID inválido" });
+    }
 
     const contrato = await contratosService.verContrato(id);
-    if (!contrato) return res.status(404).json({ error: "Contrato no encontrado" });
 
-    res.json(
+    if (!contrato) {
+      return res.status(404).json({ error: "Contrato no encontrado" });
+    }
+
+    return res.json(
       normalizeContrato({
         ...contrato,
         estado_definido:
@@ -120,7 +129,7 @@ exports.verContrato = async (req, res) => {
       })
     );
   } catch (err) {
-    res.status(500).json({
+    return res.status(500).json({
       error: "Error al obtener contrato",
       detalle: err.message,
     });
@@ -133,14 +142,20 @@ exports.verContrato = async (req, res) => {
 exports.verContratoPorToken = async (req, res) => {
   try {
     const token = req.params.token;
-    if (!token) return res.status(400).json({ error: "Token inválido" });
+
+    if (!token) {
+      return res.status(400).json({ error: "Token inválido" });
+    }
 
     const contrato = await contratosService.obtenerPorToken(token);
-    if (!contrato) return res.status(404).json({ error: "Contrato no encontrado" });
 
-    res.json(normalizeContrato(contrato));
+    if (!contrato) {
+      return res.status(404).json({ error: "Contrato no encontrado" });
+    }
+
+    return res.json(normalizeContrato(contrato));
   } catch (err) {
-    res.status(500).json({
+    return res.status(500).json({
       error: "Error al obtener contrato por token",
       detalle: err.message,
     });
@@ -173,29 +188,27 @@ exports.firmar = async (req, res) => {
       return res.status(404).json({ error: "Contrato no encontrado" });
     }
 
-    // 👇 ESTO ES LO IMPORTANTE
-    const archivoFirmado = req.file.filename; // solo nombre
-    const rutaFirmado = req.file.path; // ruta completa
+    const archivoFirmado = req.file.filename;
+    const rutaFirmado = req.file.path;
 
     await contratosService.marcarFirmadoArchivo({
       contratoId,
       usuarioId,
       archivoFirmado,
-      rutaFirmado
+      rutaFirmado,
     });
 
-    res.json({
+    return res.json({
       ok: true,
       mensaje: "Contrato firmado correctamente",
       archivo: archivoFirmado,
-      ruta: rutaFirmado
+      ruta: rutaFirmado,
     });
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({
+    return res.status(500).json({
       error: "Error al firmar contrato",
-      detalle: err.message
+      detalle: err.message,
     });
   }
 };
@@ -206,32 +219,42 @@ exports.firmar = async (req, res) => {
 exports.firmarPorToken = async (req, res) => {
   try {
     const token = req.params.token;
-    if (!token) return res.status(400).json({ error: "Token inválido" });
+
+    if (!token) {
+      return res.status(400).json({ error: "Token inválido" });
+    }
+
+    const ip =
+      req.headers["x-forwarded-for"] ||
+      req.socket?.remoteAddress ||
+      "";
+
+    const userAgent = req.headers["user-agent"] || "";
 
     const result = await contratosService.firmarContratoToken({
       token,
       usuarioId: req.user?.id || null,
-      ip:
-        req.headers["x-forwarded-for"] ||
-        req.socket?.remoteAddress ||
-        "",
-      userAgent: req.headers["user-agent"],
+      ip,
+      userAgent,
     });
 
-    res.json({
+    return res.json({
       ok: true,
       estado: ESTADOS_CONTRATO.FIRMADO,
       result,
     });
 
   } catch (err) {
-    res.status(500).json({
+    return res.status(500).json({
       error: "Error en firma por token",
       detalle: err.message,
     });
   }
 };
 
+/* =========================
+   FIRMAR POR TOKEN ARCHIVO
+========================= */
 exports.firmarPorTokenArchivo = async (req, res) => {
   try {
     const token = req.params.token;
@@ -240,12 +263,11 @@ exports.firmarPorTokenArchivo = async (req, res) => {
       return res.status(400).json({ error: "Token inválido" });
     }
 
-    // 🔥 DEBUG CLAVE
     console.log("FILE RECIBIDO:", req.file);
 
     if (!req.file) {
       return res.status(400).json({
-        error: "No ha llegado ningún PDF. Revisa el formData"
+        error: "No ha llegado ningún PDF. Revisa el formData",
       });
     }
 
@@ -254,8 +276,8 @@ exports.firmarPorTokenArchivo = async (req, res) => {
       usuarioId: null,
       archivoFirmado: req.file.filename,
       rutaFirmado: req.file.path,
-      ip: req.headers["x-forwarded-for"] || req.socket.remoteAddress,
-      userAgent: req.headers["user-agent"]
+      ip: req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "",
+      userAgent: req.headers["user-agent"] || "",
     });
 
     return res.json({
@@ -263,31 +285,34 @@ exports.firmarPorTokenArchivo = async (req, res) => {
       mensaje: "Contrato firmado correctamente",
       archivo: req.file.filename,
       ruta: req.file.path,
-      result
+      result,
     });
 
   } catch (err) {
-    console.error(err);
     return res.status(500).json({
       error: "Error firmando contrato",
-      detalle: err.message
+      detalle: err.message,
     });
   }
 };
+
 /* =========================
    AUDITORÍA
 ========================= */
 exports.obtenerAuditoria = async (req, res) => {
   try {
     const contratoId = Number(req.params.id);
-    if (isNaN(contratoId)) return res.status(400).json({ error: "ID inválido" });
+
+    if (isNaN(contratoId)) {
+      return res.status(400).json({ error: "ID inválido" });
+    }
 
     const logs = await contratosService.obtenerAuditoria(contratoId);
 
-    res.json({ contratoId, logs });
+    return res.json({ contratoId, logs });
 
   } catch (err) {
-    res.status(500).json({
+    return res.status(500).json({
       error: "Error al obtener auditoría",
       detalle: err.message,
     });

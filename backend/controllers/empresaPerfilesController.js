@@ -25,11 +25,11 @@ exports.asignarPerfil = async (req, res) => {
       return res.status(401).json({ error: "No autenticado" });
     }
 
-    if (isNaN(empresaId) || empresaId <= 0) {
+    if (!empresaId || isNaN(empresaId) || empresaId <= 0) {
       return res.status(400).json({ error: "empresaId inválido" });
     }
 
-    if (isNaN(perfilId) || perfilId <= 0) {
+    if (!perfilId || isNaN(perfilId) || perfilId <= 0) {
       return res.status(400).json({ error: "perfilId inválido" });
     }
 
@@ -73,7 +73,7 @@ exports.asignarPerfil = async (req, res) => {
       creadoPor
     );
 
-    if (!contrato?.contratoId && !contrato?.token) {
+    if (!contrato) {
       throw new Error("Error al generar contrato automático");
     }
 
