@@ -1,234 +1,132 @@
 const db = require("../models/db");
-
 const { generarHash } = require("../utils/hash");
 const { generarPDFContrato } = require("./pdf.service");
 const { enviarContratoEmail } = require("./email.service");
 const { ESTADOS_CONTRATO } = require("../utils/estadosContrato");
 
 function toArray(r) {
-if (!r) return [];
-if (Array.isArray(r)) return r;
-if (Array.isArray(r?.rows)) return r.rows;
-if (Array.isArray(r?.data)) return r.data;
-return [];
+  if (!r) return [];
+  if (Array.isArray(r)) return r;
+  if (Array.isArray(r?.rows)) return r.rows;
+  if (Array.isArray(r?.data)) return r.data;
+  return [];
 }
 
-/* =========================
-GENERAR CONTRATO AUTOMÁTICO
-========================= */
-async function generarContratoAutomatico(
-empresaId,
-perfiles,
-creadoPor
-) {
-/* =========================
-VALIDACIONES
-========================= */
+async function generarContratoAutomatico(empresaId, perfiles, creadoPor) {
+  const empresa = Number(empresaId);
+  const usuario = Number(creadoPor);
 
-const empresa = Number(empresaId);
-const usuario = Number(creadoPor);
+  if (isNaN(empresa) || empresa <= 0) throw new Error("empresaId inválido");
+  if (isNaN(usuario) || usuario <= 0) throw new Error("creadoPor inválido");
+  if (!Array.isArray(perfiles) || perfiles.length === 0)
+    throw new Error("Debes enviar al menos un perfil");
 
-if (isNaN(empresa) || empresa <= 0) {
-throw new Error("empresaId inválido");
-}
+  // evitar duplicados
+  const existeRaw = await db.query(
+    `SELECT FIRST 1 ID, TOKEN
+     FROM CONTRATOS_MANTENIMIENTO
+     WHERE EMPRESA_ID = ?
+     ORDER BY ID DESC`,
+    [empresa]
+  );
 
-if (isNaN(usuario) || usuario <= 0) {
-throw new Error("creadoPor inválido");
-}
+  const existe = toArray(existeRaw);
 
-if (!Array.isArray(perfiles) || perfiles.length === 0) {
-throw new Error("Debes enviar al menos un perfil");
-}
+  if (existe.length > 0) {
+    return {
+      contratoId: existe[0].ID,
+      token: existe[0].TOKEN,
+      duplicado: true,
+    };
+  }
 
-/* =========================
-EVITAR DUPLICADOS
-========================= */
+  // ID
+  const idRaw = await db.query(
+    `SELECT GEN_ID(GEN_CONTRATOS, 1) AS ID FROM RDB$DATABASE`
+  );
 
-const existeRaw = await db.query(
-`     SELECT FIRST 1 ID, TOKEN
-    FROM CONTRATOS_MANTENIMIENTO
-    WHERE EMPRESA_ID = ?
-    ORDER BY ID DESC
-    `,
-[empresa]
-);
+  const contratoId = toArray(idRaw)[0]?.ID;
+  if (!contratoId) throw new Error("No se pudo generar ID");
 
-const existe = toArray(existeRaw);
+  const token = generarHash({
+    contratoId,
+    empresaId: empresa,
+    perfiles,
+    t: Date.now(),
+  });
 
-if (existe.length > 0) {
-return {
-contratoId: existe[0].ID,
-token: existe[0].TOKEN,
-duplicado: true
-};
-}
+  const hashContrato = generarHash({
+    contratoId,
+    empresaId: empresa,
+    perfiles,
+    token,
+  });
 
-/* =========================
-GENERAR ID CONTRATO
-========================= */
+  // contrato
+  await db.query(
+    `INSERT INTO CONTRATOS_MANTENIMIENTO
+     (ID, EMPRESA_ID, TOKEN, HASH_CONTRATO, ESTADO, FECHA_ENVIO)
+     VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+    [
+      contratoId,
+      empresa,
+      token,
+      hashContrato,
+      ESTADOS_CONTRATO.PENDIENTE,
+    ]
+  );
 
-const idRaw = await db.query(
-`     SELECT GEN_ID(GEN_CONTRATOS, 1) AS ID
-    FROM RDB$DATABASE
-    `
-);
+  // perfiles
+  for (const perfilId of perfiles) {
+    await db.query(
+      `INSERT INTO CONTRATO_PERFILES (CONTRATO_ID, PERFIL_ID)
+       VALUES (?, ?)`,
+      [contratoId, perfilId]
+    );
+  }
 
-const contratoId = toArray(idRaw)[0]?.ID;
+  // nombres perfiles
+  const perfilesRaw = await db.query(
+    `SELECT NOMBRE FROM PERFILES WHERE ID IN (${perfiles.map(() => "?").join(",")})`,
+    perfiles
+  );
 
-if (!contratoId) {
-throw new Error("No se pudo generar el ID del contrato");
-}
+  const nombres = toArray(perfilesRaw).map(p => p.NOMBRE);
 
-/* =========================
-HASH CONTRATO
-========================= */
+  const pdf = await generarPDFContrato({
+    contratoId,
+    empresaId: empresa,
+    perfiles: nombres,
+    hash: hashContrato,
+  });
 
-const hashContrato = generarHash({
-contratoId,
-empresaId: empresa,
-perfiles,
-timestamp: Date.now()
-});
+  const emailRaw = await db.query(
+    `SELECT EMAIL FROM EMPRESAS WHERE EMPRESA_ID = ?`,
+    [empresa]
+  );
 
-/* =========================
-TOKEN FIRMA
-========================= */
+  const email = toArray(emailRaw)[0]?.EMAIL;
 
-const token = generarHash({
-contratoId,
-empresaId: empresa,
-perfiles,
-timestamp: Date.now()
-});
+  const linkFirma = `http://localhost:3000/firma.html?token=${token}`;
 
-/* =========================
-GUARDAR CONTRATO
-========================= */
+  if (email) {
+    await enviarContratoEmail({
+      to: email,
+      pdfPath: pdf.filePath,
+      contratoId,
+      linkFirma,
+    });
+  }
 
-await db.query(
-`     INSERT INTO CONTRATOS_MANTENIMIENTO
-    (
-      ID,
-      EMPRESA_ID,
-      HASH_CONTRATO,
-      TOKEN,
-      ESTADO,
-      FECHA_ENVIO
-    )
-    VALUES
-    (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-    `,
-[
-contratoId,
-empresa,
-hashContrato,
-token,
-ESTADOS_CONTRATO.PENDIENTE
-]
-);
-
-/* =========================
-GUARDAR RELACIÓN PERFILES
-========================= */
-
-for (const perfilId of perfiles) {
-await db.query(
-`       INSERT INTO CONTRATO_PERFILES
-      (
-        CONTRATO_ID,
-        PERFIL_ID
-      )
-      VALUES (?, ?)
-      `,
-[contratoId, perfilId]
-);
-}
-
-/* =========================
-OBTENER NOMBRES PERFILES
-========================= */
-
-const perfilesRaw = await db.query(
-`     SELECT NOMBRE
-    FROM PERFILES
-    WHERE ID IN (${perfiles.map(() => "?").join(",")})
-    `,
-perfiles
-);
-
-const nombresPerfiles =
-toArray(perfilesRaw).map(p => p.NOMBRE);
-
-/* =========================
-PDF
-========================= */
-
-const pdf = await generarPDFContrato({
-contratoId,
-empresaId: empresa,
-perfiles: nombresPerfiles,
-hash: hashContrato
-});
-
-if (!pdf?.fileName) {
-throw new Error("Error generando PDF");
-}
-
-/* =========================
-EMAIL EMPRESA
-========================= */
-
-const emailRaw = await db.query(
-`     SELECT EMAIL
-    FROM EMPRESAS
-    WHERE EMPRESA_ID = ?
-    `,
-[empresa]
-);
-
-const email =
-toArray(emailRaw)[0]?.EMAIL || null;
-
-const FRONTEND_URL =
-process.env.FRONTEND_URL ||
-"http://localhost:3000";
-
-const linkFirma =
-`${FRONTEND_URL}/firma.html?token=${token}`;
-
-/* =========================
-ENVIAR EMAIL
-========================= */
-
-if (email) {
-try {
-await enviarContratoEmail({
-to: email,
-pdfPath: pdf.filePath,
-contratoId,
-linkFirma
-});
-} catch (err) {
-console.error("ERROR EMAIL:", err.message);
-}
-}
-
-/* =========================
-RESPUESTA
-========================= */
-
-return {
-ok: true,
-contratoId,
-token,
-hash: hashContrato,
-pdf: pdf.fileName,
-aplicaciones: nombresPerfiles,
-emailEnviado: Boolean(email),
-linkFirma
-};
+  return {
+    contratoId,
+    token,
+    pdf: pdf.fileName,
+    perfiles: nombres,
+    linkFirma,
+  };
 }
 
 module.exports = {
-generarContratoAutomatico
+  generarContratoAutomatico,
 };
