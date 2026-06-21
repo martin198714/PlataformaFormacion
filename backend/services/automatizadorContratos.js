@@ -21,7 +21,9 @@ async function generarContratoAutomatico(empresaId, perfiles, creadoPor) {
   if (!Array.isArray(perfiles) || perfiles.length === 0)
     throw new Error("Debes enviar al menos un perfil");
 
-  // evitar duplicados
+  /* =========================
+     EVITAR DUPLICADOS
+  ========================= */
   const existeRaw = await db.query(
     `SELECT FIRST 1 ID, TOKEN
      FROM CONTRATOS_MANTENIMIENTO
@@ -40,35 +42,31 @@ async function generarContratoAutomatico(empresaId, perfiles, creadoPor) {
     };
   }
 
-  // ID
-  const idRaw = await db.query(
-    `SELECT GEN_ID(GEN_CONTRATOS, 1) AS ID FROM RDB$DATABASE`
-  );
-
-  const contratoId = toArray(idRaw)[0]?.ID;
-  if (!contratoId) throw new Error("No se pudo generar ID");
-
+  /* =========================
+     TOKEN + HASH
+  ========================= */
   const token = generarHash({
-    contratoId,
-    empresaId: empresa,
+    empresa,
     perfiles,
     t: Date.now(),
   });
 
   const hashContrato = generarHash({
-    contratoId,
-    empresaId: empresa,
+    empresa,
     perfiles,
     token,
   });
 
-  // contrato
-  await db.query(
+  /* =========================
+     INSERT CONTRATO (FIX CRÍTICO)
+     → SIN ID MANUAL
+  ========================= */
+  const insertRaw = await db.query(
     `INSERT INTO CONTRATOS_MANTENIMIENTO
-     (ID, EMPRESA_ID, TOKEN, HASH_CONTRATO, ESTADO, FECHA_ENVIO)
-     VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+     (EMPRESA_ID, TOKEN, HASH_CONTRATO, ESTADO, FECHA_ENVIO)
+     VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+     RETURNING ID`,
     [
-      contratoId,
       empresa,
       token,
       hashContrato,
@@ -76,23 +74,41 @@ async function generarContratoAutomatico(empresaId, perfiles, creadoPor) {
     ]
   );
 
-  // perfiles
+  const contratoId = toArray(insertRaw)[0]?.ID;
+
+  if (!contratoId) throw new Error("No se pudo crear contrato");
+
+  /* =========================
+     INSERT PERFILES (SAFE)
+  ========================= */
   for (const perfilId of perfiles) {
+    const pid = Number(perfilId);
+    if (isNaN(pid)) continue;
+
     await db.query(
       `INSERT INTO CONTRATO_PERFILES (CONTRATO_ID, PERFIL_ID)
        VALUES (?, ?)`,
-      [contratoId, perfilId]
+      [contratoId, pid]
     );
   }
 
-  // nombres perfiles
+  /* =========================
+     NOMBRES PERFILES (SAFE IN)
+  ========================= */
+  const placeholders = perfiles.map(() => "?").join(",");
+
   const perfilesRaw = await db.query(
-    `SELECT NOMBRE FROM PERFILES WHERE ID IN (${perfiles.map(() => "?").join(",")})`,
+    `SELECT NOMBRE
+     FROM PERFILES
+     WHERE ID IN (${placeholders})`,
     perfiles
   );
 
   const nombres = toArray(perfilesRaw).map(p => p.NOMBRE);
 
+  /* =========================
+     PDF
+  ========================= */
   const pdf = await generarPDFContrato({
     contratoId,
     empresaId: empresa,
@@ -100,30 +116,43 @@ async function generarContratoAutomatico(empresaId, perfiles, creadoPor) {
     hash: hashContrato,
   });
 
-  const emailRaw = await db.query(
-    `SELECT EMAIL FROM EMPRESAS WHERE EMPRESA_ID = ?`,
-    [empresa]
-  );
-
-  const email = toArray(emailRaw)[0]?.EMAIL;
-
-  const linkFirma = `http://localhost:3000/firma.html?token=${token}`;
-
-  if (email) {
-    await enviarContratoEmail({
-      to: email,
-      pdfPath: pdf.filePath,
-      contratoId,
-      linkFirma,
-    });
+  if (!pdf?.filePath) {
+    throw new Error("Error generando PDF");
   }
 
+  /* =========================
+     EMAIL (NO ROMPER FLUJO)
+  ========================= */
+  try {
+    const emailRaw = await db.query(
+      `SELECT EMAIL FROM EMPRESAS WHERE EMPRESA_ID = ?`,
+      [empresa]
+    );
+
+    const email = toArray(emailRaw)[0]?.EMAIL;
+
+    if (email) {
+      await enviarContratoEmail({
+        to: email,
+        pdfPath: pdf.filePath,
+        contratoId,
+        linkFirma: `http://localhost:3000/firma.html?token=${token}`,
+      });
+    }
+  } catch (err) {
+    console.error("EMAIL ERROR:", err.message);
+  }
+
+  /* =========================
+     RESPONSE FINAL
+  ========================= */
   return {
+    ok: true,
     contratoId,
     token,
     pdf: pdf.fileName,
     perfiles: nombres,
-    linkFirma,
+    linkFirma: `http://localhost:3000/firma.html?token=${token}`,
   };
 }
 
