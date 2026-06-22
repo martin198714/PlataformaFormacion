@@ -5,9 +5,6 @@ const { generarPDFContrato, verificarPDFFirmado } = require("./pdf.service");
 const { enviarContratoEmail } = require("./email.service");
 const { v4: uuidv4 } = require("uuid");
 
-/* =========================
-   NORMALIZADOR DB
-========================= */
 function toArray(r) {
   if (!r) return [];
   if (Array.isArray(r)) return r;
@@ -28,13 +25,10 @@ async function listarPorUsuario(usuarioId) {
         c.ESTADO,
         c.FECHA_ENVIO,
         c.TOKEN,
-        a.FICHERO_NOMBRE,
-        p.NOMBRE AS PERFIL_NOMBRE
+        a.FICHERO_NOMBRE
      FROM CONTRATOS_MANTENIMIENTO c
      LEFT JOIN EMPRESAS e ON e.EMPRESA_ID = c.EMPRESA_ID
      LEFT JOIN ARCHIVOS a ON a.ARCHIVO_ID = c.ARCHIVO_ENVIADO_ID
-     LEFT JOIN CONTRATO_PERFILES cp ON cp.CONTRATO_ID = c.ID
-     LEFT JOIN PERFILES p ON p.ID = cp.PERFIL_ID
      WHERE c.EMPRESA_ID = (
         SELECT EMPRESA_ID FROM USUARIOS WHERE USUARIO_ID = ?
      )
@@ -76,31 +70,32 @@ async function verContrato(id) {
 }
 
 /* =========================
-   CREAR CONTRATO + EMAIL POR PERFIL
+   CREAR CONTRATO + EMAILS POR PERFIL (FIX FINAL)
 ========================= */
-async function crearContrato(empresaId, perfilId, usuarioId) {
+async function crearContrato(empresaId, perfiles, usuarioId) {
   try {
-    if (!empresaId || !perfilId || !usuarioId) {
-      throw new Error("Faltan datos obligatorios");
+    if (!empresaId || !Array.isArray(perfiles) || perfiles.length === 0) {
+      throw new Error("Datos inválidos");
     }
 
+    const empresa = Number(empresaId);
     const token = uuidv4();
 
     const hash = generarHash({
-      empresaId,
-      perfilId,
+      empresaId: empresa,
+      perfiles,
       token,
       t: Date.now(),
     });
 
     /* =========================
-       CREAR CONTRATO
+       INSERT CONTRATO
     ========================= */
     await db.query(
       `INSERT INTO CONTRATOS_MANTENIMIENTO
        (EMPRESA_ID, TOKEN, HASH_CONTRATO, ESTADO, FECHA_ENVIO)
        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-      [empresaId, token, hash, ESTADOS_CONTRATO.PENDIENTE]
+      [empresa, token, hash, ESTADOS_CONTRATO.PENDIENTE]
     );
 
     const contratoRow = await db.query(
@@ -113,75 +108,73 @@ async function crearContrato(empresaId, perfilId, usuarioId) {
     const contratoId = toArray(contratoRow)[0]?.ID;
 
     if (!contratoId) {
-      throw new Error("No se pudo obtener ID del contrato");
-    }
-
-    const perfilNum = Number(perfilId);
-
-    if (isNaN(perfilNum)) {
-      throw new Error("perfilId inválido");
+      throw new Error("No se pudo obtener contratoId");
     }
 
     /* =========================
-       RELACIÓN CONTRATO - PERFIL
+       RELACIÓN CONTRATO - PERFILES
     ========================= */
-    await db.query(
-      `INSERT INTO CONTRATO_PERFILES (CONTRATO_ID, PERFIL_ID)
-       VALUES (?, ?)`,
-      [contratoId, perfilNum]
-    );
+    for (const perfilId of perfiles) {
+      const pid = Number(perfilId);
+      if (isNaN(pid)) continue;
+
+      await db.query(
+        `INSERT INTO CONTRATO_PERFILES (CONTRATO_ID, PERFIL_ID)
+         VALUES (?, ?)`,
+        [contratoId, pid]
+      );
+    }
 
     /* =========================
        PDF
     ========================= */
     const pdf = await generarPDFContrato({
       contratoId,
-      empresaId,
-      perfilId: perfilNum,
+      empresaId: empresa,
+      perfiles,
       hash,
     });
 
     if (!pdf?.filePath) {
-      throw new Error("PDF no generado correctamente");
+      throw new Error("PDF no generado");
     }
 
     /* =========================
-       USUARIOS DESTINO POR PERFIL
-       (ESTO ES LO IMPORTANTE)
+       🔥 DESTINATARIOS CORRECTOS
+       SOLO USUARIOS DE ESA EMPRESA + PERFIL
     ========================= */
+    const placeholders = perfiles.map(() => "?").join(",");
+
     const userRow = await db.query(
       `
       SELECT DISTINCT u.EMAIL
       FROM USUARIOS u
-      INNER JOIN USUARIO_PERFILES up ON up.USUARIO_ID = u.USUARIO_ID
+      INNER JOIN USUARIOS_PERFILES up
+        ON up.USUARIO_ID = u.USUARIO_ID
       WHERE u.EMPRESA_ID = ?
-        AND up.PERFIL_ID = ?
+        AND up.PERFIL_ID IN (${placeholders})
+        AND u.ACTIVO = 1
+        AND u.DELETED = 0
       `,
-      [empresaId, perfilNum]
+      [empresa, ...perfiles]
     );
 
     const emails = toArray(userRow)
       .map(u => u.EMAIL)
       .filter(Boolean);
 
-    console.log("📩 EMAILS DESTINO:", emails);
+    console.log("📩 DESTINATARIOS:", emails);
 
     /* =========================
        ENVIAR EMAILS
     ========================= */
-    if (emails.length > 0) {
-      for (const email of emails) {
-        await enviarContratoEmail({
-          to: email,
-          pdfPath: pdf.filePath,
-          contratoId,
-          linkFirma: `http://localhost:3000/firma.html?token=${token}`,
-        });
-      }
-
-      console.log("✅ EMAILS ENVIADOS CORRECTAMENTE");
-    } else {
-      console.log("⚠️ No hay usuarios con ese perfil en la empresa");
+    for (const email of emails) {
+      await enviarContratoEmail({
+        to: email,
+        pdfPath: pdf.filePath,
+        contratoId,
+        linkFirma: `http://localhost:3000/firma.html?token=${token}`,
+      });
     }
 
     return {
@@ -190,7 +183,6 @@ async function crearContrato(empresaId, perfilId, usuarioId) {
       token,
       pdf: pdf.fileName,
       emailsEnviados: emails.length,
-      linkFirma: `http://localhost:3000/firma.html?token=${token}`,
     };
 
   } catch (err) {
@@ -215,7 +207,7 @@ async function obtenerPorToken(token) {
 }
 
 /* =========================
-   FIRMAR TOKEN
+   FIRMAR CONTRATO
 ========================= */
 async function firmarContratoToken({ token, ip, userAgent }) {
   const contrato = await obtenerPorToken(token);
@@ -286,9 +278,6 @@ async function firmarContratoTokenArchivo(data) {
   return { ok: true, contratoId: contrato.ID };
 }
 
-/* =========================
-   EXPORTS
-========================= */
 module.exports = {
   listarPorUsuario,
   listarPorEmpresa,

@@ -14,12 +14,17 @@ function toArray(r) {
 
 async function generarContratoAutomatico(empresaId, perfiles, creadoPor) {
   const empresa = Number(empresaId);
-  const usuario = Number(creadoPor);
 
-  if (isNaN(empresa) || empresa <= 0) throw new Error("empresaId inválido");
-  if (isNaN(usuario) || usuario <= 0) throw new Error("creadoPor inválido");
+  if (isNaN(empresa) || empresa <= 0)
+    throw new Error("empresaId inválido");
+
   if (!Array.isArray(perfiles) || perfiles.length === 0)
     throw new Error("Debes enviar al menos un perfil");
+
+  const perfilesNumeros = perfiles.map(Number).filter(n => !isNaN(n));
+
+  if (perfilesNumeros.length === 0)
+    throw new Error("Perfiles inválidos");
 
   /* =========================
      EVITAR DUPLICADOS
@@ -47,16 +52,19 @@ async function generarContratoAutomatico(empresaId, perfiles, creadoPor) {
   ========================= */
   const token = generarHash({
     empresa,
-    perfiles,
+    perfiles: perfilesNumeros,
     t: Date.now(),
   });
 
   const hashContrato = generarHash({
     empresa,
-    perfiles,
+    perfiles: perfilesNumeros,
     token,
   });
 
+  /* =========================
+     INSERT CONTRATO
+  ========================= */
   const insertRaw = await db.query(
     `INSERT INTO CONTRATOS_MANTENIMIENTO
      (EMPRESA_ID, TOKEN, HASH_CONTRATO, ESTADO, FECHA_ENVIO)
@@ -72,35 +80,33 @@ async function generarContratoAutomatico(empresaId, perfiles, creadoPor) {
 
   const contratoId = toArray(insertRaw)[0]?.ID;
 
-  if (!contratoId) throw new Error("No se pudo crear contrato");
+  if (!contratoId)
+    throw new Error("No se pudo crear contrato");
 
   /* =========================
-     INSERT PERFILES
+     RELACIÓN CONTRATO - PERFILES
   ========================= */
-  for (const perfilId of perfiles) {
-    const pid = Number(perfilId);
-    if (isNaN(pid)) continue;
-
+  for (const perfilId of perfilesNumeros) {
     await db.query(
       `INSERT INTO CONTRATO_PERFILES (CONTRATO_ID, PERFIL_ID)
        VALUES (?, ?)`,
-      [contratoId, pid]
+      [contratoId, perfilId]
     );
   }
 
   /* =========================
-     NOMBRES PERFILES
+     OBTENER NOMBRES PERFILES
   ========================= */
-  const placeholders = perfiles.map(() => "?").join(",");
+  const placeholders = perfilesNumeros.map(() => "?").join(",");
 
   const perfilesRaw = await db.query(
     `SELECT NOMBRE
      FROM PERFILES
      WHERE ID IN (${placeholders})`,
-    perfiles
+    perfilesNumeros
   );
 
-  const nombres = toArray(perfilesRaw).map(p => p.NOMBRE);
+  const nombresPerfiles = toArray(perfilesRaw).map(p => p.NOMBRE);
 
   /* =========================
      PDF
@@ -108,50 +114,52 @@ async function generarContratoAutomatico(empresaId, perfiles, creadoPor) {
   const pdf = await generarPDFContrato({
     contratoId,
     empresaId: empresa,
-    perfiles: nombres,
+    perfiles: nombresPerfiles,
     hash: hashContrato,
   });
 
-  if (!pdf?.filePath) {
+  if (!pdf?.filePath)
     throw new Error("Error generando PDF");
-  }
 
   /* =========================
-     🔥 EMAIL CORRECTO (USUARIOS CON PERFILES)
+     🔥 USUARIOS DESTINO (CORRECTO)
   ========================= */
-  try {
-    const emailRaw = await db.query(
-      `
-      SELECT DISTINCT u.EMAIL
-      FROM USUARIOS u
-      INNER JOIN USUARIO_PERFILES up ON up.USUARIO_ID = u.USUARIO_ID
-      WHERE u.EMPRESA_ID = ?
-        AND up.PERFIL_ID IN (${placeholders})
-      `,
-      [empresa, ...perfiles]
-    );
+  const emailRaw = await db.query(
+    `
+    SELECT DISTINCT u.EMAIL
+    FROM USUARIOS u
+    INNER JOIN USUARIOS_PERFILES up
+      ON up.USUARIO_ID = u.USUARIO_ID
+    WHERE u.EMPRESA_ID = ?
+      AND up.PERFIL_ID IN (${placeholders})
+      AND u.ACTIVO = 1
+      AND u.DELETED = 0
+    `,
+    [empresa, ...perfilesNumeros]
+  );
 
-    const emails = toArray(emailRaw)
+  const emails = [...new Set(
+    toArray(emailRaw)
       .map(u => u.EMAIL)
-      .filter(Boolean);
+      .filter(Boolean)
+  )];
 
-    console.log("📩 EMAILS DESTINO:", emails);
+  console.log("📩 EMAILS DESTINO:", emails);
 
-    if (emails.length > 0) {
-      for (const email of emails) {
-        await enviarContratoEmail({
-          to: email,
-          pdfPath: pdf.filePath,
-          contratoId,
-          linkFirma: `http://localhost:3000/firma.html?token=${token}`,
-        });
-      }
-    } else {
-      console.log("⚠️ No hay usuarios con esos perfiles");
+  /* =========================
+     ENVIAR EMAILS
+  ========================= */
+  for (const email of emails) {
+    try {
+      await enviarContratoEmail({
+        to: email,
+        pdfPath: pdf.filePath,
+        contratoId,
+        linkFirma: `http://localhost:3000/firma.html?token=${token}`,
+      });
+    } catch (err) {
+      console.error(`❌ Error enviando a ${email}:`, err.message);
     }
-
-  } catch (err) {
-    console.error("EMAIL ERROR:", err.message);
   }
 
   return {
@@ -159,7 +167,8 @@ async function generarContratoAutomatico(empresaId, perfiles, creadoPor) {
     contratoId,
     token,
     pdf: pdf.fileName,
-    perfiles: nombres,
+    perfiles: nombresPerfiles,
+    emailsEnviados: emails.length,
     linkFirma: `http://localhost:3000/firma.html?token=${token}`,
   };
 }
