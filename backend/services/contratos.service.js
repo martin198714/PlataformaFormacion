@@ -78,7 +78,7 @@ async function verContrato(id) {
 /* =========================
    CREAR CONTRATO + EMAIL POR PERFIL
 ========================= */
-async function crearContrato(empresaId, perfilId, usuarioId, perfilDestino) {
+async function crearContrato(empresaId, perfilId, usuarioId) {
   try {
     if (!empresaId || !perfilId || !usuarioId) {
       throw new Error("Faltan datos obligatorios");
@@ -94,7 +94,7 @@ async function crearContrato(empresaId, perfilId, usuarioId, perfilDestino) {
     });
 
     /* =========================
-       INSERT CONTRATO
+       CREAR CONTRATO
     ========================= */
     await db.query(
       `INSERT INTO CONTRATOS_MANTENIMIENTO
@@ -104,39 +104,32 @@ async function crearContrato(empresaId, perfilId, usuarioId, perfilDestino) {
     );
 
     const contratoRow = await db.query(
-      `SELECT FIRST 1 ID FROM CONTRATOS_MANTENIMIENTO WHERE TOKEN = ?`,
+      `SELECT FIRST 1 ID
+       FROM CONTRATOS_MANTENIMIENTO
+       WHERE TOKEN = ?`,
       [token]
     );
 
     const contratoId = toArray(contratoRow)[0]?.ID;
-    if (!contratoId) throw new Error("No se pudo obtener contratoId");
+
+    if (!contratoId) {
+      throw new Error("No se pudo obtener ID del contrato");
+    }
 
     const perfilNum = Number(perfilId);
 
+    if (isNaN(perfilNum)) {
+      throw new Error("perfilId inválido");
+    }
+
+    /* =========================
+       RELACIÓN CONTRATO - PERFIL
+    ========================= */
     await db.query(
       `INSERT INTO CONTRATO_PERFILES (CONTRATO_ID, PERFIL_ID)
        VALUES (?, ?)`,
       [contratoId, perfilNum]
     );
-
-    /* =========================
-       OBTENER USUARIOS POR PERFIL (IMPORTANTE)
-    ========================= */
-    const userRow = await db.query(
-      `
-      SELECT u.EMAIL
-      FROM USUARIOS u
-      INNER JOIN USUARIO_PERFILES up ON up.USUARIO_ID = u.USUARIO_ID
-      INNER JOIN PERFILES p ON p.ID = up.PERFIL_ID
-      WHERE u.EMPRESA_ID = ?
-        AND LOWER(p.NOMBRE) = LOWER(?)
-      `,
-      [empresaId, perfilDestino]
-    );
-
-    const emails = toArray(userRow).map(u => u.EMAIL);
-
-    console.log("📩 EMAILS DESTINO:", emails);
 
     /* =========================
        PDF
@@ -153,7 +146,28 @@ async function crearContrato(empresaId, perfilId, usuarioId, perfilDestino) {
     }
 
     /* =========================
-       EMAIL
+       USUARIOS DESTINO POR PERFIL
+       (ESTO ES LO IMPORTANTE)
+    ========================= */
+    const userRow = await db.query(
+      `
+      SELECT DISTINCT u.EMAIL
+      FROM USUARIOS u
+      INNER JOIN USUARIO_PERFILES up ON up.USUARIO_ID = u.USUARIO_ID
+      WHERE u.EMPRESA_ID = ?
+        AND up.PERFIL_ID = ?
+      `,
+      [empresaId, perfilNum]
+    );
+
+    const emails = toArray(userRow)
+      .map(u => u.EMAIL)
+      .filter(Boolean);
+
+    console.log("📩 EMAILS DESTINO:", emails);
+
+    /* =========================
+       ENVIAR EMAILS
     ========================= */
     if (emails.length > 0) {
       for (const email of emails) {
@@ -167,13 +181,16 @@ async function crearContrato(empresaId, perfilId, usuarioId, perfilDestino) {
 
       console.log("✅ EMAILS ENVIADOS CORRECTAMENTE");
     } else {
-      console.log("⚠️ No hay usuarios con ese perfil");
+      console.log("⚠️ No hay usuarios con ese perfil en la empresa");
     }
 
     return {
       ok: true,
       contratoId,
       token,
+      pdf: pdf.fileName,
+      emailsEnviados: emails.length,
+      linkFirma: `http://localhost:3000/firma.html?token=${token}`,
     };
 
   } catch (err) {
