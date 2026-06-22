@@ -22,74 +22,53 @@ const storage = multer.diskStorage({
   }
 });
 
-const uploadContrato = multer({
+const upload = multer({
   storage,
   limits: { fileSize: 20 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype === "application/pdf") cb(null, true);
-    else cb(new Error("Solo PDF"));
+    cb(null, file.mimetype === "application/pdf");
   }
 });
 
 /* =========================
    PROTEGIDOS
 ========================= */
-
 router.get("/", authMiddleware, contratosController.listar);
-
-router.get(
-  "/empresa/:empresaId",
-  authMiddleware,
-  contratosController.listarPorEmpresa
-);
-
-router.post(
-  "/crear",
-  authMiddleware,
-  contratosController.crear
-);
+router.get("/empresa/:empresaId", authMiddleware, contratosController.listarPorEmpresa);
+router.post("/crear", authMiddleware, contratosController.crear);
 
 /* =========================
    PÚBLICOS
 ========================= */
+router.get("/firma/:token", contratosController.verContratoPorToken);
 
-router.get(
-  "/firma/:token",
-  contratosController.verContratoPorToken
-);
+/* =========================
+   FIRMA TOKEN
+========================= */
+router.post("/firmar-token/:token", contratosController.firmarPorToken);
 
-/* FIRMA CON PDF */
+/* =========================
+   FIRMA PDF
+========================= */
 router.post(
   "/firmar/token/:token",
-  uploadContrato.single("pdf"),
-  contratosController.firmarPorTokenArchivo
-);
-
-/* FIRMA SIN PDF */
-router.post(
-  "/firmar-token/:token",
-  contratosController.firmarPorToken
-);
-
-/* =========================
-   FIRMA POR ID (IMPORTANTE)
-   ⚠️ ARREGLADO: antes apuntaba a "firmar" (NO EXISTE)
-========================= */
-
-router.post(
-  "/firmar/:id",
-  authMiddleware,
+  upload.single("pdf"),
   contratosController.firmarPorTokenArchivo
 );
 
 /* =========================
-   DETALLE CONTRATO
+   FIRMA UNIFICADA (RECOMENDADO)
 ========================= */
-
-router.get(
-  "/:id",
+router.post(
+  "/firmar/:id/:token?",
   authMiddleware,
-  contratosController.verContrato
+  upload.single("pdf"),
+  contratosController.firmar
 );
+
+/* =========================
+   DETALLE
+========================= */
+router.get("/:id", authMiddleware, contratosController.verContrato);
 
 module.exports = router;

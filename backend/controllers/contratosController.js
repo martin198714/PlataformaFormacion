@@ -247,6 +247,26 @@ exports.firmarPorTokenArchivo = async (req, res) => {
   }
 };
 
+exports.firmar = async (req, res) => {
+  try {
+    const result = await contratosService.firmarContrato({
+      id: req.params.id,
+      token: req.params.token,
+      archivoFirmado: req.file?.filename,
+      rutaFirmado: req.file?.path,
+      ip: req.headers["x-forwarded-for"] || req.socket?.remoteAddress,
+      userAgent: req.headers["user-agent"],
+      usuarioId: req.user?.id
+    });
+
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    });
+  }
+};
+
 /* =========================
    AUDITORÍA (SAFE)
 ========================= */

@@ -259,12 +259,195 @@ async function firmarContratoToken({ token, ip, userAgent }) {
   };
 }
 
+async function obtenerPorId(id) {
+  const r = await db.query(
+    `SELECT c.*, a.FICHERO_NOMBRE
+     FROM CONTRATOS_MANTENIMIENTO c
+     LEFT JOIN ARCHIVOS a ON a.ARCHIVO_ID = c.ARCHIVO_ENVIADO_ID
+     WHERE c.ID = ?`,
+    [id]
+  );
+
+  return toArray(r)[0] || null;
+}
+
+async function marcarFirmadoArchivo({
+  contratoId,
+  usuarioId,
+  archivoFirmado,
+  rutaFirmado
+}) {
+  const contrato = await obtenerPorId(contratoId);
+
+  if (!contrato) throw new Error("Contrato no existe");
+
+  const hashFirma = generarHash({
+    contratoId,
+    usuarioId,
+    archivoFirmado,
+    t: Date.now()
+  });
+
+  await db.query(
+    `UPDATE CONTRATOS_MANTENIMIENTO
+     SET ESTADO = ?,
+         ARCHIVO_FIRMADO = ?,
+         RUTA_FIRMADO = ?,
+         USUARIO_FIRMA_ID = ?,
+         FECHA_FIRMA = CURRENT_TIMESTAMP,
+         HASH_FIRMADO = ?
+     WHERE ID = ?`,
+    [
+      ESTADOS_CONTRATO.FIRMADO,
+      archivoFirmado,
+      rutaFirmado,
+      usuarioId,
+      hashFirma,
+      contratoId
+    ]
+  );
+
+  return { ok: true };
+}
+
+async function firmarContrato({
+  id = null,
+  token = null,
+  archivoFirmado = null,
+  rutaFirmado = null,
+  ip = "",
+  userAgent = "",
+  usuarioId = null
+}) {
+  let contrato = null;
+
+  // 1. Resolver contrato
+  if (id) {
+    const r = await db.query(
+      `SELECT * FROM CONTRATOS_MANTENIMIENTO WHERE ID = ?`,
+      [id]
+    );
+    contrato = toArray(r)[0];
+  } else if (token) {
+    const r = await db.query(
+      `SELECT * FROM CONTRATOS_MANTENIMIENTO WHERE TOKEN = ?`,
+      [token]
+    );
+    contrato = toArray(r)[0];
+  }
+
+  if (!contrato) throw new Error("Contrato no encontrado");
+
+  // 2. Validación PDF si existe
+  if (rutaFirmado) {
+    const valid = await verificarPDFFirmado(rutaFirmado);
+    if (!valid?.valido) {
+      throw new Error("PDF firmado inválido");
+    }
+  }
+
+  // 3. Hash de auditoría
+  const hashFirma = generarHash({
+    id: contrato.ID,
+    token: contrato.TOKEN,
+    archivoFirmado,
+    ip,
+    userAgent,
+    t: Date.now()
+  });
+
+  // 4. Update estado centralizado
+  await db.query(
+    `UPDATE CONTRATOS_MANTENIMIENTO
+     SET ESTADO = ?,
+         FECHA_FIRMA = CURRENT_TIMESTAMP,
+         IP_FIRMA = ?,
+         USER_AGENT = ?,
+         USUARIO_FIRMA_ID = ?,
+         ARCHIVO_FIRMADO = COALESCE(?, ARCHIVO_FIRMADO),
+         RUTA_FIRMADO = COALESCE(?, RUTA_FIRMADO),
+         HASH_FIRMADO = ?
+     WHERE ID = ?`,
+    [
+      ESTADOS_CONTRATO.FIRMADO,
+      ip,
+      userAgent,
+      usuarioId,
+      archivoFirmado,
+      rutaFirmado,
+      hashFirma,
+      contrato.ID
+    ]
+  );
+
+  // 5. AUDITORÍA (opcional tabla logs)
+  await db.query(
+    `INSERT INTO CONTRATOS_AUDITORIA
+     (CONTRATO_ID, ACCION, IP, USER_AGENT, FECHA)
+     VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+    [
+      contrato.ID,
+      "FIRMA_CONTRATO",
+      ip,
+      userAgent
+    ]
+  );
+
+  // 6. USUARIOS DESTINO SIN DUPLICADOS
+  const emailRaw = await db.query(
+    `
+    SELECT DISTINCT u.EMAIL
+    FROM USUARIOS u
+    INNER JOIN USUARIOS_PERFILES up
+      ON up.USUARIO_ID = u.USUARIO_ID
+    WHERE u.EMPRESA_ID = ?
+      AND u.ACTIVO = 1
+      AND u.DELETED = 0
+    `,
+    [contrato.EMPRESA_ID]
+  );
+
+  const emails = [...new Set(toArray(emailRaw).map(u => u.EMAIL))];
+
+  // 7. ENVÍO EMAIL CON RETRY SIMPLE
+  for (const email of emails) {
+    let tries = 0;
+
+    while (tries < 3) {
+      try {
+        await enviarContratoEmail({
+          to: email,
+          pdfPath: rutaFirmado || null,
+          contratoId: contrato.ID,
+          linkFirma: `http://localhost:3000/firma.html?token=${contrato.TOKEN}`
+        });
+
+        break; // éxito
+      } catch (err) {
+        tries++;
+        if (tries >= 3) {
+          console.error(`❌ Email fallido a ${email}`);
+        }
+      }
+    }
+  }
+
+  return {
+    ok: true,
+    contratoId: contrato.ID,
+    estado: ESTADOS_CONTRATO.FIRMADO
+  };
+}
+
 module.exports = {
   listarPorUsuario,
   listarPorEmpresa,
   crearContrato,
   verContrato,
   obtenerPorToken,
+  obtenerPorId,
   firmarContratoToken,
   firmarContratoTokenArchivo,
+  marcarFirmadoArchivo,
+  firmarContrato
 };
