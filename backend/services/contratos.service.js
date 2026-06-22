@@ -2,7 +2,7 @@ const db = require("../models/db");
 const { ESTADOS_CONTRATO } = require("../utils/estadosContrato");
 const { generarHash } = require("../utils/hash");
 const { generarPDFContrato, verificarPDFFirmado } = require("./pdf.service");
-const nodemailer = require("nodemailer");
+const { enviarContratoEmail } = require("./email.service");
 const { v4: uuidv4 } = require("uuid");
 
 /* =========================
@@ -76,9 +76,9 @@ async function verContrato(id) {
 }
 
 /* =========================
-   CREAR CONTRATO (FIX REAL)
+   CREAR CONTRATO + EMAIL POR PERFIL
 ========================= */
-async function crearContrato(empresaId, perfilId, usuarioId) {
+async function crearContrato(empresaId, perfilId, usuarioId, perfilDestino) {
   try {
     if (!empresaId || !perfilId || !usuarioId) {
       throw new Error("Faltan datos obligatorios");
@@ -100,45 +100,75 @@ async function crearContrato(empresaId, perfilId, usuarioId) {
       `INSERT INTO CONTRATOS_MANTENIMIENTO
        (EMPRESA_ID, TOKEN, HASH_CONTRATO, ESTADO, FECHA_ENVIO)
        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-      [
-        empresaId,
-        token,
-        hash,
-        ESTADOS_CONTRATO.PENDIENTE || "PENDIENTE"
-      ]
+      [empresaId, token, hash, ESTADOS_CONTRATO.PENDIENTE]
     );
 
-    /* =========================
-       OBTENER ID REAL (SEGURO FIREBIRD)
-    ========================= */
     const contratoRow = await db.query(
-      `SELECT FIRST 1 ID
-       FROM CONTRATOS_MANTENIMIENTO
-       WHERE TOKEN = ?
-       ORDER BY ID DESC`,
+      `SELECT FIRST 1 ID FROM CONTRATOS_MANTENIMIENTO WHERE TOKEN = ?`,
       [token]
     );
 
     const contratoId = toArray(contratoRow)[0]?.ID;
+    if (!contratoId) throw new Error("No se pudo obtener contratoId");
 
-    if (!contratoId) {
-      throw new Error("No se pudo obtener ID del contrato");
-    }
-
-    /* =========================
-       VALIDAR PERFIL
-    ========================= */
     const perfilNum = Number(perfilId);
-
-    if (isNaN(perfilNum)) {
-      throw new Error("perfilId inválido");
-    }
 
     await db.query(
       `INSERT INTO CONTRATO_PERFILES (CONTRATO_ID, PERFIL_ID)
        VALUES (?, ?)`,
       [contratoId, perfilNum]
     );
+
+    /* =========================
+       OBTENER USUARIOS POR PERFIL (IMPORTANTE)
+    ========================= */
+    const userRow = await db.query(
+      `
+      SELECT u.EMAIL
+      FROM USUARIOS u
+      INNER JOIN USUARIO_PERFILES up ON up.USUARIO_ID = u.USUARIO_ID
+      INNER JOIN PERFILES p ON p.ID = up.PERFIL_ID
+      WHERE u.EMPRESA_ID = ?
+        AND LOWER(p.NOMBRE) = LOWER(?)
+      `,
+      [empresaId, perfilDestino]
+    );
+
+    const emails = toArray(userRow).map(u => u.EMAIL);
+
+    console.log("📩 EMAILS DESTINO:", emails);
+
+    /* =========================
+       PDF
+    ========================= */
+    const pdf = await generarPDFContrato({
+      contratoId,
+      empresaId,
+      perfilId: perfilNum,
+      hash,
+    });
+
+    if (!pdf?.filePath) {
+      throw new Error("PDF no generado correctamente");
+    }
+
+    /* =========================
+       EMAIL
+    ========================= */
+    if (emails.length > 0) {
+      for (const email of emails) {
+        await enviarContratoEmail({
+          to: email,
+          pdfPath: pdf.filePath,
+          contratoId,
+          linkFirma: `http://localhost:3000/firma.html?token=${token}`,
+        });
+      }
+
+      console.log("✅ EMAILS ENVIADOS CORRECTAMENTE");
+    } else {
+      console.log("⚠️ No hay usuarios con ese perfil");
+    }
 
     return {
       ok: true,
@@ -147,10 +177,11 @@ async function crearContrato(empresaId, perfilId, usuarioId) {
     };
 
   } catch (err) {
-    console.error("ERROR CREAR CONTRATO:", err);
+    console.error("❌ ERROR CREAR CONTRATO:", err);
     throw err;
   }
 }
+
 /* =========================
    OBTENER POR TOKEN
 ========================= */
@@ -167,7 +198,7 @@ async function obtenerPorToken(token) {
 }
 
 /* =========================
-   FIRMAR TOKEN (IP + USER)
+   FIRMAR TOKEN
 ========================= */
 async function firmarContratoToken({ token, ip, userAgent }) {
   const contrato = await obtenerPorToken(token);
