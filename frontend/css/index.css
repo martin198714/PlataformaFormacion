@@ -54,16 +54,52 @@ main#contenido {
 
 /* TABLET */
 @media (max-width: 991px) {
+
     main#contenido {
         margin-top: -260px !important;
-        padding-top: 100px !important;
+        padding-top: 200px !important;
+    }
+
+    /* 🔥 TITULO MÁS CERCA DEL LOGO */
+    .titulo-formulario {
+        font-size: 1.8rem;
+        margin-top: 0;          /* QUITAMOS bajada */
+        margin-bottom: 0;
+        line-height: 1.1;
+    }
+
+    header.encabezado-login h1 {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+
+    header.encabezado-login {
+        padding-bottom: 20px;   /* 🔥 controla separación con cards */
     }
 }
 
 /* MÓVIL */
 @media (max-width: 576px) {
+
     main#contenido {
         margin-top: -240px !important;
-        padding-top: 95px !important;
+        padding-top: 190px !important;
+    }
+
+    .titulo-formulario {
+        font-size: 1.4rem;
+        margin-top: 0;
+        margin-bottom: 0;
+        line-height: 1.1;
+    }
+
+    header.encabezado-login h1 {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    header.encabezado-login {
+        padding-bottom: 25px;
     }
 }
