@@ -57,10 +57,6 @@ async function generarContratoAutomatico(empresaId, perfiles, creadoPor) {
     token,
   });
 
-  /* =========================
-     INSERT CONTRATO (FIX CRÍTICO)
-     → SIN ID MANUAL
-  ========================= */
   const insertRaw = await db.query(
     `INSERT INTO CONTRATOS_MANTENIMIENTO
      (EMPRESA_ID, TOKEN, HASH_CONTRATO, ESTADO, FECHA_ENVIO)
@@ -79,7 +75,7 @@ async function generarContratoAutomatico(empresaId, perfiles, creadoPor) {
   if (!contratoId) throw new Error("No se pudo crear contrato");
 
   /* =========================
-     INSERT PERFILES (SAFE)
+     INSERT PERFILES
   ========================= */
   for (const perfilId of perfiles) {
     const pid = Number(perfilId);
@@ -93,7 +89,7 @@ async function generarContratoAutomatico(empresaId, perfiles, creadoPor) {
   }
 
   /* =========================
-     NOMBRES PERFILES (SAFE IN)
+     NOMBRES PERFILES
   ========================= */
   const placeholders = perfiles.map(() => "?").join(",");
 
@@ -121,31 +117,43 @@ async function generarContratoAutomatico(empresaId, perfiles, creadoPor) {
   }
 
   /* =========================
-     EMAIL (NO ROMPER FLUJO)
+     🔥 EMAIL CORRECTO (USUARIOS CON PERFILES)
   ========================= */
   try {
     const emailRaw = await db.query(
-      `SELECT EMAIL FROM EMPRESAS WHERE EMPRESA_ID = ?`,
-      [empresa]
+      `
+      SELECT DISTINCT u.EMAIL
+      FROM USUARIOS u
+      INNER JOIN USUARIO_PERFILES up ON up.USUARIO_ID = u.USUARIO_ID
+      WHERE u.EMPRESA_ID = ?
+        AND up.PERFIL_ID IN (${placeholders})
+      `,
+      [empresa, ...perfiles]
     );
 
-    const email = toArray(emailRaw)[0]?.EMAIL;
+    const emails = toArray(emailRaw)
+      .map(u => u.EMAIL)
+      .filter(Boolean);
 
-    if (email) {
-      await enviarContratoEmail({
-        to: email,
-        pdfPath: pdf.filePath,
-        contratoId,
-        linkFirma: `http://localhost:3000/firma.html?token=${token}`,
-      });
+    console.log("📩 EMAILS DESTINO:", emails);
+
+    if (emails.length > 0) {
+      for (const email of emails) {
+        await enviarContratoEmail({
+          to: email,
+          pdfPath: pdf.filePath,
+          contratoId,
+          linkFirma: `http://localhost:3000/firma.html?token=${token}`,
+        });
+      }
+    } else {
+      console.log("⚠️ No hay usuarios con esos perfiles");
     }
+
   } catch (err) {
     console.error("EMAIL ERROR:", err.message);
   }
 
-  /* =========================
-     RESPONSE FINAL
-  ========================= */
   return {
     ok: true,
     contratoId,
