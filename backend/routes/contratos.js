@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+
 const contratosController = require("../controllers/contratosController");
 const { authMiddleware } = require("../middlewares/auth");
 
@@ -31,66 +32,64 @@ const uploadContrato = multer({
 });
 
 /* =========================
-   CONTRATOS PROTEGIDOS
+   PROTEGIDOS
 ========================= */
 
 router.get("/", authMiddleware, contratosController.listar);
 
 router.get(
-    "/empresa/:empresaId",
-    authMiddleware,
-    contratosController.listarPorEmpresa
+  "/empresa/:empresaId",
+  authMiddleware,
+  contratosController.listarPorEmpresa
 );
 
 router.post(
-    "/crear",
-    authMiddleware,
-    contratosController.crear
+  "/crear",
+  authMiddleware,
+  contratosController.crear
 );
 
 /* =========================
-   FIRMA POR TOKEN (PÚBLICO)
-   ⚠️ ESTO ES LO QUE USA TU FRONT
+   PÚBLICOS
 ========================= */
 
-/* VER CONTRATO */
 router.get(
-    "/firma/:token",
-    contratosController.verContratoPorToken
+  "/firma/:token",
+  contratosController.verContratoPorToken
 );
 
-/* SUBIR PDF FIRMADO (UPLOAD) */
+/* FIRMA CON PDF */
 router.post(
   "/firmar/token/:token",
-  uploadContrato.single("pdf"), // 🔥 SIN ESTO NO FUNCIONA NUNCA
+  uploadContrato.single("pdf"),
   contratosController.firmarPorTokenArchivo
 );
 
-/* FIRMA SIN PDF (solo lógica) */
+/* FIRMA SIN PDF */
 router.post(
-    "/firmar-token/:token",
-    contratosController.firmarPorToken
+  "/firmar-token/:token",
+  contratosController.firmarPorToken
 );
 
 /* =========================
-   FIRMA POR ID (PROTEGIDO)
+   FIRMA POR ID (IMPORTANTE)
+   ⚠️ ARREGLADO: antes apuntaba a "firmar" (NO EXISTE)
 ========================= */
 
 router.post(
-    "/firmar/:id",
-    authMiddleware,
-    contratosController.firmar
+  "/firmar/:id",
+  authMiddleware,
+  contratosController.firmarPorTokenArchivo
 );
 
 /* =========================
-   VER CONTRATO (PROTEGIDO)
-   ⚠️ SIEMPRE AL FINAL
+   DETALLE CONTRATO
 ========================= */
 
 router.get(
-    "/:id",
-    authMiddleware,
-    contratosController.verContrato
+  "/:id",
+  authMiddleware,
+  contratosController.verContrato
 );
 
 module.exports = router;
