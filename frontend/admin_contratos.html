@@ -209,7 +209,7 @@
         <br><br>
 
         <label>Perfil</label>
-        <select id="perfilId" multiple>
+        <select id="perfilId" multiple size="6">
             ${perfiles.map(p => `
                 <option value="${p.ID}">
                     ${p.NOMBRE}
@@ -230,16 +230,25 @@
                 ========================= */
                 document.getElementById("btnCrear").onclick = async () => {
 
-                    const empresaId = Number(document.getElementById("empresaId").value);
+                    const empresaId = parseInt(document.getElementById("empresaId").value, 10);
 
-                    const perfilesSeleccionados = Array.from(
-                        document.getElementById("perfilId").selectedOptions
-                    )
-                        .map(opt => Number(opt.value))
-                        .filter(id => Number.isFinite(id) && id > 0); // 🔥 FIX CLAVE
+                    const select = document.getElementById("perfilId");
 
-                    if (!empresaId || perfilesSeleccionados.length === 0) {
-                        alert("Selecciona empresa y al menos un perfil válido");
+                    const perfilesSeleccionados = Array.from(select.options)
+                        .filter(opt => opt.selected)
+                        .map(opt => parseInt(opt.value, 10))
+                        .filter(id => !isNaN(id) && id > 0);
+
+                    console.log("EMPRESA:", empresaId);
+                    console.log("PERFILES:", perfilesSeleccionados);
+
+                    if (!empresaId) {
+                        alert("Selecciona una empresa válida");
+                        return;
+                    }
+
+                    if (!Array.isArray(perfilesSeleccionados) || perfilesSeleccionados.length === 0) {
+                        alert("Selecciona al menos un perfil");
                         return;
                     }
 
