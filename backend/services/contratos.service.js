@@ -87,8 +87,12 @@ async function crearContrato(empresaId, perfiles, usuarioId) {
     .map(Number)
     .filter(n => !isNaN(n));
 
-  if (!empresa || perfilesNumeros.length === 0) {
-    throw new Error("IDs inválidos");
+  if (!empresa) {
+    throw new Error("Empresa inválida");
+  }
+
+  if (!Array.isArray(perfilesNumeros) || perfilesNumeros.length === 0) {
+    throw new Error("Debe seleccionar al menos un perfil válido");
   }
 
   const token = uuidv4();
