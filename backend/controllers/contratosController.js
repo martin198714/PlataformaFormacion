@@ -25,6 +25,15 @@ function normalizeContrato(c) {
   };
 }
 
+/* 🔥 NUEVO: normalizador de perfiles en controller (doble seguridad) */
+function normalizarPerfilesInput(body) {
+  if (body.perfiles !== undefined) return body.perfiles;
+
+  if (body.perfilId !== undefined) return body.perfilId;
+
+  return null;
+}
+
 /* =========================
    LISTAR USUARIO
 ========================= */
@@ -69,25 +78,45 @@ exports.listarPorEmpresa = async (req, res) => {
 };
 
 /* =========================
-   CREAR CONTRATO
+   CREAR CONTRATO (FIX REAL)
 ========================= */
 exports.crear = async (req, res) => {
   try {
     const empresaId = Number(req.body.empresaId);
-    const perfilId = Number(req.body.perfilId);
+
+    // 🔥 FIX: acepta perfilId o perfiles (array o número)
+    const perfilesRaw = normalizarPerfilesInput(req.body);
+
     const usuarioId = req.user?.id;
 
     if (!usuarioId) {
       return res.status(401).json({ error: "No autenticado" });
     }
 
-    if (isNaN(empresaId) || isNaN(perfilId)) {
+    if (isNaN(empresaId)) {
+      return res.status(400).json({ error: "Empresa inválida" });
+    }
+
+    if (!perfilesRaw) {
+      return res.status(400).json({ error: "Perfiles no enviados" });
+    }
+
+    // 🔥 normalización final segura
+    const perfiles = Array.isArray(perfilesRaw)
+      ? perfilesRaw
+      : [perfilesRaw];
+
+    const perfilesNumeros = perfiles
+      .map(Number)
+      .filter(n => Number.isInteger(n) && n > 0);
+
+    if (perfilesNumeros.length === 0) {
       return res.status(400).json({ error: "IDs inválidos" });
     }
 
     const result = await contratosService.crearContrato(
       empresaId,
-      perfilId,
+      perfilesNumeros,
       usuarioId
     );
 
@@ -108,7 +137,7 @@ exports.crear = async (req, res) => {
 };
 
 /* =========================
-   VER CONTRATO POR ID (SAFE FALLBACK)
+   VER CONTRATO POR ID
 ========================= */
 exports.verContrato = async (req, res) => {
   try {
@@ -171,7 +200,7 @@ exports.verContratoPorToken = async (req, res) => {
 };
 
 /* =========================
-   FIRMAR POR TOKEN (IP + USER AGENT)
+   FIRMAR POR TOKEN
 ========================= */
 exports.firmarPorToken = async (req, res) => {
   try {
@@ -247,6 +276,9 @@ exports.firmarPorTokenArchivo = async (req, res) => {
   }
 };
 
+/* =========================
+   FIRMAR GENERAL
+========================= */
 exports.firmar = async (req, res) => {
   try {
     const result = await contratosService.firmarContrato({
@@ -267,6 +299,9 @@ exports.firmar = async (req, res) => {
   }
 };
 
+/* =========================
+   AUTO FIRMA
+========================= */
 exports.iniciarAutoFirma = async (req, res) => {
   try {
     const token = req.params.token;
@@ -289,10 +324,8 @@ exports.recibirAutoFirma = async (req, res) => {
   }
 };
 
-
-
 /* =========================
-   AUDITORÍA (SAFE)
+   AUDITORÍA
 ========================= */
 exports.obtenerAuditoria = async (req, res) => {
   try {

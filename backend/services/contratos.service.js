@@ -16,6 +16,22 @@ function toArray(r) {
   return [];
 }
 
+/* 🔥 NUEVO: normalizador seguro de perfiles */
+function normalizarPerfiles(perfiles) {
+  if (!perfiles) return [];
+
+  if (Array.isArray(perfiles)) {
+    return perfiles.map(Number).filter(n => Number.isInteger(n) && n > 0);
+  }
+
+  if (typeof perfiles === "string" || typeof perfiles === "number") {
+    const n = Number(perfiles);
+    return Number.isInteger(n) && n > 0 ? [n] : [];
+  }
+
+  return [];
+}
+
 /* =========================
    LISTAR USUARIO
 ========================= */
@@ -73,25 +89,25 @@ async function verContrato(id) {
 }
 
 /* =========================
-   CREAR CONTRATO (MULTI PERFIL + EMAIL)
-   🔥 ARREGLADO: acepta perfiles desde frontend
+   CREAR CONTRATO (FIX DEFINITIVO)
 ========================= */
 async function crearContrato(empresaId, perfiles, usuarioId) {
   const empresa = Number(empresaId);
 
-  const perfilesArray = Array.isArray(perfiles)
-    ? perfiles
-    : [perfiles];
+  const perfilesNumeros = normalizarPerfiles(perfiles);
 
-  const perfilesNumeros = perfilesArray
-    .map(Number)
-    .filter(n => !isNaN(n));
+  console.log("DEBUG crearContrato:", {
+    empresaId,
+    perfiles,
+    empresa,
+    perfilesNumeros
+  });
 
-  if (!empresa) {
+  if (!empresa || empresa <= 0) {
     throw new Error("Empresa inválida");
   }
 
-  if (!Array.isArray(perfilesNumeros) || perfilesNumeros.length === 0) {
+  if (perfilesNumeros.length === 0) {
     throw new Error("Debe seleccionar al menos un perfil válido");
   }
 
@@ -347,7 +363,7 @@ async function recibirFirmaAutoFirma(data) {
 }
 
 /* =========================
-   EXPORT (COMPLETO)
+   EXPORT
 ========================= */
 module.exports = {
   listarPorUsuario,
