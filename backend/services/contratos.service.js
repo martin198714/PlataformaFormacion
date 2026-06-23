@@ -16,20 +16,20 @@ function toArray(r) {
   return [];
 }
 
-/* 🔥 NUEVO: normalizador seguro de perfiles */
+/* =========================
+   NORMALIZADOR PERFILES
+========================= */
 function normalizarPerfiles(perfiles) {
   if (!perfiles) return [];
 
   if (Array.isArray(perfiles)) {
-    return perfiles.map(Number).filter(n => Number.isInteger(n) && n > 0);
+    return perfiles
+      .map(Number)
+      .filter(n => Number.isInteger(n) && n > 0);
   }
 
-  if (typeof perfiles === "string" || typeof perfiles === "number") {
-    const n = Number(perfiles);
-    return Number.isInteger(n) && n > 0 ? [n] : [];
-  }
-
-  return [];
+  const n = Number(perfiles);
+  return Number.isInteger(n) && n > 0 ? [n] : [];
 }
 
 /* =========================
@@ -63,8 +63,7 @@ async function listarPorUsuario(usuarioId) {
 ========================= */
 async function listarPorEmpresa(empresaId) {
   const r = await db.query(
-    `SELECT *
-     FROM CONTRATOS_MANTENIMIENTO
+    `SELECT * FROM CONTRATOS_MANTENIMIENTO
      WHERE EMPRESA_ID = ?
      ORDER BY ID DESC`,
     [empresaId]
@@ -89,11 +88,10 @@ async function verContrato(id) {
 }
 
 /* =========================
-   CREAR CONTRATO (FIX DEFINITIVO)
+   CREAR CONTRATO (🔥 FIREBIRD FIX REAL)
 ========================= */
 async function crearContrato(empresaId, perfiles, usuarioId) {
   const empresa = Number(empresaId);
-
   const perfilesNumeros = normalizarPerfiles(perfiles);
 
   console.log("DEBUG crearContrato:", {
@@ -120,22 +118,29 @@ async function crearContrato(empresaId, perfiles, usuarioId) {
     t: Date.now(),
   });
 
+  /* 🔥 FIREBIRD FIX: RETURNING ID */
   const insert = await db.query(
     `INSERT INTO CONTRATOS_MANTENIMIENTO
      (EMPRESA_ID, TOKEN, HASH_CONTRATO, ESTADO, FECHA_ENVIO)
-     VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+     VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+     RETURNING ID`,
     [empresa, token, hash, ESTADOS_CONTRATO.PENDIENTE]
   );
 
   const contratoId =
-    insert?.insertId || toArray(insert)[0]?.ID;
+    insert?.[0]?.ID ??
+    insert?.ID ??
+    toArray(insert)?.[0]?.ID;
 
-  if (!contratoId) throw new Error("No se creó contrato");
+  if (!contratoId) {
+    console.log("🔥 FIREBIRD INSERT RAW:", insert);
+    throw new Error("No se creó contrato");
+  }
 
   for (const perfilId of perfilesNumeros) {
     await db.query(
       `INSERT INTO CONTRATO_PERFILES (CONTRATO_ID, PERFIL_ID)
-       SELECT ?, ?
+       SELECT ?, ? FROM RDB$DATABASE
        WHERE NOT EXISTS (
          SELECT 1 FROM CONTRATO_PERFILES
          WHERE CONTRATO_ID = ? AND PERFIL_ID = ?
