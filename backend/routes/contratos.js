@@ -34,26 +34,41 @@ const upload = multer({
 });
 
 /* =========================
-   PROTEGIDOS
+   SAFE HANDLER WRAPPER
+   (evita crash "handler must be a function")
 ========================= */
-router.get("/", authMiddleware, contratosController.listar);
-router.get("/empresa/:empresaId", authMiddleware, contratosController.listarPorEmpresa);
-router.post("/crear", authMiddleware, contratosController.crear);
+const safe = (fn, name) => {
+  return (req, res, next) => {
+    if (typeof fn !== "function") {
+      return res.status(500).json({
+        error: `Controller method missing: ${name}`
+      });
+    }
+    return fn(req, res, next);
+  };
+};
 
 /* =========================
-   DETALLE
+   PROTEGIDOS
 ========================= */
-router.get("/:id", authMiddleware, contratosController.verContrato);
+router.get("/", authMiddleware, safe(contratosController.listar, "listar"));
+router.get("/empresa/:empresaId", authMiddleware, safe(contratosController.listarPorEmpresa, "listarPorEmpresa"));
+router.post("/crear", authMiddleware, safe(contratosController.crear, "crear"));
+
+/* =========================
+   DETALLE (IMPORTANTE: antes de /:id genérico conflictivo)
+========================= */
+router.get("/:id", authMiddleware, safe(contratosController.verContrato, "verContrato"));
 
 /* =========================
    PÚBLICOS (FIRMA)
 ========================= */
-router.get("/firma/:token", contratosController.verContratoPorToken);
+router.get("/firma/:token", safe(contratosController.verContratoPorToken, "verContratoPorToken"));
 
 /* =========================
    FIRMA SIMPLE POR TOKEN
 ========================= */
-router.post("/firmar-token/:token", contratosController.firmarPorToken);
+router.post("/firmar-token/:token", safe(contratosController.firmarPorToken, "firmarPorToken"));
 
 /* =========================
    FIRMA PDF POR TOKEN
@@ -61,7 +76,7 @@ router.post("/firmar-token/:token", contratosController.firmarPorToken);
 router.post(
   "/firmar/token/:token",
   upload.single("pdf"),
-  contratosController.firmarPorTokenArchivo
+  safe(contratosController.firmarPorTokenArchivo, "firmarPorTokenArchivo")
 );
 
 /* =========================
@@ -71,37 +86,41 @@ router.post(
   "/firmar/:id",
   authMiddleware,
   upload.single("pdf"),
-  contratosController.firmar
+  safe(contratosController.firmar, "firmar")
 );
 
 router.post(
   "/firmar/:id/:token",
   authMiddleware,
   upload.single("pdf"),
-  contratosController.firmar
+  safe(contratosController.firmar, "firmar")
 );
 
 /* =========================
-   🔐 AUTOFIRMA (NUEVO FLUJO)
+   🔐 AUTOFIRMA (FIXED + CONSISTENTE)
 ========================= */
 
 /**
- * Paso 1:
- * Inicia proceso Autofirma (redirección / generación de firma)
+ * PASO 1: iniciar autofirma
  */
 router.get(
   "/autofirma/:token",
-  contratosController.iniciarAutofirma
+  safe(
+    contratosController.iniciarAutoFirma || contratosController.iniciarAutofirma,
+    "iniciarAutoFirma"
+  )
 );
 
 /**
- * Paso 2:
- * Callback de Autofirma (recibe resultado firmado)
+ * PASO 2: callback autofirma
  */
 router.post(
   "/autofirma/return",
   upload.single("pdf"),
-  contratosController.finalizarAutofirma
+  safe(
+    contratosController.recibirAutoFirma || contratosController.recibirAutofirma || contratosController.finalizarAutofirma,
+    "recibirAutoFirma"
+  )
 );
 
 module.exports = router;
