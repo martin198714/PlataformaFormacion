@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { getConnection } = require("../models/db");
+const controlDB = require('../models/firebird');
 const axios = require("axios");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
@@ -77,6 +78,7 @@ exports.register = async (req, res) => {
       "SELECT USUARIO_ID FROM USUARIOS WHERE EMAIL = ?",
       [email],
       (errSel, resSel) => {
+
         if (errSel) {
           db.detach();
           return res.status(500).json({ error: errSel.message });
@@ -84,36 +86,78 @@ exports.register = async (req, res) => {
 
         if (resSel.length > 0) {
           db.detach();
-          return res
-            .status(409)
-            .json({ error: "El correo ya está registrado" });
+          return res.status(409).json({ error: "El correo ya está registrado" });
         }
 
+        // 🔥 INSERT USUARIO
         db.query(
           `INSERT INTO USUARIOS
           (EMAIL, PASSWORD_HASH, NOMBRE_COMPLETO, TELEFONO, ROL_ID, ACTIVO, CREATED_AT)
           VALUES (?, ?, ?, ?, 2, 1, CURRENT_TIMESTAMP)`,
           [email, password_hash, nombre_completo, telefono],
-          (errIns) => {
-            db.detach();
+          async (errIns) => {
 
             if (errIns) {
+              db.detach();
               return res.status(500).json({ error: errIns.message });
             }
 
-            transporter.sendMail({
-              from: process.env.EMAIL_USER,
-              to: email,
-              subject: "Bienvenido",
-              html: `<h2>Hola ${nombre_completo}</h2><p>Cuenta creada correctamente.</p>`,
-            });
+            // 🔥 OBTENER USUARIO_ID (FIX IMPORTANTE)
+            db.query(
+              "SELECT USUARIO_ID FROM USUARIOS WHERE EMAIL = ?",
+              [email],
+              async (errId, resId) => {
 
-            return res.status(201).json({
-              message: "Usuario registrado correctamente",
-            });
-          },
+                if (errId || !resId || !resId[0]) {
+                  db.detach();
+                  return res.status(500).json({ error: "No se pudo obtener USUARIO_ID" });
+                }
+
+                const userId = resId[0].USUARIO_ID;
+
+                // 🔥 INSERT EN CONTROL.FDB (AÑADIDO)
+                try {
+                  await controlDB.query(
+                    `INSERT INTO MAPEO_USUARIOS (USUARIO_ID, CODIGO_SOPORTE)
+                     VALUES (?, 1)`,
+                    [userId]
+                  );
+                } catch (errCtrl) {
+
+                  console.error("Error CONTROL:", errCtrl);
+
+                  // 🔥 rollback manual
+                  db.query(
+                    "DELETE FROM USUARIOS WHERE USUARIO_ID = ?",
+                    [userId],
+                    () => {
+                      db.detach();
+                      return res.status(500).json({
+                        error: "Error asignando soporte en CONTROL"
+                      });
+                    }
+                  );
+
+                  return;
+                }
+
+                db.detach();
+
+                transporter.sendMail({
+                  from: process.env.EMAIL_USER,
+                  to: email,
+                  subject: "Bienvenido",
+                  html: `<h2>Hola ${nombre_completo}</h2><p>Cuenta creada correctamente.</p>`,
+                });
+
+                return res.status(201).json({
+                  message: "Usuario registrado correctamente",
+                });
+              }
+            );
+          }
         );
-      },
+      }
     );
   });
 };

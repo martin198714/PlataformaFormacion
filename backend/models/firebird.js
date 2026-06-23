@@ -7,19 +7,37 @@ const options = {
     user: 'SYSDBA',
     password: 'masterkey',
     lowercase_keys: false,
-    role: null,
-    pageSize: 4096,
-    charset: 'UTF8'
+    charset: 'UTF8',
+    wireCrypt: false
 };
 
-function getConnection(callback) {
-    Firebird.attach(options, (err, db) => {
-        if (err) {
-            console.error("Error conectando a Firebird:", err);
-            return callback(err);
-        }
-        callback(null, db);
+function query(sql, params = []) {
+    return new Promise((resolve, reject) => {
+
+        Firebird.attach(options, (err, db) => {
+            if (err) return reject(err);
+
+            db.query(sql, params, (err, result) => {
+
+                db.detach();
+
+                if (err) return reject(err);
+
+                try {
+                    resolve(JSON.parse(JSON.stringify(result || [])));
+                } catch {
+                    resolve([]);
+                }
+            });
+        });
     });
 }
 
-module.exports = { getConnection };
+function getConnection(callback) {
+    Firebird.attach(options, callback);
+}
+
+module.exports = {
+    query,
+    getConnection
+};
