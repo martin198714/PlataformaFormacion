@@ -48,7 +48,7 @@ router.get("/firma/:token", contratosController.verContratoPorToken);
 router.post("/firmar-token/:token", contratosController.firmarPorToken);
 
 /* =========================
-   FIRMA PDF
+   FIRMA PDF TOKEN
 ========================= */
 router.post(
   "/firmar/token/:token",
@@ -57,10 +57,17 @@ router.post(
 );
 
 /* =========================
-   FIRMA UNIFICADA (RECOMENDADO)
+   FIRMA PDF AUTENTICADA
 ========================= */
 router.post(
-  "/firmar/:id/:token?",
+  "/firmar/:id",
+  authMiddleware,
+  upload.single("pdf"),
+  contratosController.firmar
+);
+
+router.post(
+  "/firmar/:id/:token",
   authMiddleware,
   upload.single("pdf"),
   contratosController.firmar
