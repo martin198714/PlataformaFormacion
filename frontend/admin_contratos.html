@@ -167,7 +167,6 @@
                             ? `<a href="${BASE_URL}/uploads/contratos/${c.FICHERO_NOMBRE}" target="_blank">📄 PDF</a>`
                             : "Pendiente"}
                     </td>
-
                 </tr>
             `;
                 });
@@ -179,7 +178,7 @@
         }
 
         /* =========================
-           CREAR CONTRATO (NUEVO FLUJO CORRECTO)
+           CREAR CONTRATO (MULTI PERFIL FIX)
         ========================= */
         async function asignarPerfil() {
 
@@ -215,7 +214,7 @@
 
             <br><br>
 
-            <label>Perfil</label>
+            <label>Perfiles (puedes seleccionar varios)</label>
             <select id="perfilId" multiple>
                 ${perfiles.map(p => `
                     <option value="${p.ID}">
@@ -233,19 +232,36 @@
                 document.body.appendChild(box);
 
                 /* =========================
-                   CREAR CONTRATO REAL
+                   CREAR CONTRATO
                 ========================= */
                 document.getElementById("btnCrear").onclick = async () => {
 
-                    const empresaId = Number(document.getElementById("empresaId").value);
+                    const empresaSelect = document.getElementById("empresaId");
+                    const empresaId = Number(empresaSelect.value);
+
                     const perfilesSeleccionados = Array.from(
                         document.getElementById("perfilId").selectedOptions
-                    ).map(opt => Number(opt.value));
+                    ).map(opt => Number(opt.value))
+                        .filter(n => !isNaN(n) && n > 0);
+
+                    /* 🔥 FIX CRÍTICO */
+                    if (!empresaId || empresaId <= 0) {
+                        alert("Selecciona una empresa válida");
+                        return;
+                    }
+
+                    if (!perfilesSeleccionados.length) {
+                        alert("Selecciona al menos un perfil");
+                        return;
+                    }
 
                     const res = await fetch(`${BASE_URL}/api/contratos/crear`, {
                         method: "POST",
                         headers: getAuthHeaders(),
-                        body: JSON.stringify({ empresaId, perfiles: perfilesSeleccionados })
+                        body: JSON.stringify({
+                            empresaId,
+                            perfiles: perfilesSeleccionados
+                        })
                     });
 
                     const data = await res.json();

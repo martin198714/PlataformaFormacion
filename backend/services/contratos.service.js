@@ -74,6 +74,7 @@ async function verContrato(id) {
 
 /* =========================
    CREAR CONTRATO (MULTI PERFIL + EMAIL)
+   🔥 ARREGLADO: acepta perfiles desde frontend
 ========================= */
 async function crearContrato(empresaId, perfiles, usuarioId) {
   const empresa = Number(empresaId);
@@ -84,10 +85,10 @@ async function crearContrato(empresaId, perfiles, usuarioId) {
 
   const perfilesNumeros = perfilesArray
     .map(Number)
-    .filter(Number.isFinite);
+    .filter(n => !isNaN(n));
 
   if (!empresa || perfilesNumeros.length === 0) {
-    throw new Error("Datos inválidos");
+    throw new Error("IDs inválidos");
   }
 
   const token = uuidv4();
@@ -99,9 +100,6 @@ async function crearContrato(empresaId, perfiles, usuarioId) {
     t: Date.now(),
   });
 
-  /* =========================
-     INSERT CONTRATO
-  ========================= */
   const insert = await db.query(
     `INSERT INTO CONTRATOS_MANTENIMIENTO
      (EMPRESA_ID, TOKEN, HASH_CONTRATO, ESTADO, FECHA_ENVIO)
@@ -114,9 +112,6 @@ async function crearContrato(empresaId, perfiles, usuarioId) {
 
   if (!contratoId) throw new Error("No se creó contrato");
 
-  /* =========================
-     CONTRATO_PERFILES (SAFE)
-  ========================= */
   for (const perfilId of perfilesNumeros) {
     await db.query(
       `INSERT INTO CONTRATO_PERFILES (CONTRATO_ID, PERFIL_ID)
@@ -129,9 +124,6 @@ async function crearContrato(empresaId, perfiles, usuarioId) {
     );
   }
 
-  /* =========================
-     PDF
-  ========================= */
   const pdf = await generarPDFContrato({
     contratoId,
     empresaId: empresa,
@@ -141,9 +133,6 @@ async function crearContrato(empresaId, perfiles, usuarioId) {
 
   if (!pdf?.filePath) throw new Error("PDF no generado");
 
-  /* =========================
-     EMAILS POR PERFILES
-  ========================= */
   const placeholders = perfilesNumeros.map(() => "?").join(",");
 
   const emailRaw = await db.query(
@@ -203,13 +192,6 @@ async function firmarContratoToken({ token, ip, userAgent }) {
   const contrato = await obtenerPorToken(token);
   if (!contrato) throw new Error("Contrato no existe");
 
-  const hashFirma = generarHash({
-    token,
-    ip,
-    userAgent,
-    t: Date.now(),
-  });
-
   await db.query(
     `UPDATE CONTRATOS_MANTENIMIENTO
      SET ESTADO = ?,
@@ -222,7 +204,7 @@ async function firmarContratoToken({ token, ip, userAgent }) {
       ESTADOS_CONTRATO.FIRMADO,
       ip,
       userAgent,
-      hashFirma,
+      generarHash({ token, ip, userAgent, t: Date.now() }),
       token,
     ]
   );
@@ -237,16 +219,10 @@ async function firmarContratoTokenArchivo(data) {
   const contrato = await obtenerPorToken(data.token);
   if (!contrato) throw new Error("Contrato no encontrado");
 
-  const valid = await verificarPDFFirmado(data.rutaFirmado);
-  if (!valid?.valido) throw new Error("PDF inválido");
-
-  const hashFirma = generarHash({
-    token: data.token,
-    archivo: data.archivoFirmado,
-    ip: data.ip,
-    userAgent: data.userAgent,
-    t: Date.now(),
-  });
+  if (data.rutaFirmado) {
+    const valid = await verificarPDFFirmado(data.rutaFirmado);
+    if (!valid?.valido) throw new Error("PDF inválido");
+  }
 
   await db.query(
     `UPDATE CONTRATOS_MANTENIMIENTO
@@ -264,7 +240,7 @@ async function firmarContratoTokenArchivo(data) {
       data.rutaFirmado,
       data.ip,
       data.userAgent,
-      hashFirma,
+      generarHash(data),
       data.token,
     ]
   );
@@ -284,25 +260,11 @@ async function firmarContrato(data) {
       [data.id]
     );
     contrato = toArray(r)[0];
-  } else if (data.token) {
+  } else {
     contrato = await obtenerPorToken(data.token);
   }
 
   if (!contrato) throw new Error("Contrato no encontrado");
-
-  if (data.rutaFirmado) {
-    const valid = await verificarPDFFirmado(data.rutaFirmado);
-    if (!valid?.valido) throw new Error("PDF inválido");
-  }
-
-  const hashFirma = generarHash({
-    id: contrato.ID,
-    token: contrato.TOKEN,
-    archivoFirmado: data.archivoFirmado,
-    ip: data.ip,
-    userAgent: data.userAgent,
-    t: Date.now(),
-  });
 
   await db.query(
     `UPDATE CONTRATOS_MANTENIMIENTO
@@ -322,8 +284,8 @@ async function firmarContrato(data) {
       data.usuarioId,
       data.archivoFirmado,
       data.rutaFirmado,
-      hashFirma,
-      contrato.ID
+      generarHash(data),
+      contrato.ID,
     ]
   );
 
@@ -341,7 +303,7 @@ async function prepararFirmaAutoFirma(token) {
     ok: true,
     redirectUrl: `autofirma://sign?token=${token}`,
     request: {
-      token: contrato.TOKEN,
+      token,
       contratoId: contrato.ID,
       empresaId: contrato.EMPRESA_ID,
       urlReturn: "http://localhost:3000/api/contratos/autofirma/return",
@@ -353,19 +315,6 @@ async function prepararFirmaAutoFirma(token) {
 async function recibirFirmaAutoFirma(data) {
   const contrato = await obtenerPorToken(data.token);
   if (!contrato) throw new Error("Contrato no encontrado");
-
-  if (data.rutaFirmado) {
-    const valid = await verificarPDFFirmado(data.rutaFirmado);
-    if (!valid?.valido) throw new Error("PDF inválido");
-  }
-
-  const hashFirma = generarHash({
-    token: data.token,
-    archivoFirmado: data.archivoFirmado,
-    ip: data.ip,
-    userAgent: data.userAgent,
-    t: Date.now(),
-  });
 
   await db.query(
     `UPDATE CONTRATOS_MANTENIMIENTO
@@ -385,20 +334,16 @@ async function recibirFirmaAutoFirma(data) {
       data.ip,
       data.userAgent,
       data.usuarioId,
-      hashFirma,
+      generarHash(data),
       data.token,
     ]
   );
 
-  return {
-    ok: true,
-    contratoId: contrato.ID,
-    estado: ESTADOS_CONTRATO.FIRMADO,
-  };
+  return { ok: true, contratoId: contrato.ID };
 }
 
 /* =========================
-   EXPORT
+   EXPORT (COMPLETO)
 ========================= */
 module.exports = {
   listarPorUsuario,
