@@ -267,6 +267,30 @@ exports.firmar = async (req, res) => {
   }
 };
 
+exports.iniciarAutoFirma = async (req, res) => {
+  try {
+    const token = req.params.token;
+
+    const data = await contratosService.prepararFirmaAutoFirma(token);
+
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.recibirAutoFirma = async (req, res) => {
+  try {
+    const result = await contratosService.recibirFirmaAutoFirma(req.body);
+
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+
 /* =========================
    AUDITORÍA (SAFE)
 ========================= */

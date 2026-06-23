@@ -7,6 +7,9 @@ const fs = require("fs");
 const contratosController = require("../controllers/contratosController");
 const { authMiddleware } = require("../middlewares/auth");
 
+/* =========================
+   UPLOAD CONFIG
+========================= */
 const base = path.join(__dirname, "..", "uploads");
 const firmadosDir = path.join(base, "firmados");
 
@@ -38,17 +41,22 @@ router.get("/empresa/:empresaId", authMiddleware, contratosController.listarPorE
 router.post("/crear", authMiddleware, contratosController.crear);
 
 /* =========================
-   PÚBLICOS
+   DETALLE
+========================= */
+router.get("/:id", authMiddleware, contratosController.verContrato);
+
+/* =========================
+   PÚBLICOS (FIRMA)
 ========================= */
 router.get("/firma/:token", contratosController.verContratoPorToken);
 
 /* =========================
-   FIRMA TOKEN
+   FIRMA SIMPLE POR TOKEN
 ========================= */
 router.post("/firmar-token/:token", contratosController.firmarPorToken);
 
 /* =========================
-   FIRMA PDF TOKEN
+   FIRMA PDF POR TOKEN
 ========================= */
 router.post(
   "/firmar/token/:token",
@@ -57,7 +65,7 @@ router.post(
 );
 
 /* =========================
-   FIRMA PDF AUTENTICADA
+   FIRMA AUTENTICADA (LOGIN)
 ========================= */
 router.post(
   "/firmar/:id",
@@ -74,8 +82,26 @@ router.post(
 );
 
 /* =========================
-   DETALLE
+   🔐 AUTOFIRMA (NUEVO FLUJO)
 ========================= */
-router.get("/:id", authMiddleware, contratosController.verContrato);
+
+/**
+ * Paso 1:
+ * Inicia proceso Autofirma (redirección / generación de firma)
+ */
+router.get(
+  "/autofirma/:token",
+  contratosController.iniciarAutofirma
+);
+
+/**
+ * Paso 2:
+ * Callback de Autofirma (recibe resultado firmado)
+ */
+router.post(
+  "/autofirma/return",
+  upload.single("pdf"),
+  contratosController.finalizarAutofirma
+);
 
 module.exports = router;
