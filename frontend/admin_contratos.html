@@ -7,7 +7,8 @@
 
     <title>Administración de contratos | Ejidosoft Formación</title>
 
-    <meta name="description" content="Panel de administración de contratos de Ejidosoft Formación. Gestiona empresas, perfiles y contratos de forma segura y eficiente.">
+    <meta name="description"
+        content="Panel de administración de contratos de Ejidosoft Formación. Gestiona empresas, perfiles y contratos de forma segura y eficiente.">
 
     <meta name="robots" content="index, follow">
 
@@ -163,8 +164,8 @@
 
                     <td>
                         ${c.FICHERO_NOMBRE
-                        ? `<a href="${BASE_URL}/uploads/contratos/${c.FICHERO_NOMBRE}" target="_blank">📄 PDF</a>`
-                        : "Pendiente"}
+                            ? `<a href="${BASE_URL}/uploads/contratos/${c.FICHERO_NOMBRE}" target="_blank">📄 PDF</a>`
+                            : "Pendiente"}
                     </td>
 
                 </tr>
@@ -215,7 +216,7 @@
             <br><br>
 
             <label>Perfil</label>
-            <select id="perfilId">
+            <select id="perfilId" multiple>
                 ${perfiles.map(p => `
                     <option value="${p.ID}">
                         ${p.NOMBRE}
@@ -237,12 +238,14 @@
                 document.getElementById("btnCrear").onclick = async () => {
 
                     const empresaId = Number(document.getElementById("empresaId").value);
-                    const perfilId = Number(document.getElementById("perfilId").value);
+                    const perfilesSeleccionados = Array.from(
+                        document.getElementById("perfilId").selectedOptions
+                    ).map(opt => Number(opt.value));
 
                     const res = await fetch(`${BASE_URL}/api/contratos/crear`, {
                         method: "POST",
                         headers: getAuthHeaders(),
-                        body: JSON.stringify({ empresaId, perfilId })
+                        body: JSON.stringify({ empresaId, perfiles: perfilesSeleccionados })
                     });
 
                     const data = await res.json();
