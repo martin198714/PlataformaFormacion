@@ -125,141 +125,121 @@
         /* =========================
            CARGAR CONTRATOS
         ========================= */
+
         async function cargar() {
+
             try {
 
                 const res = await fetch(`${BASE_URL}/api/contratos`, {
                     headers: getAuthHeaders()
                 });
 
-                if (!res.ok) {
-                    alert("Error cargando contratos");
-                    return;
-                }
-
                 const data = await res.json();
-                console.log(data);
+
+                console.log("CONTRATOS:", data);
+
+                if (!res.ok) {
+                    throw new Error(data.error || "Error cargando contratos");
+                }
 
                 const tbody = document.getElementById("tabla");
                 tbody.innerHTML = "";
 
-                /* =========================
-                   AGRUPAR CONTRATOS
-                ========================= */
-
-                const contratos = {};
-
                 data.forEach(c => {
 
-                    if (!contratos[c.ID]) {
-
-                        contratos[c.ID] = {
-                            ...c,
-                            PERFILES: []
-                        };
-
-                    }
-
-                    const perfil = c.PERFIL_NOMBRE || c.PERFIL;
-
-                    if (
-                        perfil &&
-                        !contratos[c.ID].PERFILES.includes(perfil)
-                    ) {
-                        contratos[c.ID].PERFILES.push(perfil);
-                    }
-
-                });
-
-                /* =========================
-                   PINTAR TABLA
-                ========================= */
-
-                Object.values(contratos).forEach(c => {
-
-                    const estado = (c.ESTADO || "").toUpperCase();
-
-                    const estadoClass =
-                        estado === "FIRMADO"
-                            ? "text-success"
-                            : "text-warning";
-
                     tbody.innerHTML += `
-                <tr>
-                    <td>${c.ID}</td>
+            <tr>
 
-                    <td>${c.EMPRESA_NOMBRE || c.EMPRESA_ID}</td>
+                <td>${c.ID}</td>
 
-                    <td>${c.PERFILES.join(", ")}</td>
+                <td>${c.EMPRESA_NOMBRE || ""}</td>
 
-                    <td class="${estadoClass}">
-                        ${c.ESTADO}
-                    </td>
+                <td>${c.PERFIL_NOMBRE || ""}</td>
 
-                    <td>${c.FECHA_ENVIO || ""}</td>
+                <td class="${c.ESTADO === "FIRMADO" ? "text-success" : "text-warning"}">
+                    ${c.ESTADO}
+                </td>
 
-                    <td>
-                        ${c.FICHERO_NOMBRE
-                            ? `<a href="${BASE_URL}/uploads/contratos/${c.FICHERO_NOMBRE}" target="_blank">📄 PDF</a>`
+                <td>${c.FECHA_ENVIO || ""}</td>
+
+                <td>
+                    ${c.FICHERO_NOMBRE
+                            ? `<a target="_blank"
+                             href="${BASE_URL}/uploads/contratos/${c.FICHERO_NOMBRE}">
+                             📄 Ver PDF
+                           </a>`
                             : "Pendiente"
                         }
-                    </td>
-                </tr>
+                </td>
+
+            </tr>
             `;
                 });
 
-            } catch (err) {
-
-                console.error(err);
-                alert("Error cargando contratos");
-
+            } catch (e) {
+                console.error(e);
+                alert(e.message);
             }
         }
 
         /* =========================
-           CREAR CONTRATO (CORREGIDO)
+        CREAR CONTRATO
         ========================= */
+
         async function asignarPerfil() {
 
             try {
+
                 const [empresasRes, perfilesRes] = await Promise.all([
-                    fetch(`${BASE_URL}/api/empresas`, { headers: getAuthHeaders() }),
-                    fetch(`${BASE_URL}/api/perfiles`, { headers: getAuthHeaders() })
+                    fetch(`${BASE_URL}/api/empresas`, {
+                        headers: getAuthHeaders()
+                    }),
+                    fetch(`${BASE_URL}/api/perfiles`, {
+                        headers: getAuthHeaders()
+                    })
                 ]);
 
                 const empresas = await empresasRes.json();
                 const perfiles = await perfilesRes.json();
 
                 const box = document.createElement("div");
+
                 box.style.position = "fixed";
                 box.style.top = "50%";
                 box.style.left = "50%";
-                box.style.transform = "translate(-50%, -50%)";
-                box.style.background = "#fff";
+                box.style.transform = "translate(-50%,-50%)";
+                box.style.background = "#FFF";
                 box.style.padding = "20px";
-                box.style.zIndex = "9999";
+                box.style.zIndex = "99999";
+                box.style.border = "1px solid #ccc";
 
                 box.innerHTML = `
             <h3>Crear contrato</h3>
 
-            <label>Empresa</label>
+            <label>Empresa</label><br>
+
             <select id="empresaId">
+
                 ${empresas.map(e => `
                     <option value="${e.EMPRESA_ID}">
                         ${e.NOMBRE}
                     </option>
                 `).join("")}
+
             </select>
 
             <br><br>
 
-            <label>Perfil</label>
-            <select id="perfilId" multiple>
+            <label>Perfiles</label><br>
+
+            <select id="perfilId" multiple size="8">
+
                 ${perfiles.map(p => `
                     <option value="${p.ID}">
                         ${p.NOMBRE}
                     </option>
                 `).join("")}
+
             </select>
 
             <br><br>
@@ -270,66 +250,63 @@
 
                 document.body.appendChild(box);
 
-                /* =========================
-                   CREAR CONTRATO REAL
-                ========================= */
+                document.getElementById("btnCerrar").onclick = () => {
+                    box.remove();
+                };
+
                 document.getElementById("btnCrear").onclick = async () => {
 
                     const empresaId = Number(document.getElementById("empresaId").value);
 
-                    const perfilesSeleccionados = Array.from(
-                        document.getElementById("perfilId").selectedOptions
-                    )
-                        .map(opt => opt.value)        // primero string limpio
-                        .map(v => Number(v))          // convertir a número
-                        .filter(v => Number.isInteger(v) && v > 0); // validar
+                    const perfilesSeleccionados = Array
+                        .from(document.getElementById("perfilId").selectedOptions)
+                        .map(o => Number(o.value));
 
-                    console.log("EMPRESA ID:", empresaId);
-                    console.log("PERFILES:", perfilesSeleccionados);
-
-                    if (!Number.isInteger(empresaId) || empresaId <= 0) {
-                        alert("Empresa inválida");
-                        return;
-                    }
-
-                    if (perfilesSeleccionados.length === 0) {
-                        alert("Selecciona al menos un perfil válido");
-                        return;
-                    }
+                    console.log("EMPRESA", empresaId);
+                    console.log("PERFILES", perfilesSeleccionados);
 
                     const res = await fetch(`${BASE_URL}/api/contratos/crear`, {
+
                         method: "POST",
+
                         headers: getAuthHeaders(),
+
                         body: JSON.stringify({
+
                             empresaId,
                             perfiles: perfilesSeleccionados
+
                         })
+
                     });
 
                     const data = await res.json();
 
+                    console.log(data);
+
                     if (!res.ok) {
-                        console.error("ERROR BACKEND:", data);
-                        alert(data.error || "Error creando contrato");
+
+                        alert(data.detalle || data.error);
                         return;
+
                     }
 
-                    alert("Contrato generado y enviado ✔");
+                    alert("Contrato creado");
 
-                    document.body.removeChild(box);
+                    box.remove();
+
                     cargar();
+
                 };
 
-                document.getElementById("btnCerrar").onclick = () => {
-                    document.body.removeChild(box);
-                };
-
-            } catch (err) {
-                console.error(err);
+            } catch (e) {
+                console.error(e);
             }
+
         }
 
         cargar();
+
     </script>
 </body>
 
