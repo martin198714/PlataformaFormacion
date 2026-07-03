@@ -11,18 +11,22 @@ body {
 body::before {
     content: "";
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
 
     background-image: url("../img/image009.jpg");
     background-repeat: no-repeat;
     background-position: center center;
     background-size: cover;
 
-    opacity: 0.40;
-    filter: grayscale(20%);
+    opacity: 0.12; /* ajustado para que se vea pero no moleste */
+    filter: grayscale(10%);
 
-    z-index: -1; /* 🔥 IMPORTANTE: evita bloquear clicks */
     pointer-events: none;
+
+    z-index: 0; /* antes -1 → ahora correcto */
 }
 
 /* ===============================
@@ -34,37 +38,42 @@ body > * {
 }
 
 /* ===============================
-   AJUSTE LAYOUT SOLO ADMIN (FINO)
+   FOOTER (SEPARACIÓN)
+================================= */
+footer {
+    margin-top: 50px;
+    position: relative;
+    z-index: 2;
+}
+
+/* ===============================
+   AJUSTE LAYOUT SOLO ADMIN
 ================================= */
 
-/* Subir el contenido, pero SIN pegarlo al navbar */
+/* Subir el contenido sin pegarlo al navbar */
 body:has(#titulo-admin) main {
-    margin-top: -20px !important;  /* antes -40px → menos agresivo */
+    margin-top: -20px !important;
     padding-top: 25px !important;
 }
 
-/* Separación segura bajo el navbar (clave para el logo) */
+/* Separación segura bajo el navbar */
 body:has(#titulo-admin) section.container {
-    margin-top: 10px !important;  /* 👈 evita que el logo toque el nav */
+    margin-top: 10px !important;
+    padding-bottom: 80px !important; /* 👈 IMPORTANTE: espacio con footer */
 }
 
-/* Header más compacto pero con aire superior */
+/* Header más compacto */
 body:has(#titulo-admin) .row.align-items-center {
     margin-bottom: 20px !important;
     min-height: 100px !important;
 }
 
-/* 🔥 MENOS SEPARACIÓN ENTRE CARDS (lo que pedías) */
+/* MENOS ESPACIO ENTRE CARDS */
 body:has(#titulo-admin) .row.g-4 {
-    row-gap: 0.6rem !important;   /* antes 1.2rem */
+    row-gap: 0.6rem !important;
 }
 
 /* Cards más compactas */
 body:has(#titulo-admin) .card {
     padding: 0.7rem !important;
-}
-
-/* Evitar que el final respire demasiado */
-body:has(#titulo-admin) section.container {
-    padding-bottom: 20px !important;
 }

@@ -1,19 +1,76 @@
- body {
-     background: #f5f7fa;
- }
+ /* =========================
+   MARCA DE AGUA (FIX REAL)
+========================= */
 
- #calendar {
-     max-width: 1000px;
-     margin: auto;
- }
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
 
- .fc-event {
-     cursor: pointer;
- }
+  background-image: url("../img/image008.jpg");
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
 
- /* 🔥 tamaño de letra de los eventos del calendario */
+  opacity: 0.25;
+  filter: grayscale(20%) blur(0.5px);
+
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* capa superior para que el contenido esté por encima */
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* =========================
+   NAVBAR
+========================= */
+
+.navbar {
+  position: relative;
+  z-index: 9999;
+}
+
+body {
+    background: #f5f7fa;
+}
+
+/* =========================
+   🔥 FIX SOLO AÑADIDO (NO BORRA TU CSS)
+========================= */
+
+/* calendario como tarjeta + separación real */
+#calendar {
+    max-width: 1000px;
+    margin: 20px auto 60px auto !important; /* 🔥 mejora separación */
+
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    width: 100%;
+    overflow: visible;
+}
+
+/* evita que el footer se pegue */
+footer {
+    margin-top: 60px !important; /* 🔥 sobrescribe el 0 */
+}
+
+/* =========================
+   FULLCALENDAR (TU CSS ORIGINAL)
+========================= */
+
 .fc-event {
-    font-size: 0.58rem;   /* más pequeño */
+    cursor: pointer;
+}
+
+/* 🔥 tamaño de letra de los eventos del calendario */
+.fc-event {
+    font-size: 0.58rem;
     padding: 1px 3px;
     line-height: 1.2;
 }
@@ -32,9 +89,18 @@
 .fc-daygrid-day-number {
     font-size: 0.9rem;
 }
+
+/* =========================
+   NAVBAR COLOR (TU ORIGINAL)
+========================= */
+
 .navbar-ejidosoft {
     background-color: #1A237E;
 }
+
+/* =========================
+   LOGIN HEADER (TU ORIGINAL)
+========================= */
 
 .encabezado-login img,
 .encabezado-login h1 {
@@ -43,11 +109,11 @@
 }
 
 .encabezado-login {
-  margin-bottom: -20px;  /* menos agresivo */
-  transform: translateY(0); /* quitamos el empuje hacia arriba */
-  padding-top: 20px; /* separación real desde la navbar */
+    margin-bottom: -20px;
+    transform: translateY(0);
+    padding-top: 20px;
 }
 
 .encabezado-login .container {
-    margin-top: -10px;  /* pequeño empuje hacia arriba */
+    margin-top: -10px;
 }

@@ -1,13 +1,50 @@
+/* =========================
+   MARCA DE AGUA (FIX REAL)
+========================= */
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+
+  background-image: url("../img/image008.jpg");
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+
+  opacity: 0.25;
+  filter: grayscale(20%) blur(0.5px);
+
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* capa superior para que el contenido esté por encima */
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* =========================
+   NAVBAR
+========================= */
+
+.navbar {
+  position: relative;
+  z-index: 9999;
+}
+
+
 body {
     background: #FFFFFF;
     font-family: 'OpenSans-Bold', Arial;
-    overflow-x: hidden; /* 🔥 evita scroll lateral */
+    overflow-x: hidden;
 }
 
 .btn-amarillo {
     background-color: #FFCA2C;
     border-color: #FFCA2C;
-    color: white; /* para que el texto se vea bien */
+    color: white;
 }
 
 .btn-amarillo:hover {
@@ -16,41 +53,52 @@ body {
     color: white;
 }
 
+/* 🔥 ESTE ES EL ARREGLO REAL */
+.container.mt-4 {
+    padding-bottom: 250px !important;
+}
+
+.container.mt-4 .card {
+    margin-bottom: 0 !important;
+}
+
+.card-body {
+    padding-bottom: 60px !important;
+}
+
 #calendar {
     background: white;
     padding: 15px;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     width: 100%;
-    overflow: hidden; /* 🔥 evita desbordes internos */
+    overflow: visible;
+
+    /* quitamos margen */
+    margin-bottom: 0 !important;
 }
 
-/* 🔽 AJUSTES FULLCALENDAR */
+/* FULLCALENDAR */
 
-/* Evita que el calendario se salga */
 .fc {
     font-size: 0.75rem;
     max-width: 100%;
 }
 
-/* 🔥 tamaño de letra de los eventos del calendario */
 .fc-event {
-    font-size: 0.58rem;   /* más pequeño */
+    font-size: 0.58rem;
     padding: 1px 3px;
     line-height: 1.2;
 }
 
-/* 🔥 reduce también el alto del evento */
 .fc-daygrid-event {
     padding: 1px 2px;
 }
 
-/* Espaciado interno */
 .fc-daygrid-day {
     padding: 10px;
 }
 
-/* Número del día ligeramente más grande */
 .fc-daygrid-day-number {
     font-size: 0.9rem;
 }
@@ -60,7 +108,12 @@ footer {
     color: white;
     padding: 15px;
     text-align: center;
-    margin-top: 40px;
+
+    /* 🔥 sin margen */
+    margin-top: 0 !important;
+
+    position: relative;
+    clear: both;
 }
 
 .estado-completo {
@@ -84,93 +137,78 @@ footer {
 }
 
 .encabezado-login {
-    margin-top: -22px; /* antes -15px */
+    margin-top: -22px;
     padding-top: 0;
     margin-bottom: 3px;
 }
 
-/* título aún más compacto */
 .titulo-formulario {
     margin-top: 0;
     margin-bottom: 0;
     line-height: 1.05;
 }
 
-/* mantiene todo bien centrado */
 .encabezado-login .row {
     align-items: center;
 }
 
 main.container {
-    margin-top: 1px; /* antes 6px */
+    margin-top: 1px;
 }
 
 main.container > .row {
-    margin-top: -25px; /* antes -14px */
+    margin-top: -25px;
 }
 
-/* =========================
-   RESPONSIVE HEADER FIX (MÁS CERCANO AL NAV)
-   ========================= */
-
-/* Tablets */
+/* TABLETS */
 @media (max-width: 992px) {
 
     .encabezado-login {
-        margin-top: -45px; /* 🔥 sube más el bloque */
+        margin-top: -45px;
         margin-bottom: 3px;
-        padding-top: 0;
     }
 
     .encabezado-login img {
         max-width: 140px;
-        margin-top: -55px; /* 🔥 ahora sí bastante más cerca del nav */
+        margin-top: -55px;
     }
 
     .titulo-formulario {
         font-size: 1.3rem;
-        line-height: 1.1;
     }
 
-    .encabezado-login .row {
-        text-align: center;
-    }
-
-    /* 🔥 reduce el “empuje” del contenido */
     main.container > .row {
         margin-top: -35px;
     }
+
+    .container.mt-4 {
+        padding-bottom: 280px !important;
+    }
 }
 
-/* Móviles */
+/* MÓVILES */
 @media (max-width: 576px) {
 
     .encabezado-login {
-        margin-top: -50px; /* 🔥 más compacto aún */
+        margin-top: -50px;
         margin-bottom: 4px;
-        padding-top: 0;
     }
 
     .encabezado-login img {
         max-width: 110px;
-        margin-top: -60px; /* 🔥 casi pegado al nav */
+        margin-top: -60px;
     }
 
     .titulo-formulario {
         font-size: 1rem;
-        line-height: 1.15;
         padding: 0 10px;
-    }
-
-    .encabezado-login .col-12 {
-        text-align: center !important;
-    }
-
-    main.container {
-        margin-top: 0;
     }
 
     main.container > .row {
         margin-top: -40px;
+    }
+
+    .container.mt-4 {
+        padding-bottom: 320px !important;
     }
 }

@@ -3,68 +3,85 @@
     min-height: 100vh;
     overflow-x: hidden;
     background-color: #f8f9fa;
+
+    /* añadido */
+    display: flex;
+    flex-direction: column;
 }
 
-/* Marca de agua visible */
+/* =========================
+   MARCA DE AGUA (FIX REAL)
+========================= */
+
 body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
+  content: "";
+  position: fixed;
+  inset: 0;
 
-    background-image: url("../img/image006.jpg");
-    background-repeat: no-repeat;
-    background-position: center center;
-    background-size: cover;
+  background-image: url("../img/image006.jpg");
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
 
-    opacity: 0.40;
-    filter: grayscale(20%);
+  opacity: 0.25;
+  filter: grayscale(20%) blur(0.5px);
 
-    z-index: -1;
-    pointer-events: none;
+  z-index: 0;
+  pointer-events: none;
 }
+
+/* capa superior para que el contenido esté por encima */
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* =========================
+   NAVBAR
+========================= */
 
 .navbar {
   position: relative;
   z-index: 9999;
 }
 
- table {
-     width: 100%;
-     border-collapse: collapse;
-     margin-top: 20px;
- }
-
- th,
- td {
-     border: 1px solid #ccc;
-     padding: 8px;
- }
-
- th {
-     background: #f0f0f0;
- }
-
- button {
-     padding: 6px 10px;
-     cursor: pointer;
- }
-
- .estado-pendiente {
-     color: orange;
-     font-weight: bold;
- }
-
- .estado-firmado {
-     color: green;
-     font-weight: bold;
- }
-
- .navbar {
-    position: relative;
-    z-index: 9999;
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
 }
 
-.titulo-formulario{
+th,
+td {
+    border: 1px solid #ccc;
+    padding: 8px;
+}
+
+th {
+    background: #f0f0f0;
+}
+
+button {
+    padding: 6px 10px;
+    cursor: pointer;
+}
+
+.estado-pendiente {
+    color: orange;
+    font-weight: bold;
+}
+
+.estado-firmado {
+    color: green;
+    font-weight: bold;
+}
+
+.titulo-formulario {
     text-align: center;
     transform: translateX(-180px);
+}
+
+/* añadido */
+footer {
+    margin-top: auto;
 }

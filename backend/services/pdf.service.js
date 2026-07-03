@@ -5,89 +5,112 @@ const path = require("path");
 /* =========================
    GENERAR PDF CONTRATO
 ========================= */
-async function generarPDFContrato({ contratoId, empresaId, perfilId, hash }) {
+async function generarPDFContrato({
+  contratoId,
+  empresaNombre,
+  perfiles,
+  hash
+}) {
   try {
-    if (!contratoId || !empresaId || !perfilId) {
+
+    if (
+      !contratoId ||
+      !empresaNombre ||
+      !Array.isArray(perfiles) ||
+      perfiles.length === 0
+    ) {
+      console.log({
+        contratoId,
+        empresaNombre,
+        perfiles,
+        hash
+      });
+
       throw new Error("Datos insuficientes para generar PDF");
     }
 
-    /* =========================
-       CREAR DOCUMENTO PDF
-    ========================= */
     const pdfDoc = await PDFDocument.create();
+
     const page = pdfDoc.addPage([600, 800]);
 
-    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const font = await pdfDoc.embedFont(
+      StandardFonts.Helvetica
+    );
 
-    /* =========================
-       CONTENIDO DOCUMENTO
-    ========================= */
-    page.drawText("CONTRATO DE SERVICIO", {
-      x: 50,
-      y: 750,
-      size: 20,
-      font,
-      color: rgb(0, 0, 0),
-    });
+    page.drawText(
+      "CONTRATO DE SERVICIO",
+      {
+        x: 50,
+        y: 750,
+        size: 20,
+        font
+      }
+    );
 
-    page.drawText(`Contrato ID: ${contratoId}`, {
-      x: 50,
-      y: 700,
-      size: 12,
-      font,
-    });
+    page.drawText(
+      `Contrato ID: ${contratoId}`,
+      {
+        x: 50,
+        y: 700,
+        size: 12,
+        font
+      }
+    );
 
-    page.drawText(`Empresa ID: ${empresaId}`, {
-      x: 50,
-      y: 680,
-      size: 12,
-      font,
-    });
+    page.drawText(
+      `Empresa: ${empresaNombre}`,
+      {
+        x: 50,
+        y: 680,
+        size: 12,
+        font
+      }
+    );
 
-    page.drawText(`Perfil ID: ${perfilId}`, {
-      x: 50,
-      y: 660,
-      size: 12,
-      font,
-    });
+    page.drawText(
+      `Perfiles: ${perfiles.join(", ")}`,
+      {
+        x: 50,
+        y: 660,
+        size: 12,
+        font
+      }
+    );
 
-    page.drawText(`HASH: ${hash}`, {
-      x: 50,
-      y: 620,
-      size: 10,
-      font,
-      color: rgb(0.2, 0.2, 0.2),
-    });
+    page.drawText(
+      `HASH: ${hash}`,
+      {
+        x: 50,
+        y: 620,
+        size: 10,
+        font
+      }
+    );
 
-    page.drawText(`Documento generado automáticamente`, {
-      x: 50,
-      y: 580,
-      size: 10,
-      font,
-      color: rgb(0.5, 0.5, 0.5),
-    });
-
-    /* =========================
-       GENERAR BUFFER PDF
-    ========================= */
     const pdfBytes = await pdfDoc.save();
 
-    /* =========================
-       CARPETA SEGURA
-    ========================= */
-    const dir = path.join(__dirname, "../uploads/contratos");
+    const dir = path.join(
+      __dirname,
+      "../uploads/contratos"
+    );
 
     if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+      fs.mkdirSync(dir, {
+        recursive: true
+      });
     }
 
-    /* =========================
-       GUARDAR ARCHIVO
-    ========================= */
     const fileName = `contrato_${contratoId}.pdf`;
-    const filePath = path.join(dir, fileName);
 
-    fs.writeFileSync(filePath, pdfBytes);
+    const filePath = path.join(
+      dir,
+      fileName
+    );
+
+    fs.writeFileSync(
+      filePath,
+      pdfBytes
+    );
 
     return {
       fileName,
@@ -95,8 +118,13 @@ async function generarPDFContrato({ contratoId, empresaId, perfilId, hash }) {
     };
 
   } catch (err) {
-    console.error("ERROR PDF:", err.message);
-    throw new Error("Error generando PDF de contrato");
+
+    console.error(
+      "ERROR PDF:",
+      err.message
+    );
+
+    throw err;
   }
 }
 

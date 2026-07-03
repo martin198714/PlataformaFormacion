@@ -1,11 +1,26 @@
- body {
+ /* =========================
+   LAYOUT GENERAL (FOOTER ABAJO)
+========================= */
+
+body {
     position: relative;
     min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+
     overflow-x: hidden;
     background-color: #f8f9fa;
 }
 
-/* Marca de agua visible */
+/* el contenido crece y empuja el footer */
+main {
+    flex: 1;
+}
+
+/* =========================
+   MARCA DE AGUA (FIX REAL)
+========================= */
+
 body::before {
     content: "";
     position: fixed;
@@ -16,39 +31,44 @@ body::before {
     background-position: center center;
     background-size: cover;
 
-    opacity: 0.40;
-    filter: grayscale(20%);
+    opacity: 0.25;
+    filter: grayscale(20%) blur(0.5px);
 
-    z-index: -1;
+    z-index: 0;
     pointer-events: none;
 }
 
-.navbar {
-  position: relative;
-  z-index: 9999;
+/* todo el contenido por encima de la marca de agua */
+body > * {
+    position: relative;
+    z-index: 1;
 }
 
 /* =========================
-   TABLA (PANTALLAS GRANDES - SIN CAMBIOS VISUALES)
+   NAVBAR
 ========================= */
+
+.navbar {
+    position: relative;
+    z-index: 9999;
+}
+
+/* =========================
+   TABLA (GENERAL)
+========================= */
+
 table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
 }
 
-/* =========================
-   CELDAS
-========================= */
 th,
 td {
     border: 1px solid #ccc;
     padding: 8px;
 }
 
-/* =========================
-   CABECERA TABLA
-========================= */
 th {
     background: #f0f0f0;
 }
@@ -56,6 +76,7 @@ th {
 /* =========================
    BOTONES
 ========================= */
+
 button {
     padding: 6px 10px;
     cursor: pointer;
@@ -63,16 +84,9 @@ button {
 }
 
 /* =========================
-   NAVBAR
-========================= */
-.navbar {
-    position: relative;
-    z-index: 9999;
-}
-
-/* =========================
    TÍTULO FORMULARIO
 ========================= */
+
 .titulo-formulario {
     text-align: center;
     transform: translateX(-180px);
@@ -81,16 +95,22 @@ button {
 /* =========================
    WRAPPER TABLA
 ========================= */
+
 .table-wrapper {
     width: 100%;
 }
 
+footer {
+    margin-top: auto;
+    width: 100%;
+}
+
 /* =========================================================
-   TABLET + MÓVIL (RESPONSIVE SIN SCROLL HORIZONTAL)
+   TABLET + MÓVIL
 ========================================================= */
+
 @media (max-width: 992px) {
 
-    /* Layout encabezado */
     .row.align-items-center {
         flex-direction: column;
         text-align: center !important;
@@ -100,7 +120,6 @@ button {
         margin-bottom: 10px;
     }
 
-    /* Título centrado */
     .titulo-formulario {
         transform: none;
         text-align: center;
@@ -116,9 +135,6 @@ button {
         top: -8px;
     }
 
-    /* =========================
-       TABLA RESPONSIVE
-    ========================= */
     .table-wrapper {
         width: 100%;
         max-width: 100%;
@@ -135,7 +151,6 @@ button {
     td {
         padding: 6px;
 
-        /* CLAVE: evitar desbordamiento */
         overflow-wrap: anywhere;
         word-break: break-word;
         white-space: normal;
@@ -145,8 +160,9 @@ button {
 }
 
 /* =========================================================
-   MÓVIL PEQUEÑO (≤576px)
+   MÓVIL PEQUEÑO
 ========================================================= */
+
 @media (max-width: 576px) {
 
     section.container {

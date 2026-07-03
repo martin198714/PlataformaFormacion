@@ -1,13 +1,22 @@
 const db = require("../models/db");
 const { ESTADOS_CONTRATO } = require("../utils/estadosContrato");
 const { generarHash } = require("../utils/hash");
-const { generarPDFContrato, verificarPDFFirmado } = require("./pdf.service");
-const { enviarContratoEmail } = require("./email.service");
+
+const {
+  generarPDFContrato,
+  verificarPDFFirmado
+} = require("./pdf.service");
+
+const {
+  enviarContratoEmail
+} = require("./email.service");
+
 const { v4: uuidv4 } = require("uuid");
 
 /* =========================
-   UTIL
+UTIL
 ========================= */
+
 function toArray(r) {
   if (!r) return [];
   if (Array.isArray(r)) return r;
@@ -16,97 +25,186 @@ function toArray(r) {
   return [];
 }
 
+function safe(v) {
+  return v ?? "";
+}
+
 /* =========================
-   NORMALIZADOR PERFILES
+NORMALIZADOR
 ========================= */
+
 function normalizarPerfiles(perfiles) {
   if (!perfiles) return [];
 
   if (Array.isArray(perfiles)) {
     return perfiles
       .map(Number)
-      .filter(n => Number.isInteger(n) && n > 0);
+      .filter(v => Number.isInteger(v) && v > 0);
   }
 
   const n = Number(perfiles);
-  return Number.isInteger(n) && n > 0 ? [n] : [];
+  return Number.isInteger(n) ? [n] : [];
+}
+
+function normalizeContrato(c) {
+  return {
+    ...c,
+    PERFIL_NOMBRE: c.PERFIL_NOMBRE ?? "",
+    PERFIL: c.PERFIL ?? "",
+    EMPRESA_NOMBRE: c.EMPRESA_NOMBRE ?? "",
+    ESTADO: c.ESTADO ?? ""
+  };
 }
 
 /* =========================
-   LISTAR USUARIO
+LISTAR USUARIO
 ========================= */
+
 async function listarPorUsuario(usuarioId) {
-  const r = await db.query(
-    `SELECT
-        c.ID,
-        c.EMPRESA_ID,
-        e.NOMBRE AS EMPRESA_NOMBRE,
-        c.ESTADO,
-        c.FECHA_ENVIO,
-        c.TOKEN,
-        a.FICHERO_NOMBRE
-     FROM CONTRATOS_MANTENIMIENTO c
-     LEFT JOIN EMPRESAS e ON e.EMPRESA_ID = c.EMPRESA_ID
-     LEFT JOIN ARCHIVOS a ON a.ARCHIVO_ID = c.ARCHIVO_ENVIADO_ID
-     WHERE c.EMPRESA_ID = (
-        SELECT EMPRESA_ID FROM USUARIOS WHERE USUARIO_ID = ?
-     )
-     ORDER BY c.ID DESC`,
-    [usuarioId]
-  );
 
-  return toArray(r);
+  const r = await db.query(`
+    SELECT
+    c.ID,
+    c.EMPRESA_ID,
+    e.NOMBRE AS EMPRESA_NOMBRE,
+    LIST(p.NOMBRE, ', ') AS PERFIL_NOMBRE,
+    c.ESTADO,
+    c.FECHA_ENVIO,
+    c.TOKEN
+FROM CONTRATOS_MANTENIMIENTO c
+INNER JOIN EMPRESAS e
+    ON e.EMPRESA_ID = c.EMPRESA_ID
+INNER JOIN CONTRATO_PERFILES cp
+    ON cp.CONTRATO_ID = c.ID
+INNER JOIN PERFILES p
+    ON p.ID = cp.PERFIL_ID
+WHERE c.EMPRESA_ID = (
+    SELECT EMPRESA_ID
+    FROM USUARIOS
+    WHERE USUARIO_ID = ?
+)
+GROUP BY
+    c.ID,
+    c.EMPRESA_ID,
+    e.NOMBRE,
+    c.ESTADO,
+    c.FECHA_ENVIO,
+    c.TOKEN
+ORDER BY c.ID DESC;
+  `, [usuarioId]);
+
+  const datos = toArray(r);
+
+  console.log("========== LISTAR USUARIO ==========");
+  console.log(JSON.stringify(datos, null, 2));
+  console.log("====================================");
+
+  return datos.map(normalizeContrato);
 }
 
 /* =========================
-   LISTAR EMPRESA
+LISTAR EMPRESA
 ========================= */
+
 async function listarPorEmpresa(empresaId) {
-  const r = await db.query(
-    `SELECT * FROM CONTRATOS_MANTENIMIENTO
-     WHERE EMPRESA_ID = ?
-     ORDER BY ID DESC`,
-    [empresaId]
-  );
 
-  return toArray(r);
+  const r = await db.query(`
+    SELECT
+    c.ID,
+    c.EMPRESA_ID,
+    e.NOMBRE AS EMPRESA_NOMBRE,
+    LIST(p.NOMBRE, ', ') AS PERFIL_NOMBRE,
+    c.ESTADO,
+    c.FECHA_ENVIO,
+    c.FECHA_FIRMA,
+    c.TOKEN
+FROM CONTRATOS_MANTENIMIENTO c
+INNER JOIN EMPRESAS e
+    ON e.EMPRESA_ID = c.EMPRESA_ID
+INNER JOIN CONTRATO_PERFILES cp
+    ON cp.CONTRATO_ID = c.ID
+INNER JOIN PERFILES p
+    ON p.ID = cp.PERFIL_ID
+WHERE c.EMPRESA_ID = ?
+GROUP BY
+    c.ID,
+    c.EMPRESA_ID,
+    e.NOMBRE,
+    c.ESTADO,
+    c.FECHA_ENVIO,
+    c.FECHA_FIRMA,
+    c.TOKEN
+ORDER BY c.ID DESC;
+  `, [empresaId]);
+
+  const datos = toArray(r);
+
+  console.log("========== LISTAR EMPRESA ==========");
+  console.log(JSON.stringify(datos, null, 2));
+  console.log("====================================");
+
+  return datos.map(normalizeContrato);
 }
 
 /* =========================
-   VER CONTRATO
+VER CONTRATO
 ========================= */
+
 async function verContrato(id) {
-  const r = await db.query(
-    `SELECT c.*, a.FICHERO_NOMBRE
-     FROM CONTRATOS_MANTENIMIENTO c
-     LEFT JOIN ARCHIVOS a ON a.ARCHIVO_ID = c.ARCHIVO_ENVIADO_ID
-     WHERE c.ID = ?`,
-    [id]
-  );
+  const r = await db.query(`
+    SELECT
+        c.*,
+        a.FICHERO_NOMBRE,
+        LIST(p.NOMBRE, ', ') AS PERFIL_NOMBRE
+    FROM CONTRATOS_MANTENIMIENTO c
+    LEFT JOIN ARCHIVOS a
+        ON a.ARCHIVO_ID = c.ARCHIVO_ENVIADO_ID
+    LEFT JOIN CONTRATO_PERFILES cp
+        ON cp.CONTRATO_ID = c.ID
+    LEFT JOIN PERFILES p
+        ON p.ID = cp.PERFIL_ID
+    WHERE c.ID = ?
+    GROUP BY
+        c.ID,
+        a.FICHERO_NOMBRE
+`, [id]);
 
-  return toArray(r)[0] || null;
+  return normalizeContrato(toArray(r)[0] || {});
 }
 
 /* =========================
-   CREAR CONTRATO (🔥 FIREBIRD FIX REAL)
+OBTENER POR TOKEN
 ========================= */
-async function crearContrato(empresaId, perfiles, usuarioId) {
+
+async function obtenerPorToken(token) {
+  const r = await db.query(`
+    SELECT * FROM CONTRATOS_MANTENIMIENTO WHERE TOKEN=?
+  `, [token]);
+
+  return normalizeContrato(toArray(r)[0] || {});
+}
+
+/* =========================
+CREAR CONTRATO
+========================= */
+
+async function crearContrato(empresaId, perfiles) {
   const empresa = Number(empresaId);
   const perfilesNumeros = normalizarPerfiles(perfiles);
 
-  console.log("DEBUG crearContrato:", {
-    empresaId,
-    perfiles,
-    empresa,
-    perfilesNumeros
-  });
+  console.log("================================");
+  console.log("CREAR CONTRATO");
+  console.log("Empresa:", empresa);
+  console.log("Perfiles recibidos:", perfiles);
+  console.log("Perfiles normalizados:", perfilesNumeros);
+  console.log("================================");
 
-  if (!empresa || empresa <= 0) {
+  if (!empresa) {
     throw new Error("Empresa inválida");
   }
 
-  if (perfilesNumeros.length === 0) {
-    throw new Error("Debe seleccionar al menos un perfil válido");
+  if (!perfilesNumeros.length) {
+    throw new Error("Debe seleccionar al menos un perfil");
   }
 
   const token = uuidv4();
@@ -114,262 +212,319 @@ async function crearContrato(empresaId, perfiles, usuarioId) {
   const hash = generarHash({
     empresa,
     perfiles: perfilesNumeros,
-    token,
-    t: Date.now(),
+    fecha: Date.now()
   });
 
-  /* 🔥 FIREBIRD FIX: RETURNING ID */
-  const insert = await db.query(
-    `INSERT INTO CONTRATOS_MANTENIMIENTO
-     (EMPRESA_ID, TOKEN, HASH_CONTRATO, ESTADO, FECHA_ENVIO)
-     VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-     RETURNING ID`,
-    [empresa, token, hash, ESTADOS_CONTRATO.PENDIENTE]
-  );
+  /* =========================
+     INSERTAR CONTRATO
+  ========================= */
+
+  const insert = await db.query(`
+    INSERT INTO CONTRATOS_MANTENIMIENTO
+    (
+      EMPRESA_ID,
+      TOKEN,
+      HASH_CONTRATO,
+      ESTADO,
+      FECHA_ENVIO
+    )
+    VALUES
+    (
+      ?, ?, ?, ?, CURRENT_TIMESTAMP
+    )
+    RETURNING ID
+  `, [
+    empresa,
+    token,
+    hash,
+    ESTADOS_CONTRATO.PENDIENTE
+  ]);
 
   const contratoId =
-    insert?.[0]?.ID ??
-    insert?.ID ??
+    insert?.[0]?.ID ||
+    insert?.ID ||
     toArray(insert)?.[0]?.ID;
 
   if (!contratoId) {
-    console.log("🔥 FIREBIRD INSERT RAW:", insert);
-    throw new Error("No se creó contrato");
+    throw new Error("No se pudo crear el contrato");
   }
 
+  /* =========================
+     GUARDAR PERFILES
+  ========================= */
+
   for (const perfilId of perfilesNumeros) {
-    await db.query(
-      `INSERT INTO CONTRATO_PERFILES (CONTRATO_ID, PERFIL_ID)
-       SELECT ?, ? FROM RDB$DATABASE
-       WHERE NOT EXISTS (
-         SELECT 1 FROM CONTRATO_PERFILES
-         WHERE CONTRATO_ID = ? AND PERFIL_ID = ?
-       )`,
-      [contratoId, perfilId, contratoId, perfilId]
-    );
+    console.log("Insertando perfil:", perfilId);
+
+    await db.query(`
+      INSERT INTO CONTRATO_PERFILES
+      (
+        CONTRATO_ID,
+        PERFIL_ID
+      )
+      VALUES
+      (
+        ?, ?
+      )
+    `, [
+      contratoId,
+      perfilId
+    ]);
   }
+
+  /* =========================
+     OBTENER NOMBRE EMPRESA
+  ========================= */
+
+  const empresaRaw = await db.query(`
+    SELECT NOMBRE
+    FROM EMPRESAS
+    WHERE EMPRESA_ID = ?
+  `, [empresa]);
+
+  const empresaNombre =
+    toArray(empresaRaw)[0]?.NOMBRE || "Empresa";
+
+  /* =========================
+     OBTENER NOMBRES PERFILES
+  ========================= */
+
+  const placeholders = perfilesNumeros
+    .map(() => "?")
+    .join(",");
+
+  const perfilesRaw = await db.query(`
+    SELECT NOMBRE
+    FROM PERFILES
+    WHERE ID IN (${placeholders})
+  `, perfilesNumeros);
+
+  const nombresPerfiles = toArray(perfilesRaw)
+    .map(p => p.NOMBRE);
+
+  /* =========================
+     GENERAR PDF
+  ========================= */
 
   const pdf = await generarPDFContrato({
     contratoId,
-    empresaId: empresa,
-    perfiles: perfilesNumeros,
-    hash,
+    empresaNombre,
+    perfiles: nombresPerfiles,
+    hash
   });
 
-  if (!pdf?.filePath) throw new Error("PDF no generado");
+  if (!pdf?.filePath) {
+    throw new Error("Error generando el PDF");
+  }
 
-  const placeholders = perfilesNumeros.map(() => "?").join(",");
+  /* =========================
+     OBTENER EMAILS
+  ========================= */
 
-  const emailRaw = await db.query(
-    `
-    SELECT DISTINCT u.EMAIL
-    FROM USUARIOS u
-    INNER JOIN USUARIOS_PERFILES up
-      ON up.USUARIO_ID = u.USUARIO_ID
-    WHERE u.EMPRESA_ID = ?
-      AND up.PERFIL_ID IN (${placeholders})
-      AND u.ACTIVO = 1
-      AND u.DELETED = 0
-    `,
-    [empresa, ...perfilesNumeros]
-  );
+  const emailsRaw = await db.query(`
+    SELECT DISTINCT EMAIL
+    FROM USUARIOS
+    WHERE EMPRESA_ID = ?
+  `, [empresa]);
 
-  const emails = toArray(emailRaw).map(u => u.EMAIL);
+  const emails = toArray(emailsRaw)
+    .map(x => x.EMAIL)
+    .filter(Boolean);
+
+  /* =========================
+     ENVIAR EMAILS
+  ========================= */
 
   for (const email of emails) {
-    await enviarContratoEmail({
-      to: email,
-      pdfPath: pdf.filePath,
-      contratoId,
-      linkFirma: `http://localhost:3000/firma.html?token=${token}`,
-    });
+
+    try {
+
+      await enviarContratoEmail({
+        to: email,
+        pdfPath: pdf.filePath,
+        contratoId,
+        linkFirma: `http://127.0.0.1:5500/frontend/firmar.html?token=${token}`
+      });
+
+    } catch (err) {
+
+      console.error(
+        `Error enviando email a ${email}:`,
+        err.message
+      );
+
+    }
   }
 
   return {
     ok: true,
     contratoId,
-    token,
-    pdf: pdf.fileName,
-    perfiles: perfilesNumeros,
-    emailsEnviados: emails.length,
+    token
   };
 }
 
 /* =========================
-   OBTENER POR TOKEN
+AUTOFIRMA PREPARACIÓN
 ========================= */
-async function obtenerPorToken(token) {
-  const r = await db.query(
-    `SELECT c.*, a.FICHERO_NOMBRE
-     FROM CONTRATOS_MANTENIMIENTO c
-     LEFT JOIN ARCHIVOS a ON a.ARCHIVO_ID = c.ARCHIVO_ENVIADO_ID
-     WHERE c.TOKEN = ?`,
-    [token]
-  );
 
-  return toArray(r)[0] || null;
-}
-
-/* =========================
-   FIRMAR TOKEN SIMPLE
-========================= */
-async function firmarContratoToken({ token, ip, userAgent }) {
-  const contrato = await obtenerPorToken(token);
-  if (!contrato) throw new Error("Contrato no existe");
-
-  await db.query(
-    `UPDATE CONTRATOS_MANTENIMIENTO
-     SET ESTADO = ?,
-         FECHA_FIRMA = CURRENT_TIMESTAMP,
-         IP_FIRMA = ?,
-         USER_AGENT = ?,
-         HASH_FIRMADO = ?
-     WHERE TOKEN = ?`,
-    [
-      ESTADOS_CONTRATO.FIRMADO,
-      ip,
-      userAgent,
-      generarHash({ token, ip, userAgent, t: Date.now() }),
-      token,
-    ]
-  );
-
-  return { ok: true, contratoId: contrato.ID };
-}
-
-/* =========================
-   FIRMAR PDF TOKEN
-========================= */
-async function firmarContratoTokenArchivo(data) {
-  const contrato = await obtenerPorToken(data.token);
-  if (!contrato) throw new Error("Contrato no encontrado");
-
-  if (data.rutaFirmado) {
-    const valid = await verificarPDFFirmado(data.rutaFirmado);
-    if (!valid?.valido) throw new Error("PDF inválido");
-  }
-
-  await db.query(
-    `UPDATE CONTRATOS_MANTENIMIENTO
-     SET ESTADO = ?,
-         ARCHIVO_FIRMADO = ?,
-         RUTA_FIRMADO = ?,
-         IP_FIRMA = ?,
-         USER_AGENT = ?,
-         HASH_FIRMADO = ?,
-         FECHA_FIRMA = CURRENT_TIMESTAMP
-     WHERE TOKEN = ?`,
-    [
-      ESTADOS_CONTRATO.FIRMADO,
-      data.archivoFirmado,
-      data.rutaFirmado,
-      data.ip,
-      data.userAgent,
-      generarHash(data),
-      data.token,
-    ]
-  );
-
-  return { ok: true, contratoId: contrato.ID };
-}
-
-/* =========================
-   FIRMAR GENERAL
-========================= */
-async function firmarContrato(data) {
-  let contrato = null;
-
-  if (data.id) {
-    const r = await db.query(
-      `SELECT * FROM CONTRATOS_MANTENIMIENTO WHERE ID = ?`,
-      [data.id]
-    );
-    contrato = toArray(r)[0];
-  } else {
-    contrato = await obtenerPorToken(data.token);
-  }
-
-  if (!contrato) throw new Error("Contrato no encontrado");
-
-  await db.query(
-    `UPDATE CONTRATOS_MANTENIMIENTO
-     SET ESTADO = ?,
-         FECHA_FIRMA = CURRENT_TIMESTAMP,
-         IP_FIRMA = ?,
-         USER_AGENT = ?,
-         USUARIO_FIRMA_ID = ?,
-         ARCHIVO_FIRMADO = COALESCE(?, ARCHIVO_FIRMADO),
-         RUTA_FIRMADO = COALESCE(?, RUTA_FIRMADO),
-         HASH_FIRMADO = ?
-     WHERE ID = ?`,
-    [
-      ESTADOS_CONTRATO.FIRMADO,
-      data.ip,
-      data.userAgent,
-      data.usuarioId,
-      data.archivoFirmado,
-      data.rutaFirmado,
-      generarHash(data),
-      contrato.ID,
-    ]
-  );
-
-  return { ok: true, contratoId: contrato.ID };
-}
-
-/* =========================
-   AUTOFIRMA
-========================= */
 async function prepararFirmaAutoFirma(token) {
   const contrato = await obtenerPorToken(token);
-  if (!contrato) throw new Error("Contrato no encontrado");
+
+  if (!contrato?.ID) throw new Error("Contrato no encontrado");
 
   return {
     ok: true,
-    redirectUrl: `autofirma://sign?token=${token}`,
-    request: {
-      token,
-      contratoId: contrato.ID,
-      empresaId: contrato.EMPRESA_ID,
-      urlReturn: "http://localhost:3000/api/contratos/autofirma/return",
-      timestamp: Date.now(),
-    },
+    token,
+    redirectUrl: `autofirma://sign?token=${token}`
   };
 }
 
-async function recibirFirmaAutoFirma(data) {
-  const contrato = await obtenerPorToken(data.token);
-  if (!contrato) throw new Error("Contrato no encontrado");
+/* =========================
+RECIBIR FIRMA AUTOFIRMA (REAL CALLBACK)
+========================= */
 
-  await db.query(
-    `UPDATE CONTRATOS_MANTENIMIENTO
-     SET ESTADO = ?,
-         ARCHIVO_FIRMADO = ?,
-         RUTA_FIRMADO = ?,
-         IP_FIRMA = ?,
-         USER_AGENT = ?,
-         USUARIO_FIRMA_ID = ?,
-         HASH_FIRMADO = ?,
-         FECHA_FIRMA = CURRENT_TIMESTAMP
-     WHERE TOKEN = ?`,
-    [
-      ESTADOS_CONTRATO.FIRMADO,
-      data.archivoFirmado,
-      data.rutaFirmado,
-      data.ip,
-      data.userAgent,
-      data.usuarioId,
-      generarHash(data),
-      data.token,
-    ]
-  );
+async function recibirFirmaAutoFirma(data) {
+  return firmarContratoTokenArchivo(data);
+}
+
+/* =========================
+FIRMA TOKEN PRINCIPAL (FIXED FLOW)
+========================= */
+
+async function firmarContratoTokenArchivo(data) {
+  const contrato = await obtenerPorToken(data.token);
+
+  if (!contrato?.ID) throw new Error("Contrato no encontrado");
+
+  if (contrato.ESTADO === ESTADOS_CONTRATO.FIRMADO) {
+    return {
+      ok: true,
+      contratoId: contrato.ID,
+      mensaje: "Ya firmado"
+    };
+  }
+
+  /* VALIDACIÓN PDF FIRMADO */
+  if (data.rutaFirmado) {
+    const valid = await verificarPDFFirmado(data.rutaFirmado);
+    if (!valid?.valido) throw new Error("PDF inválido");
+
+    await db.query(`
+      UPDATE CONTRATOS_MANTENIMIENTO
+      SET ARCHIVO_FIRMADO=?
+      WHERE ID=?
+    `, [data.rutaFirmado, contrato.ID]);
+  }
+
+  const hashFirmado = generarHash({
+    contrato: contrato.ID,
+    token: contrato.TOKEN,
+    fecha: Date.now(),
+    ip: data.ip
+  });
+
+  await db.query(`
+    UPDATE CONTRATOS_MANTENIMIENTO
+    SET
+      ESTADO=?,
+      FECHA_FIRMA=CURRENT_TIMESTAMP,
+      IP_FIRMA=?,
+      USER_AGENT=?,
+      HASH_FIRMADO=?
+    WHERE ID=?
+  `, [
+    ESTADOS_CONTRATO.FIRMADO,
+    data.ip || null,
+    data.userAgent || null,
+    hashFirmado,
+    contrato.ID
+  ]);
+
+  /* ADMIN UPDATE (NO FALLA SI NO EXISTE) */
+  await db.query(`
+    UPDATE ADMIN_CONTRATOS
+    SET ESTADO=?, FECHA_FIRMA=CURRENT_TIMESTAMP
+    WHERE CONTRATO_ID=?
+  `, [
+    ESTADOS_CONTRATO.FIRMADO,
+    contrato.ID
+  ]);
+
+  return {
+    ok: true,
+    contratoId: contrato.ID,
+    estado: ESTADOS_CONTRATO.FIRMADO
+  };
+}
+
+/* =========================
+FIRMA SIMPLE TOKEN
+========================= */
+
+async function firmarContratoToken(data) {
+  return firmarContratoTokenArchivo(data);
+}
+
+/* =========================
+FIRMA MANUAL
+========================= */
+
+async function firmarContrato(data) {
+  const contrato = data.id
+    ? await verContrato(data.id)
+    : await obtenerPorToken(data.token);
+
+  if (!contrato?.ID) throw new Error("Contrato no encontrado");
+
+  if (contrato.ESTADO === ESTADOS_CONTRATO.FIRMADO) {
+    return { ok: true, contratoId: contrato.ID };
+  }
+
+  await db.query(`
+    UPDATE CONTRATOS_MANTENIMIENTO
+    SET
+      ESTADO=?,
+      FECHA_FIRMA=CURRENT_TIMESTAMP,
+      IP_FIRMA=?,
+      USER_AGENT=?,
+      HASH_FIRMADO=?
+    WHERE ID=?
+  `, [
+    ESTADOS_CONTRATO.FIRMADO,
+    data.ip || null,
+    data.userAgent || null,
+    generarHash({
+      contrato: contrato.ID,
+      token: contrato.TOKEN,
+      fecha: Date.now(),
+      ip: data.ip
+    }),
+    contrato.ID
+  ]);
 
   return { ok: true, contratoId: contrato.ID };
 }
 
+/* =========================================================
+AUTO-FIRMA UPLOAD (NUEVO SISTEMA SIN INTERVENCIÓN)
+========================================================= */
+
+/**
+ * Marca contrato firmado desde watcher local
+ */
+async function firmarContratoAuto(data) {
+  return firmarContratoTokenArchivo({
+    token: data.token,
+    rutaFirmado: data.rutaFirmado,
+    ip: data.ip,
+    userAgent: data.userAgent
+  });
+}
+
 /* =========================
-   EXPORT
+EXPORT
 ========================= */
+
 module.exports = {
   listarPorUsuario,
   listarPorEmpresa,
@@ -380,5 +535,6 @@ module.exports = {
   firmarContratoTokenArchivo,
   firmarContrato,
   prepararFirmaAutoFirma,
-  recibirFirmaAutoFirma
+  recibirFirmaAutoFirma,
+  firmarContratoAuto
 };

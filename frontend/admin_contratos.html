@@ -127,6 +127,7 @@
         ========================= */
         async function cargar() {
             try {
+
                 const res = await fetch(`${BASE_URL}/api/contratos`, {
                     headers: getAuthHeaders()
                 });
@@ -141,33 +142,76 @@
                 const tbody = document.getElementById("tabla");
                 tbody.innerHTML = "";
 
-                const contratosUnicos = [...new Map(data.map(c => [c.ID, c])).values()];
+                /* =========================
+                   AGRUPAR CONTRATOS
+                ========================= */
 
-                contratosUnicos.forEach(c => {
+                const contratos = {};
+
+                data.forEach(c => {
+
+                    if (!contratos[c.ID]) {
+
+                        contratos[c.ID] = {
+                            ...c,
+                            PERFILES: []
+                        };
+
+                    }
+
+                    const perfil = c.PERFIL_NOMBRE || c.PERFIL;
+
+                    if (
+                        perfil &&
+                        !contratos[c.ID].PERFILES.includes(perfil)
+                    ) {
+                        contratos[c.ID].PERFILES.push(perfil);
+                    }
+
+                });
+
+                /* =========================
+                   PINTAR TABLA
+                ========================= */
+
+                Object.values(contratos).forEach(c => {
 
                     const estado = (c.ESTADO || "").toUpperCase();
 
                     const estadoClass =
-                        estado === "FIRMADO" ? "text-success" : "text-warning";
+                        estado === "FIRMADO"
+                            ? "text-success"
+                            : "text-warning";
 
                     tbody.innerHTML += `
                 <tr>
                     <td>${c.ID}</td>
+
                     <td>${c.EMPRESA_NOMBRE || c.EMPRESA_ID}</td>
-                    <td>${c.PERFIL_NOMBRE || ""}</td>
-                    <td class="${estadoClass}">${c.ESTADO}</td>
+
+                    <td>${c.PERFILES.join(", ")}</td>
+
+                    <td class="${estadoClass}">
+                        ${c.ESTADO}
+                    </td>
+
                     <td>${c.FECHA_ENVIO || ""}</td>
+
                     <td>
                         ${c.FICHERO_NOMBRE
                             ? `<a href="${BASE_URL}/uploads/contratos/${c.FICHERO_NOMBRE}" target="_blank">📄 PDF</a>`
-                            : "Pendiente"}
+                            : "Pendiente"
+                        }
                     </td>
-                </tr>`;
+                </tr>
+            `;
                 });
 
             } catch (err) {
+
                 console.error(err);
                 alert("Error cargando contratos");
+
             }
         }
 

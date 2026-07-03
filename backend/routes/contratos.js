@@ -3,13 +3,14 @@ const router = express.Router();
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-
 const contratosController = require("../controllers/contratosController");
 const { authMiddleware } = require("../middlewares/auth");
+const { firmarContratoAuto } = require("../services/contratos.service");
 
 /* =========================
    UPLOAD CONFIG
 ========================= */
+
 const base = path.join(__dirname, "..", "uploads");
 const firmadosDir = path.join(base, "firmados");
 
@@ -25,18 +26,21 @@ const storage = multer.diskStorage({
   }
 });
 
+/* 🔥 FIX IMPORTANTE:
+   aceptamos pdf y pdfFirmado */
 const upload = multer({
   storage,
   limits: { fileSize: 20 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    cb(null, file.mimetype === "application/pdf");
+    const ok = file.mimetype === "application/pdf";
+    cb(null, ok);
   }
 });
 
 /* =========================
-   SAFE HANDLER WRAPPER
-   (evita crash "handler must be a function")
+   SAFE WRAPPER
 ========================= */
+
 const safe = (fn, name) => {
   return (req, res, next) => {
     if (typeof fn !== "function") {
@@ -51,76 +55,132 @@ const safe = (fn, name) => {
 /* =========================
    PROTEGIDOS
 ========================= */
-router.get("/", authMiddleware, safe(contratosController.listar, "listar"));
-router.get("/empresa/:empresaId", authMiddleware, safe(contratosController.listarPorEmpresa, "listarPorEmpresa"));
-router.post("/crear", authMiddleware, safe(contratosController.crear, "crear"));
+
+router.get(
+  "/",
+  authMiddleware,
+  safe(contratosController.listar, "listar")
+);
+
+router.get(
+  "/empresa/:empresaId",
+  authMiddleware,
+  safe(contratosController.listarPorEmpresa, "listarPorEmpresa")
+);
+
+router.post(
+  "/crear",
+  authMiddleware,
+  safe(contratosController.crear, "crear")
+);
 
 /* =========================
-   DETALLE (IMPORTANTE: antes de /:id genérico conflictivo)
+   FIRMA PÚBLICA (IMPORTANTE ANTES DE /:id)
 ========================= */
-router.get("/:id", authMiddleware, safe(contratosController.verContrato, "verContrato"));
+
+router.get(
+  "/firma/:token",
+  safe(contratosController.verContratoPorToken, "verContratoPorToken")
+);
 
 /* =========================
-   PÚBLICOS (FIRMA)
+   DETALLE CONTRATO
 ========================= */
-router.get("/firma/:token", safe(contratosController.verContratoPorToken, "verContratoPorToken"));
+
+router.get(
+  "/:id",
+  authMiddleware,
+  safe(contratosController.verContrato, "verContrato")
+);
 
 /* =========================
-   FIRMA SIMPLE POR TOKEN
+   FIRMA SIMPLE TOKEN
 ========================= */
-router.post("/firmar-token/:token", safe(contratosController.firmarPorToken, "firmarPorToken"));
+
+router.post(
+  "/firmar-token/:token",
+  safe(contratosController.firmarPorToken, "firmarPorToken")
+);
 
 /* =========================
-   FIRMA PDF POR TOKEN
+   FIRMA PDF POR TOKEN (FIX MULTER ERROR)
 ========================= */
+
 router.post(
   "/firmar/token/:token",
-  upload.single("pdf"),
+  upload.single("pdfFirmado"), // 🔥 FIX AQUÍ
   safe(contratosController.firmarPorTokenArchivo, "firmarPorTokenArchivo")
 );
 
 /* =========================
    FIRMA AUTENTICADA (LOGIN)
 ========================= */
+
 router.post(
   "/firmar/:id",
   authMiddleware,
-  upload.single("pdf"),
+  upload.single("pdfFirmado"), // 🔥 CONSISTENTE
   safe(contratosController.firmar, "firmar")
 );
 
 router.post(
   "/firmar/:id/:token",
   authMiddleware,
-  upload.single("pdf"),
+  upload.single("pdfFirmado"),
   safe(contratosController.firmar, "firmar")
 );
 
 /* =========================
-   🔐 AUTOFIRMA (FIXED + CONSISTENTE)
+   🔐 AUTOFIRMA FLOW
 ========================= */
 
 /**
- * PASO 1: iniciar autofirma
+ * INICIAR AUTOFIRMA
  */
 router.get(
   "/autofirma/:token",
   safe(
-    contratosController.iniciarAutoFirma || contratosController.iniciarAutofirma,
+    contratosController.iniciarAutoFirma ||
+      contratosController.iniciarAutofirma ||
+      contratosController.prepararFirmaAutoFirma,
     "iniciarAutoFirma"
   )
 );
 
 /**
- * PASO 2: callback autofirma
+ * CALLBACK AUTOFIRMA (SUBIDA PDF FIRMADO)
  */
 router.post(
   "/autofirma/return",
-  upload.single("pdf"),
+  upload.single("pdfFirmado"), // 🔥 FIX CRÍTICO
   safe(
-    contratosController.recibirAutoFirma || contratosController.recibirAutofirma || contratosController.finalizarAutofirma,
+    contratosController.recibirAutoFirma ||
+      contratosController.recibirAutofirma ||
+      contratosController.recibirFirmaAutoFirma,
     "recibirAutoFirma"
   )
 );
+
+router.post("/auto-upload", upload.single("file"), async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) throw new Error("Token requerido");
+    if (!req.file) throw new Error("Archivo requerido");
+
+    const { firmarContratoAuto } = require("../services/contrato.service");
+
+    const result = await firmarContratoAuto({
+      token,
+      rutaFirmado: req.file.path,
+      ip: req.ip,
+      userAgent: req.headers["user-agent"]
+    });
+
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
 module.exports = router;

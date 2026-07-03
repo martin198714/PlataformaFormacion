@@ -15,12 +15,22 @@
      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
  }
 
- body {
+body {
     position: relative;
+
     min-height: 100vh;
+
+    /* 🔥 para empujar el footer abajo */
+    display: flex;
+    flex-direction: column;
+
     overflow-x: hidden;
     background-color: #f8f9fa;
-    z-index: 0;
+}
+
+/* ocupa el espacio disponible */
+section.container {
+    flex: 1;
 }
 
 /* Marca de agua visible */
@@ -41,4 +51,8 @@ body::before {
 .navbar {
     position: relative;
     z-index: 9999;
+}
+
+footer {
+    margin-top: auto;
 }

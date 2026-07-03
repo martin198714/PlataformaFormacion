@@ -3,13 +3,21 @@ body {
     min-height: 100vh;
     overflow-x: hidden;
     background-color: #f8f9fa;
+
+    /* IMPORTANTE: crea contexto de apilamiento estable */
+    z-index: 0;
 }
 
-/* Marca de agua visible */
+/* ================================
+   MARCA DE AGUA (CORREGIDA)
+================================ */
 body::before {
     content: "";
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
 
     background-image: url("../img/image008.jpg");
     background-repeat: no-repeat;
@@ -19,8 +27,19 @@ body::before {
     opacity: 0.40;
     filter: grayscale(20%);
 
-    z-index: -1;
+    /* 🔥 CAMBIO CLAVE: en lugar de z-index negativo */
+    z-index: 0;
+
     pointer-events: none;
+}
+
+/* TODO EL CONTENIDO ENCIMA DE LA MARCA DE AGUA */
+.navbar,
+header,
+main,
+footer {
+    position: relative;
+    z-index: 1;
 }
 
 .navbar {
@@ -39,7 +58,6 @@ body::before {
 
 /* ===============================
    FIX COMPLETO MÓVIL + TABLET
-   (LOGO + TÍTULO PERFECTAMENTE CERCANOS)
 ================================= */
 
 @media (max-width: 991.98px) {
@@ -56,7 +74,6 @@ body::before {
     padding-top: 5px;
   }
 
-  /* HEADER EN COLUMNA SIN ESPACIOS EXTRA */
   .encabezado-login .row {
     display: flex !important;
     flex-direction: column !important;
@@ -78,7 +95,6 @@ body::before {
     padding: 0 !important;
   }
 
-  /* LOGO */
   .logo-login {
     max-width: 120px;
     height: auto;
@@ -86,7 +102,6 @@ body::before {
     display: block;
   }
 
-  /* TÍTULO */
   .titulo-formulario {
     font-size: 1.35rem !important;
     text-align: center;
@@ -94,7 +109,6 @@ body::before {
     padding: 0 !important;
   }
 
-  /* FORMULARIO */
   .main-upload {
     min-height: auto !important;
     padding-top: 0px !important;
@@ -105,14 +119,12 @@ body::before {
     padding: 0px 0 !important;
   }
 
-  /* PANEL */
   .ui-panel {
     width: 92% !important;
     max-width: 380px;
     margin: -42px auto 0 auto !important;
   }
 
-  /* FOOTER */
   footer .row {
     display: flex !important;
     flex-direction: column !important;
@@ -141,7 +153,6 @@ body::before {
     font-size: 0.95rem;
   }
 
-  /* 🔥 AJUSTE: SUBIR PRIMER LABEL */
   .ui-panel .text-end {
     padding-bottom: 0.25rem !important;
   }
@@ -155,7 +166,7 @@ body::before {
   }
 }
 
-/* 🔥 MÓVIL PEQUEÑO */
+/* MÓVIL PEQUEÑO */
 @media (max-width: 576px) {
 
   .titulo-formulario {

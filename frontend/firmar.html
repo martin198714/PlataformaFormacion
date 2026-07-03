@@ -3,146 +3,115 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Firma de contrato</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-    <!-- CSS -->
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/login.css">
-    <link rel="stylesheet" href="css/index.css">
-    <link rel="stylesheet" href="css/firmar.css">
+    <title>Firma contrato</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
 </head>
 
 <body>
-    
-    <main id="contenido" role="main">
 
-        <div id="estado" class="info">Cargando contrato...</div>
+    <div class="container mt-5">
 
-        <!-- =========================
-         VISOR PDF
-        ========================= -->
-        <iframe id="pdfViewer" style="width:100%; height:500px; border:1px solid #ccc; border-radius:8px;"></iframe>
+        <h2>Firma de contrato</h2>
 
-        <!-- fallback -->
-        <p id="pdfError" style="color:red; display:none;">
-            ⚠ No se pudo cargar el PDF del contrato
-        </p>
+        <div id="estado">Cargando contrato...</div>
 
-        <!-- =========================
-         SUBIR FIRMA
-        ========================= -->
-        <h3>Subir contrato firmado</h3>
-
-        <input type="file" id="file" accept="application/pdf" />
+        <iframe id="pdfViewer" style="width:100%; height:600px; border:1px solid #ccc; display:none;">
+        </iframe>
 
         <br><br>
 
-        <button class="btn" onclick="subirFirma()">
-            ✔ Firmar contrato
+        <button class="btn btn-primary" onclick="abrirAutoFirma()">
+            Firmar con AutoFirma
         </button>
 
-        <!-- resultado -->
-        <div id="resultado" class="info"></div>
+    </div>
 
-    </main>
-
-    <!-- JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
     <script>
-        const BASE_URL = "http://localhost:3000";
 
+        const API = "http://localhost:3000";
         let token = null;
-        let contrato = null;
 
-        function getToken() {
-            return new URLSearchParams(window.location.search).get("token");
+        function obtenerToken() {
+            return new URLSearchParams(location.search).get("token");
         }
 
-        async function cargarContrato() {
+        /* =========================
+        CARGAR CONTRATO
+        ========================= */
+
+        async function cargar() {
+
             try {
-                token = getToken();
 
-                if (!token) {
-                    document.getElementById("estado").innerText = "❌ Token no válido";
-                    return;
-                }
+                token = obtenerToken();
 
-                const res = await fetch(`${BASE_URL}/api/contratos/firma/${token}`);
-                const data = await res.json();
+                if (!token)
+                    throw new Error("Token inválido");
 
-                if (!res.ok) {
-                    document.getElementById("estado").innerText =
-                        data.error || "❌ Contrato no encontrado";
-                    return;
-                }
+                const r = await fetch(`${API}/api/contratos/firma/${token}`);
+                const data = await r.json();
 
-                contrato = data;
+                if (!r.ok)
+                    throw new Error(data.error);
 
                 document.getElementById("estado").innerText =
-                    "✔ Contrato listo para firma";
+                    "Contrato listo para firma";
 
-                const pdfViewer = document.getElementById("pdfViewer");
+                if (data.FICHERO_NOMBRE) {
 
-                const fileName =
-                    data.FICHERO_NOMBRE ||
-                    data.fileName ||
-                    data.ARCHIVO_NOMBRE;
+                    const pdf = document.getElementById("pdfViewer");
+                    pdf.style.display = "block";
 
-                if (fileName) {
-                    pdfViewer.src = `${BASE_URL}/uploads/contratos/${fileName}`;
-                } else {
-                    document.getElementById("estado").innerText =
-                        "⚠ Este contrato no tiene PDF asociado";
+                    pdf.src = `${API}/uploads/contratos/${data.FICHERO_NOMBRE}`;
                 }
 
-            } catch (err) {
-                console.error(err);
-                document.getElementById("estado").innerText =
-                    "❌ Error cargando contrato";
+            } catch (e) {
+                document.getElementById("estado").innerText = e.message;
             }
         }
 
-        async function subirFirma() {
+        /* =========================
+        AUTO FIRMA (SOLO DESCARGA)
+        ========================= */
+
+        async function abrirAutoFirma() {
+
+            if (!token)
+                return alert("Token inválido");
+
             try {
-                const file = document.getElementById("file").files[0];
 
-                if (!file) return alert("Selecciona un PDF firmado");
-                if (!token) return alert("Token inválido");
+                // 🔥 descarga del PDF desde backend
+                const res = await fetch(`${API}/api/contratos/descargar/${token}`);
 
-                const formData = new FormData();
-                formData.append("pdf", file); // ✔ ESTO ES CORRECTO
+                if (!res.ok)
+                    throw new Error("Error descargando contrato");
 
-                const res = await fetch(
-                    `${BASE_URL}/api/contratos/firmar/token/${token}`,
-                    {
-                        method: "POST",
-                        body: formData
-                    }
-                );
+                const blob = await res.blob();
 
-                const data = await res.json();
+                const url = window.URL.createObjectURL(blob);
 
-                if (!res.ok) {
-                    throw new Error(data.error || "Error al firmar");
-                }
+                const a = document.createElement("a");
 
-                document.getElementById("resultado").innerText =
-                    "✔ PDF firmado subido correctamente";
+                // 🔥 IMPORTANTE: formato que usa el watcher
+                a.download = `contrato_TOKEN_${token}_pendiente.pdf`;
+
+                a.href = url;
+
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
 
                 document.getElementById("estado").innerText =
-                    "✔ Contrato firmado";
+                    "Abre el PDF con AutoFirma, firma y se subirá automáticamente.";
 
-                console.log("RESPUESTA:", data);
-
-            } catch (err) {
-                console.error(err);
-                document.getElementById("resultado").innerText =
-                    err.message;
+            } catch (e) {
+                document.getElementById("estado").innerText = e.message;
             }
         }
 
-        cargarContrato();
+        cargar();
+
     </script>
 
 </body>

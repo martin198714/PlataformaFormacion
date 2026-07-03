@@ -130,6 +130,11 @@
      z-index: 9999;
  }
 
+ /* Separar footer de la tabla */
+ footer {
+     margin-top: 60px !important;
+ }
+
  /* ===============================
    AJUSTE FINO HEADER (LOGO + TÍTULO)
 ================================= */
@@ -220,245 +225,262 @@
  /* ==================================
    TABLET GRANDE (992px hacia abajo)
 ================================== */
-@media (max-width: 992px) {
+ @media (max-width: 992px) {
 
-    .encabezado-login {
-        text-align: center;
-    }
+     .encabezado-login {
+         text-align: center;
+     }
 
-    .logo-login {
-        max-width: 180px;
-        margin: 0 auto;
-    }
+     .logo-login {
+         max-width: 180px;
+         margin: 0 auto;
+     }
 
-    .titulo-formulario {
-        font-size: 1.8rem;
-        text-align: center;
-        width: 100%;
-    }
+     .titulo-formulario {
+         font-size: 1.8rem;
+         text-align: center;
+         width: 100%;
+     }
 
-    #form-soporte {
-        max-width: 95% !important;
-        margin: auto;
-    }
+     #form-soporte {
+         max-width: 95% !important;
+         margin: auto;
+     }
 
-    .table-responsive {
-        overflow-x: visible;
-    }
+     .table-responsive {
+         overflow-x: visible;
+     }
 
-    table {
-        width: 100%;
-        table-layout: fixed;
-        white-space: normal !important;
-        font-size: 12px; /* 🔽 reducido */
-    }
+     table {
+         width: 100%;
+         table-layout: fixed;
+         white-space: normal !important;
+         font-size: 12px;
+         /* 🔽 reducido */
+     }
 
-    th,
-    td {
-        padding: 6px !important;
-        white-space: normal !important;
-        word-break: break-word;
-        overflow-wrap: break-word;
-        vertical-align: middle;
-    }
+     th,
+     td {
+         padding: 6px !important;
+         white-space: normal !important;
+         word-break: break-word;
+         overflow-wrap: break-word;
+         vertical-align: middle;
+     }
 
-    /* Descripción más controlada */
-    th:nth-child(4),
-    td:nth-child(4) {
-        max-width: 160px;
-    }
-}
+     /* Descripción más controlada */
+     th:nth-child(4),
+     td:nth-child(4) {
+         max-width: 160px;
+     }
 
-/* ==================================
+     footer {
+         margin-top: 60px !important;
+     }
+ }
+
+ /* ==================================
    TABLET (768px hacia abajo)
 ================================== */
-@media (max-width: 768px) {
+ @media (max-width: 768px) {
 
-    .container {
-        padding-left: 10px;
-        padding-right: 10px;
-    }
+     .container {
+         padding-left: 10px;
+         padding-right: 10px;
+     }
 
-    .encabezado-login {
-        text-align: center;
-        padding-top: 10px !important;
-    }
+     .encabezado-login {
+         text-align: center;
+         padding-top: 10px !important;
+     }
 
-    .encabezado-login .row {
-        transform: none;
-    }
+     .encabezado-login .row {
+         transform: none;
+     }
 
-    .logo-login {
-        max-width: 150px;
-        margin: 0 auto;
-    }
+     .logo-login {
+         max-width: 150px;
+         margin: 0 auto;
+     }
 
-    .titulo-formulario {
-        font-size: 1.4rem; /* 🔽 reducido */
-        text-align: center;
-        width: 100%;
-    }
+     .titulo-formulario {
+         font-size: 1.4rem;
+         /* 🔽 reducido */
+         text-align: center;
+         width: 100%;
+     }
 
-    #form-soporte {
-        width: 100% !important;
-        max-width: 100% !important;
-        padding: 18px !important;
-    }
+     #form-soporte {
+         width: 100% !important;
+         max-width: 100% !important;
+         padding: 18px !important;
+     }
 
-    .form-control,
-    .form-select {
-        font-size: 13px;
-    }
+     .form-control,
+     .form-select {
+         font-size: 13px;
+     }
 
-    table {
-        width: 100%;
-        table-layout: fixed;
-        white-space: normal !important;
-        font-size: 11px; /* 🔽 clave para evitar scroll */
-    }
+     table {
+         width: 100%;
+         table-layout: fixed;
+         white-space: normal !important;
+         font-size: 11px;
+         /* 🔽 clave para evitar scroll */
+     }
 
-    th,
-    td {
-        padding: 4px !important; /* 🔽 más compacto */
-        word-break: break-word;
-        overflow-wrap: break-word;
-    }
+     th,
+     td {
+         padding: 4px !important;
+         /* 🔽 más compacto */
+         word-break: break-word;
+         overflow-wrap: break-word;
+     }
 
-    th:nth-child(4),
-    td:nth-child(4) {
-        max-width: 130px;
-    }
+     th:nth-child(4),
+     td:nth-child(4) {
+         max-width: 130px;
+     }
 
-    .badge-prioridad,
-    .badge-estado {
-        font-size: 10px;
-    }
+     .badge-prioridad,
+     .badge-estado {
+         font-size: 10px;
+     }
 
-    footer {
-        text-align: center;
-    }
+     footer {
+         text-align: center;
+         margin-top: 60px !important;
+     }
 
-    .footer-contacto {
-        text-align: center !important;
-        margin-top: 10px;
-    }
-}
+     .footer-contacto {
+         text-align: center !important;
+         margin-top: 10px;
+     }
+ }
 
-/* ==================================
+ /* ==================================
    MÓVIL (576px hacia abajo)
 ================================== */
-@media (max-width: 576px) {
+ @media (max-width: 576px) {
 
-    body {
-        font-size: 13px;
-    }
+     body {
+         font-size: 13px;
+     }
 
-    .logo-login {
-        max-width: 120px;
-    }
+     .logo-login {
+         max-width: 120px;
+     }
 
-    .titulo-formulario {
-        font-size: 1.2rem;
-    }
+     .titulo-formulario {
+         font-size: 1.2rem;
+     }
 
-    section.container {
-        margin-top: 0 !important;
-    }
+     section.container {
+         margin-top: 0 !important;
+     }
 
-    #form-soporte {
-        padding: 12px !important;
-    }
+     #form-soporte {
+         padding: 12px !important;
+     }
 
-    .form-control,
-    .form-select {
-        font-size: 12px;
-        padding: 7px;
-    }
+     .form-control,
+     .form-select {
+         font-size: 12px;
+         padding: 7px;
+     }
 
-    #form-soporte button {
-        font-size: 13px;
-        padding: 9px;
-    }
+     #form-soporte button {
+         font-size: 13px;
+         padding: 9px;
+     }
 
-    table {
-        width: 100%;
-        table-layout: fixed;
-        white-space: normal !important;
-        font-size: 9px; /* 🔽 clave */
-    }
+     table {
+         width: 100%;
+         table-layout: fixed;
+         white-space: normal !important;
+         font-size: 9px;
+         /* 🔽 clave */
+     }
 
-    th,
-    td {
-        padding: 3px !important;
-        word-break: break-word;
-        overflow-wrap: break-word;
-    }
+     th,
+     td {
+         padding: 3px !important;
+         word-break: break-word;
+         overflow-wrap: break-word;
+     }
 
-    th:nth-child(4),
-    td:nth-child(4) {
-        max-width: 90px;
-    }
+     th:nth-child(4),
+     td:nth-child(4) {
+         max-width: 90px;
+     }
 
-    .badge-prioridad,
-    .badge-estado {
-        font-size: 8px;
-        padding: 2px 5px;
-    }
+     .badge-prioridad,
+     .badge-estado {
+         font-size: 8px;
+         padding: 2px 5px;
+     }
 
-    .btn-delete,
-    .btn-eliminar {
-        width: 28px;
-        height: 28px;
-        padding: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
+     .btn-delete,
+     .btn-eliminar {
+         width: 28px;
+         height: 28px;
+         padding: 0;
+         display: flex;
+         justify-content: center;
+         align-items: center;
+     }
 
-    footer .row {
-        text-align: center;
-    }
+     footer .row {
+         text-align: center;
+         margin-top: 60px !important;
+     }
 
-    footer img {
-        max-width: 110px;
-        margin: 10px auto;
-    }
+     footer img {
+         max-width: 110px;
+         margin: 10px auto;
+     }
 
-    .footer-contacto {
-        text-align: center !important;
-        margin-top: 10px;
-    }
-}
+     .footer-contacto {
+         text-align: center !important;
+         margin-top: 10px;
+     }
+ }
 
-/* ==================================
+ /* ==================================
    MÓVILES PEQUEÑOS (400px hacia abajo)
 ================================== */
-@media (max-width: 400px) {
+ @media (max-width: 400px) {
 
-    .logo-login {
-        max-width: 95px;
-    }
+     .logo-login {
+         max-width: 95px;
+     }
 
-    .titulo-formulario {
-        font-size: 1.05rem;
-    }
+     .titulo-formulario {
+         font-size: 1.05rem;
+     }
 
-    table {
-        font-size: 8px; /* 🔽 extremo pero útil */
-    }
+     table {
+         font-size: 8px;
+         /* 🔽 extremo pero útil */
+     }
 
-    th,
-    td {
-        padding: 2px !important;
-    }
+     th,
+     td {
+         padding: 2px !important;
+     }
 
-    .badge-prioridad,
-    .badge-estado {
-        font-size: 7px;
-        padding: 1px 4px;
-    }
+     .badge-prioridad,
+     .badge-estado {
+         font-size: 7px;
+         padding: 1px 4px;
+     }
 
-    #form-soporte {
-        padding: 10px !important;
-    }
-}
+     #form-soporte {
+         padding: 10px !important;
+     }
+
+     footer .row {
+         text-align: center;
+         margin-top: 60px !important;
+     }
+ }

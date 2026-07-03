@@ -4,104 +4,123 @@
   --fondo-claro: #E8EBF2;
 }
 
- #formCapitulos {
-     max-width: 600px;
-     margin: 0 auto;
- }
-
- .progress {
-     height: 25px;
-     border-radius: 5px;
-     display: none;
- }
-
- .progress-bar {
-     transition: width 0.2s ease;
-     font-size: 0.9rem;
-     line-height: 25px;
- }
-
- .btn-principal {
-     background: #ffc107;
-     color: #000;
- }
-
- .titulo-formulario {
-     color: var(--azul);
-     /* azul bootstrap */
- }
-
- body {
-  font-family: 'OpenSans-Bold', Arial, sans-serif;
-}
+/* =========================
+   BASE
+========================= */
 
 body {
-    position: relative;
-    min-height: 100vh;
-    overflow-x: hidden;
-    background-color: #f8f9fa;
+  font-family: 'OpenSans-Bold', Arial, sans-serif;
+  position: relative;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-color: #f8f9fa;
 }
 
-/* Marca de agua visible */
-/* Marca de agua visible */
+/* =========================
+   MARCA DE AGUA (FIX REAL)
+========================= */
+
 body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
+  content: "";
+  position: fixed;
+  inset: 0;
 
-    background-image: url("../img/image008.jpg");
-    background-repeat: no-repeat;
-    background-position: center center;
-    background-size: cover;
+  background-image: url("../img/image008.jpg");
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
 
-    opacity: 0.40;
-    filter: grayscale(20%);
+  opacity: 0.25;
+  filter: grayscale(20%) blur(0.5px);
 
-    z-index: -1;
-    pointer-events: none;
+  z-index: 0;
+  pointer-events: none;
 }
+
+/* capa superior para que el contenido esté por encima */
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* =========================
+   NAVBAR
+========================= */
 
 .navbar {
   position: relative;
   z-index: 9999;
 }
 
+/* =========================
+   FORMULARIO
+========================= */
+
+#formCapitulos {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.progress {
+  height: 25px;
+  border-radius: 5px;
+  display: none;
+}
+
+.progress-bar {
+  transition: width 0.2s ease;
+  font-size: 0.9rem;
+  line-height: 25px;
+}
+
+.btn-principal {
+  background: #ffc107;
+  color: #000;
+}
+
+.titulo-formulario {
+  color: var(--azul);
+}
+
 .login-section {
-    padding-top: 1.2rem !important;
+  padding-top: 1.2rem !important;
 }
 
-/* SOLO el contenido interno, no el modal completo */
 .ui-panel .p-4 {
-    padding-top: 0.75rem;
+  padding-top: 0.75rem;
 }
 
-/* ===============================
-   FIX COMPLETO MÓVIL + TABLET
-   (LOGO + TÍTULO PERFECTAMENTE CERCANOS)
-================================= */
+/* =========================
+   HEADER
+========================= */
+
+.encabezado-login {
+  position: relative;
+}
+
+/* =========================
+   FOOTER
+========================= */
+
+footer {
+  position: relative;
+  z-index: 2;
+}
+
+/* =========================
+   TABLET + MÓVIL
+========================= */
 
 @media (max-width: 991.98px) {
 
   .encabezado-login {
     margin-bottom: 0 !important;
-    transform: none !important;
     padding: 15px 0;
-    display: block !important;
   }
 
-  main {
-    margin-top: 0 !important;
-    padding-top: 5px;
-  }
-
-  /* HEADER EN COLUMNA SIN ESPACIOS EXTRA */
   .encabezado-login .row {
-    display: flex !important;
     flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center;
     text-align: center !important;
-    width: 100%;
     row-gap: 0 !important;
   }
 
@@ -109,91 +128,39 @@ body::before {
   .encabezado-login .col-md-8 {
     width: 100% !important;
     max-width: 100% !important;
-    flex: 0 0 100% !important;
-    justify-content: center !important;
-    transform: none !important;
-    margin: 0 !important;
     padding: 0 !important;
   }
 
-  /* LOGO */
   .logo-login {
     max-width: 120px;
-    height: auto;
-    margin: 0 auto 2px auto !important;
-    display: block;
+    margin-bottom: 2px;
   }
 
-  /* TÍTULO */
   .titulo-formulario {
     font-size: 1.35rem !important;
-    text-align: center;
-    margin: 0 !important;
-    padding: 0 !important;
   }
 
-  /* FORMULARIO */
   .main-upload {
-    min-height: auto !important;
-    padding-top: 0px !important;
     padding-bottom: 80px;
   }
 
-  .login-section {
-    padding: 0px 0 !important;
-  }
-
-  /* PANEL */
   .ui-panel {
     width: 92% !important;
     max-width: 380px;
-    margin: -42px auto 0 auto !important;
+    margin: 0 auto !important;
   }
 
-  /* FOOTER */
   footer .row {
-    display: flex !important;
     flex-direction: column !important;
-    align-items: center !important;
     text-align: center !important;
     gap: 12px;
   }
-
-  footer .col-6,
-  footer .col-md-2,
-  footer .footer-contacto {
-    width: 100% !important;
-    max-width: 100% !important;
-    text-align: center !important;
-    margin: 0 !important;
-  }
-
-  footer img {
-    margin: 0 auto;
-    display: block;
-  }
-
-  .ui-panel label,
-  .ui-panel input,
-  .ui-panel button {
-    font-size: 0.95rem;
-  }
-
-  /* 🔥 AJUSTE: SUBIR PRIMER LABEL */
-  .ui-panel .text-end {
-    padding-bottom: 0.25rem !important;
-  }
-
-  .ui-panel .p-4 {
-    padding-top: 0.35rem !important;
-  }
-
-  #formSubir .mb-3:first-of-type {
-    margin-top: -6px !important;
-  }
 }
 
-/* 🔥 MÓVIL PEQUEÑO */
+/* =========================
+   MÓVIL PEQUEÑO
+========================= */
+
 @media (max-width: 576px) {
 
   .titulo-formulario {
@@ -202,10 +169,5 @@ body::before {
 
   .ui-panel {
     width: 94% !important;
-    margin: -38px auto 0 auto !important;
-  }
-
-  .login-section {
-    padding: 0px 0 !important;
   }
 }

@@ -8,9 +8,11 @@
 ================================= */
 html,
 body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: #fff;
   font-family: 'OpenSans', Arial, sans-serif;
 }
 
@@ -20,19 +22,20 @@ h3 {
   font-family: 'OpenSans', sans-serif;
 }
 
-body {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  overflow-x: hidden;
-  background: #fff;
-}
-
 /* ===============================
    HEADER
 ================================= */
 .navbar {
+  min-height: 30px;
   padding: 5px 0;
+  display: flex;
+  align-items: center;
+}
+
+.navbar .container {
+  min-height: inherit;
+  display: flex;
+  align-items: center;
 }
 
 .encabezado-login {
@@ -41,22 +44,19 @@ body {
   justify-content: center;
   padding-top: 30px;
   padding-bottom: 20px;
-
   position: relative;
   z-index: 20;
-
   margin-bottom: -60px;
   transform: translateY(-30px);
 }
 
 .logo-login {
   width: min(100px, 100%);
+  transform: translateY(20px);
 }
-
 
 .encabezado-login .col-md-4 {
   margin-bottom: 12px;
-  /* 👈 separación SOLO del bloque del logo */
 }
 
 .encabezado-login .col-md-4,
@@ -80,7 +80,6 @@ body {
 main {
   flex: 1;
   margin-top: -184px;
-  /* Intacto como pediste */
   padding-top: 60px;
 }
 
@@ -97,7 +96,6 @@ main {
   font-weight: bold;
   transition: all 0.3s ease;
   border: none;
-  margin-left: 10px;
 }
 
 .btn-rojo:hover {
@@ -114,15 +112,13 @@ main {
 }
 
 /* ===============================
-   UPLOAD / LOGIN
+   UPLOAD / LOGIN SECTION
 ================================= */
 .main-upload {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: calc(100vh - 200px);
-  padding-top: 40px;
-  padding-bottom: clamp(80px, 10vh, 140px);
+  display: block;
+  min-height: auto;
+  padding-top: 60px;
+  padding-bottom: 120px;
 }
 
 .login-section {
@@ -134,68 +130,68 @@ main {
 
 .login-section .card {
   width: 100%;
-  max-width: 380px;
+  max-width: 460px; /* Ancho mejorado uniforme */
   border-radius: 20px;
 }
 
 /* ===============================
-   MODAL LOGIN
+   MODALS & UI PANEL (MEJORADO)
 ================================= */
-.modal-content {
-  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
+.modal-dialog {
+  max-width: 500px; /* Límitación de ancho para modales en Escritorio */
+  width: 95%;
+  margin: 1.75rem auto;
 }
 
-.modal-dialog {
-  max-width: 350px;
+.modal-content {
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
+  border-radius: 15px;
+}
+
+.ui-panel {
+  width: 100%;
+  max-width: 460px; /* 🌟 Un pelín más ancho para que respire el registro y login */
+  border-radius: 20px;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
+  background: #fff;
+  margin: 90px auto 40px auto;
 }
 
 .modal-body {
-  padding: 20px;
+  padding: 30px;
   text-align: center;
+  font-size: 16px;
+}
+
+.modal-body h3 {
+  font-size: 22px;
+  color: var(--azul);
+  font-weight: bold;
+}
+
+.modal-body label {
+  width: 100%;
+  text-align: left;
+  font-weight: 500;
+  font-size: 15px;
+  margin-bottom: 5px;
+  color: #333;
 }
 
 .modal-body form {
   display: flex;
   flex-direction: column;
-  align-items: center;
-}
-
-.modal-body label {
-  width: 100%;
-  max-width: 250px;
-  text-align: left;
-}
-
-.modal-body h3 {
-  font-size: 20px;
-  color: var(--azul);
-  font-weight: bold;
+  align-items: stretch;
+  gap: 12px;
 }
 
 .modal-body .form-control {
-  max-width: 250px;
   width: 100%;
-  margin: 0 auto;
+  max-width: 100%;
   border-radius: 10px;
   padding: 12px;
-}
-
-.modal-body .btn-rojo {
-  max-width: 200px;
-  margin: 10px auto 0 auto;
-  display: block;
-}
-
-/* ===============================
-   UI PANEL
-================================= */
-.ui-panel {
-  width: 100%;
-  max-width: 380px;
-  border-radius: 20px;
-  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
-  background: #fff;
-  margin: 90px auto 40px auto;
+  box-sizing: border-box;
+  font-size: 16px;
 }
 
 /* ===============================
@@ -205,10 +201,9 @@ main {
   position: relative;
   overflow: hidden;
   isolation: isolate;
-  /* 🔥 CAMBIO: Reducido de 40px a 20px para subir el contenido */
   padding-top: 25px;
-  /* 🔥 NUEVO: Margen abajo para separarlo del final del main en pantallas grandes */
-  margin-bottom: 70px;
+  padding-bottom: 50px;
+  margin-bottom: -60px;
 }
 
 #ejidosoftCarousel::before {
@@ -243,11 +238,11 @@ main {
 }
 
 /* ===============================
-   HERO TEXT
+   HERO TEXT & IMAGES
 ================================= */
 .generalhero {
   background: transparent;
-  min-height: 400px;
+  min-height: 700px;
   display: flex;
   align-items: center;
 }
@@ -270,9 +265,6 @@ main {
   margin: 20px 0 25px 10px;
 }
 
-/* ===============================
-   IMAGEN HERO
-================================= */
 .img-hero {
   width: 100%;
   max-width: 400px;
@@ -286,20 +278,21 @@ main {
 footer {
   background: var(--azul);
   padding: 10px;
+  margin-top: -60px;
   font-size: 0.8rem;
   color: white;
-  margin-top: auto;
   position: relative;
+  z-index: 5;
 }
 
 /* ===============================
-   RESPONSIVE TABLET / MÓVIL
+   RESPONSIVE TABLET / MÓVIL (991px)
 ================================= */
 @media (max-width: 991px) {
   .modal-dialog {
     margin: 0 auto !important;
     transform: translateY(-20px);
-    /* 👈 lo sube un poco */
+    max-width: 90%;
   }
 
   .modal-dialog-centered {
@@ -310,45 +303,31 @@ footer {
 
   .ui-panel {
     margin: 0 auto !important;
-    /* evita que lo empuje hacia abajo */
-  }
-
-  .ui-panel {
-    max-width: 300px !important;
-    width: 88% !important;
+    max-width: 360px !important; /* 🌟 Un poco más óptimo en mobile para que no apriete las letras */
+    width: 92% !important;
     padding: 10px !important;
     transform: scale(0.95);
   }
 
   .modal-body {
-    font-size: 10px;
+    font-size: 13px;
+    padding: 20px;
   }
 
   .modal-body h3 {
-    font-size: 16px;
+    font-size: 18px;
   }
 
-  .modal-body label {
-    font-size: 10px;
+  .modal-body label,
+  .form-control,
+  .form-control::placeholder {
+    font-size: 13px;
   }
 
   .form-control {
-    font-size: 10px;
-    padding: 6px;
+    padding: 8px;
   }
 
-  .form-control,
-  .form-control::placeholder,
-  .modal-body label {
-    font-size: 10px;
-  }
-
-
-  .form-control::placeholder {
-    font-size: 10px;
-  }
-
-  /* --- NUEVA REGLA: Separa el logo del título de abajo --- */
   .logo-login {
     margin-bottom: 20px !important;
   }
@@ -394,8 +373,7 @@ footer {
   }
 
   .login-section,
-  .main-upload,
-  .ui-panel {
+  .main-upload {
     justify-content: center;
     align-items: center;
     text-align: center;
@@ -417,14 +395,13 @@ footer {
     text-align: center !important;
   }
 
-  .generalhero__text h2 {
+  .generalhero__text h2,
+  .generalhero__text p {
     margin-left: 0 !important;
     text-align: center !important;
   }
 
   .generalhero__text p {
-    margin-left: 0 !important;
-    text-align: center !important;
     margin-bottom: 25px !important;
   }
 
@@ -451,85 +428,6 @@ footer {
     display: block !important;
     opacity: 1 !important;
   }
-}
-
-/* ===============================
-   MÓVIL PEQUEÑO
-================================= */
-@media (max-width: 576px) {
-
-  main {
-    margin-top: -336px;
-  }
-
-  .encabezado-login {
-    transform: translateY(0);
-    margin-bottom: -10px;
-  }
-
-  .logo-login {
-    width: 80px;
-    /* Mantiene la separación también en móviles muy pequeños */
-    margin-bottom: 15px !important;
-  }
-
-  .modal-dialog {
-    margin: 0 auto !important;
-    transform: translateY(-20px);
-    /* 👈 lo sube un poco */
-  }
-
-  .modal-dialog-centered {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-  }
-
-  .ui-panel {
-    margin: 0 auto !important;
-    /* evita que lo empuje hacia abajo */
-  }
-
-  .ui-panel {
-    max-width: 320px !important;
-    width: 88% !important;
-    padding: 10px !important;
-    transform: scale(0.95);
-  }
-
-  .modal-body {
-    font-size: 10px;
-  }
-
-  .modal-body h3 {
-    font-size: 16px;
-  }
-
-  .modal-body label {
-    font-size: 10px;
-  }
-
-  .form-control {
-    font-size: 10px;
-    padding: 6px;
-  }
-
-  .form-control,
-  .form-control::placeholder,
-  .modal-body label {
-    font-size: 10px;
-  }
-
-  .form-control::placeholder {
-    font-size: 10px;
-  }
-
-}
-
-/* ===============================
-   FOOTER RESPONSIVE (MÓVIL Y TABLET)
-================================= */
-@media (max-width: 991px) {
 
   footer {
     padding: 20px 10px !important;
@@ -561,6 +459,35 @@ footer {
 }
 
 /* ===============================
+   MÓVIL PEQUEÑO (576px)
+================================= */
+@media (max-width: 576px) {
+  main {
+    margin-top: -336px;
+  }
+
+  .encabezado-login {
+    transform: translateY(0);
+    margin-bottom: -10px;
+  }
+
+  .logo-login {
+    width: 80px;
+    margin-bottom: 15px !important;
+  }
+
+  .modal-dialog {
+    max-width: 94%;
+    margin: 0 auto !important;
+  }
+
+  .ui-panel {
+    max-width: 320px !important;
+    width: 95% !important;
+  }
+}
+
+/* ===============================
    FOOTER DESKTOP FIX (PANTALLAS GRANDES)
 ================================= */
 @media (min-width: 992px) {
@@ -580,42 +507,30 @@ footer {
   }
 }
 
-@media (max-width: 576px) {
-  .modal-dialog {
-    max-width: 92%;
-  }
-}
-
 /* ===============================
-   FIX SOLO ADMIN HEADER (AJUSTADO)
+   FIX SOLO ADMIN HEADER
 ================================= */
-
 body:has(#titulo-admin) main {
   margin-top: 0 !important;
   padding-top: 5px !important;
 }
 
-/* separación suave entre navbar y header */
 body:has(#titulo-admin) .container .row.align-items-center {
   margin-top: 5px !important;
 }
 
-.main-upload {
-  display: block;
-  min-height: auto;
-  padding-top: 60px;
-  padding-bottom: 120px;
-}
-
 /* ===============================
-   FORMULARIOS - TAMAÑO LETRA
+   AJUSTE ANCHO RECAPTCHA
 ================================= */
-.form-control,
-.form-control::placeholder,
-.modal-body label {
-  font-size: 16px;
+.g-recaptcha {
+  width: 100%;
+  display: flex;
+  justify-content: center; /* Centra el reCAPTCHA internamente */
+  margin-top: 5px;
+  margin-bottom: 5px;
 }
 
-.modal-body {
-  font-size: 16px;
+/* Fuerza al widget interno de Google a alinearse correctamente con el formulario */
+.g-recaptcha > div {
+  margin: 0 auto !important;
 }

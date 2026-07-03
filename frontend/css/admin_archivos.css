@@ -2,282 +2,357 @@
    BASE LAYOUT
 ========================= */
 
-body {
-    position: relative;
-    min-height: 100vh;
-    overflow-x: hidden;
-    background-color: #f8f9fa;
-    text-rendering: optimizeSpeed;
+html,
+body{
+    min-height:100%;
+}
+
+body{
+    position:relative;
+
+    display:flex;
+    flex-direction:column;
+
+    min-height:100vh;
+
+    overflow-x:hidden;
+
+    background-color:#f8f9fa;
+
+    text-rendering:optimizeSpeed;
+}
+
+/* el contenido empuja el footer */
+main{
+    flex:1;
 }
 
 /* =========================
-   MARCA DE AGUA (SEGURA)
+   MARCA DE AGUA
 ========================= */
 
-body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
+body::before{
+    content:"";
 
-    background-image: url("../img/image008.jpg");
-    background-repeat: no-repeat;
-    background-position: center center;
-    background-size: cover;
+    position:fixed;
 
-    opacity: 0.40;
-    filter: grayscale(20%);
+    top:0;
+    left:0;
 
-    z-index: -1;
-    pointer-events: none;
+    width:100%;
+    height:100%;
+
+    background-image:url("../img/image008.jpg");
+
+    background-repeat:no-repeat;
+    background-position:center;
+    background-size:cover;
+
+    opacity:.18;
+
+    filter:grayscale(20%);
+
+    z-index:0;
+
+    pointer-events:none;
+}
+
+/* todo el contenido por encima */
+body > *{
+    position:relative;
+    z-index:1;
 }
 
 /* =========================
    HEADER LOGIN
 ========================= */
 
-.encabezado-login {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    padding: 10px 0;
+.encabezado-login{
+    width:100%;
+    display:flex;
+    justify-content:center;
+
+    padding:10px 0;
 }
 
-.logo-login {
-    width: min(100px, 100%);
-    height: auto;
+.logo-login{
+    width:min(100px,100%);
+    height:auto;
 }
 
-.titulo-formulario {
-    margin: 0;
-    color: #1a237e;
-    font-size: clamp(1.4rem, 4vw, 2.2rem);
+.titulo-formulario{
+    margin:0;
+
+    color:#1a237e;
+
+    font-size:clamp(1.4rem,4vw,2.2rem);
 }
 
 /* =========================
-   TABLA ARCHIVOS (ESTILO CAPÍTULOS)
+   TABLA ARCHIVOS
 ========================= */
 
-.table-fixed {
-    width: 100% !important;
-    table-layout: fixed;
-    border-collapse: collapse;
-    font-size: 0.78rem;
+.table-fixed{
+    width:100% !important;
+
+    table-layout:fixed;
+
+    border-collapse:collapse;
+
+    font-size:.78rem;
+
+    will-change:auto;
 }
 
-/* cabeceras */
-.table-fixed th {
-    font-size: 0.75rem;
-    text-align: center;
+.table-fixed th{
+    font-size:.75rem;
+
+    text-align:center;
 }
 
-/* celdas */
 .table-fixed th,
-.table-fixed td {
-    text-align: center;
-    vertical-align: middle;
-    padding: 6px 4px !important;
+.table-fixed td{
 
-    white-space: normal;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
+    text-align:center;
+
+    vertical-align:middle;
+
+    padding:6px 4px !important;
+
+    white-space:normal;
+
+    overflow-wrap:break-word;
 }
 
-/* optimización visual */
-.table-fixed {
-    will-change: transform;
+.table-fixed td{
+    vertical-align:middle;
 }
 
-/* =========================
-   COLUMNAS (ARCHIVOS)
-========================= */
+/* columnas */
 
-/* DESCRIPCIÓN (más ancha como pediste) */
 .table-fixed th:nth-child(1),
-.table-fixed td:nth-child(1) {
-    width: 45%;
-    text-align: left;
+.table-fixed td:nth-child(1){
+    width:45%;
+    text-align:left;
 }
 
-/* VERSIÓN */
 .table-fixed th:nth-child(2),
-.table-fixed td:nth-child(2) {
-    width: 10%;
+.table-fixed td:nth-child(2){
+    width:10%;
 }
 
-/* TAMAÑO */
 .table-fixed th:nth-child(3),
-.table-fixed td:nth-child(3) {
-    width: 12%;
+.table-fixed td:nth-child(3){
+    width:12%;
 }
 
-/* FECHA */
 .table-fixed th:nth-child(4),
-.table-fixed td:nth-child(4) {
-    width: 18%;
+.table-fixed td:nth-child(4){
+    width:18%;
 }
 
-/* ACCIONES */
 .table-fixed th:nth-child(5),
-.table-fixed td:nth-child(5) {
-    width: 15%;
-    white-space: nowrap;
+.table-fixed td:nth-child(5){
+    width:15%;
+    white-space:nowrap;
 }
 
 /* =========================
-   BOTONES TABLA
+   BOTONES
 ========================= */
 
-.table-fixed td .btn {
-    padding: 3px 6px;
-    font-size: 0.7rem;
-    line-height: 1;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    min-width: 28px;   /* clave para uniformidad */
-    min-height: 24px;
+.table-fixed td .btn{
+
+    padding:3px 6px;
+
+    font-size:.7rem;
+
+    line-height:1;
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:4px;
+
+    min-width:28px;
+
+    min-height:24px;
 }
 
-.table-fixed td {
-    vertical-align: middle;
-}
-
-.table-fixed td .btn i {
-    font-size: 0.7rem;
+.table-fixed td .btn i{
+    font-size:.7rem;
 }
 
 /* =========================
    RESPONSIVE
 ========================= */
 
-@media (max-width: 1024px) {
+@media (max-width:1024px){
 
-    .table-fixed {
-        font-size: 0.68rem;
-    }
-
-    .table-fixed th,
-    .table-fixed td {
-        padding: 4px;
-    }
-
-    .table-fixed td button {
-        padding: 2px 4px;
-        font-size: 0.6rem;
-    }
-
-    .table-fixed td i {
-        font-size: 0.65rem;
-    }
+.table-fixed{
+font-size:.68rem;
 }
 
-@media (max-width: 768px) {
-
-    .titulo-formulario {
-        text-align: center;
-    }
-
-    .table-fixed {
-        font-size: 0.58rem;
-    }
-
-    .table-fixed th,
-    .table-fixed td {
-        padding: 2px;
-    }
-
-    .table-fixed td button {
-        padding: 2px;
-        font-size: 0.55rem;
-    }
+.table-fixed th,
+.table-fixed td{
+padding:4px;
 }
 
-/* =========================
-   TÍTULOS COLAPSABLES
-========================= */
-
-.titulo-colapsable {
-    cursor: pointer;
-    user-select: none;
-    margin-top: 20px;
+.table-fixed td button{
+padding:2px 4px;
+font-size:.6rem;
 }
 
-/* primer título más pegado */
-#archivosContainer > h4:first-of-type {
-    margin-top: 5px !important;
+.table-fixed td i{
+font-size:.65rem;
+}
+
+}
+
+@media (max-width:768px){
+
+.titulo-formulario{
+text-align:center;
+}
+
+.table-fixed{
+font-size:.58rem;
+}
+
+.table-fixed th,
+.table-fixed td{
+padding:2px;
+}
+
+.table-fixed td button{
+padding:2px;
+font-size:.55rem;
+}
+
 }
 
 /* =========================
-   BOOTSTRAP FIXES
+   TITULOS
 ========================= */
 
-.table-responsive {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+.titulo-colapsable{
+cursor:pointer;
+
+user-select:none;
+
+margin-top:8px;
 }
 
-.collapse {
-    overflow-anchor: none;
-}
-
-.modal {
-    will-change: opacity, transform;
+#archivosContainer > h4:first-of-type{
+margin-top:5px !important;
 }
 
 /* =========================
-   NAVBAR FIX
+   BOOTSTRAP
 ========================= */
 
-.navbar {
-    position: relative;
-    z-index: 9999;
+.table-responsive{
+overflow-x:auto;
+
+-webkit-overflow-scrolling:touch;
+
+margin-top:0;
 }
 
-/* ===============================
-   FIX HEADER ADMIN USUARIOS
-================================= */
-
-body:has(#usuarioForm) main {
-  margin-top: 0 !important;
-  padding-top: 10px !important;
+.collapse{
+overflow-anchor:none;
 }
 
-body:has(#usuarioForm) header.container {
-  margin-top: 25px !important;
+.modal{
+will-change:auto;
 }
 
-body:has(#usuarioForm) header .row.align-items-center {
-  margin-top: 10px !important;
+.navbar{
+position:relative;
+
+z-index:20;
 }
 
-/* ===============================
-   ADMIN ARCHIVOS (AJUSTE LIGERO)
-================================= */
+/* =========================
+   ADMIN USUARIOS
+========================= */
 
-body:has(#archivosContainer) .encabezado-login {
-  margin-bottom: -12px !important;
-  transform: translateY(-4px) !important;
+body:has(#usuarioForm) main{
+
+margin-top:0 !important;
+
+padding-top:10px !important;
 }
 
-body:has(#archivosContainer) main {
-  margin-top: -35px !important;
-  padding-top: 55px !important;
+body:has(#usuarioForm) header.container{
+
+margin-top:25px !important;
 }
 
-/* ===============================
-   ESPACIO TÍTULO → TABLA (ARCHIVOS)
-================================= */
+body:has(#usuarioForm) header .row.align-items-center{
 
-#archivosContainer h4.titulo-colapsable {
-  margin-top: 5px !important;     /* lo sube visualmente */
-  margin-bottom: 4px !important;  /* reduce separación con tabla */
+margin-top:10px !important;
 }
 
-#archivosContainer .collapse {
-  margin-top: 0 !important;
+/* =========================
+   ADMIN ARCHIVOS
+========================= */
+
+body:has(#archivosContainer) .encabezado-login{
+
+margin-bottom:0 !important;
+
+transform:none !important;
 }
 
-#archivosContainer .table-responsive {
-  margin-top: 0 !important;
+body:has(#archivosContainer) main{
+
+margin-top:0 !important;
+
+padding-top:20px !important;
+
+padding-bottom:60px !important;
+}
+
+/* espacio título → tabla */
+
+#archivosContainer h4.titulo-colapsable{
+
+margin-top:5px !important;
+
+margin-bottom:4px !important;
+}
+
+#archivosContainer .collapse{
+
+margin-top:0 !important;
+}
+
+/* =========================
+   FOOTER
+========================= */
+
+footer{
+
+margin-top:auto;
+
+padding-top:30px;
+
+padding-bottom:30px;
+
+background:#1A237E;
+
+position:relative;
+
+z-index:10;
+}
+
+footer img{
+
+max-width:120px;
+
+height:auto;
 }

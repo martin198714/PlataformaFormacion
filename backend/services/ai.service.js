@@ -606,7 +606,12 @@ CSS permite:
 
 🌍 Resumen rápido:
 
-CSS es el lenguaje que se encarga de la parte visual de una página web, permitiendo darle estilo, colores y diseño para que no se vea solo como texto plano.`
+CSS es el lenguaje que se encarga de la parte visual de una página web, permitiendo darle estilo, colores y diseño para que no se vea solo como texto plano.`,
+base: `Base 4.0 es una herramienta destinada al control de gastos de los vehículos y de la explotación de transportes. Además, permite calcular el beneficio real, ya que se comunica con Transporta para importar las ventas de los viajes, introducir los gastos e imputarlos directamente a los distintos elementos.`,
+planning: `Planning 4.0 es una herramienta destinada a la gestión comercial de Agencias Transportistas y empresas de Transportes. El objetivo primordial de estas aplicaciones es hacer más eficiente y más útil todo el proceso de los departamentos comerciales de este tipo de empresas. La función principal es el control de las cargas y vehículos para concertar el envío de mercancías. Forma parte de un paquete de transportes en el cual comparte ficheros junto con Transporta 4.0 y Base 4.0.`,
+transporta: `Transporta 4.0 es una potente herramienta destinada a realizar una gestión integral del departamento de administración, en el ámbito de empresas de Transportes y Agencias Transportistas.`,
+gestion: `Gestión 4.0 es una potente herramienta destinada a realizar una gestión integral del departamento de administración, en el ámbito de empresas de Productores y Comercializadores de Frutas, Verduras y Hortalizas.`,
+sii: `SII 4.0 es una potente herramienta destinada a la comunicación del Suministro Inmediato de Información con la Agencia Tributaria.`
 };
 
 // =========================

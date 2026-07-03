@@ -1,3 +1,12 @@
+html,
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    /* 🔥 elimina scroll */
+}
+
 body {
     position: relative;
     min-height: 100vh;
@@ -20,7 +29,8 @@ body::before {
     opacity: 0.40;
     filter: grayscale(20%);
 
-    z-index: -1; /* 🔥 IMPORTANTE: evita bloquear clicks */
+    z-index: -1;
+    /* 🔥 IMPORTANTE: evita bloquear clicks */
     pointer-events: none;
 }
 
@@ -36,6 +46,11 @@ footer {
 .navbar {
     position: relative;
     z-index: 9999;
+    min-height: 50px;
+    /* mismo efecto que resto de páginas */
+    padding: 5px 0;
+    display: flex;
+    align-items: center;
 }
 
 #logoutBtn {
@@ -52,8 +67,22 @@ main#contenido {
     padding-top: 110px !important;
 }
 
+footer {
+    margin-top: 30px !important;
+    /* ajusta este valor */
+    position: relative;
+    z-index: 10;
+}
+
 /* TABLET */
 @media (max-width: 991px) {
+
+    html,
+    body {
+        overflow-x: hidden;
+        overflow-y: auto;
+        height: auto;
+    }
 
     main#contenido {
         margin-top: -260px !important;
@@ -63,7 +92,8 @@ main#contenido {
     /* 🔥 TITULO MÁS CERCA DEL LOGO */
     .titulo-formulario {
         font-size: 1.8rem;
-        margin-top: 0;          /* QUITAMOS bajada */
+        margin-top: 0;
+        /* QUITAMOS bajada */
         margin-bottom: 0;
         line-height: 1.1;
     }
@@ -75,12 +105,19 @@ main#contenido {
     }
 
     header.encabezado-login {
-        padding-bottom: 20px;   /* 🔥 controla separación con cards */
+        padding-bottom: 20px;
+        /* 🔥 controla separación con cards */
     }
 }
 
 /* MÓVIL */
 @media (max-width: 576px) {
+    html,
+    body {
+        overflow-x: hidden;
+        overflow-y: auto;
+        height: auto;
+    }
 
     main#contenido {
         margin-top: -240px !important;
