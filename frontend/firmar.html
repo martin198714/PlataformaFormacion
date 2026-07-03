@@ -29,15 +29,14 @@
     <script>
 
         const API = "http://localhost:3000";
+
         let token = null;
 
         function obtenerToken() {
-            return new URLSearchParams(location.search).get("token");
-        }
 
-        /* =========================
-        CARGAR CONTRATO
-        ========================= */
+            return new URLSearchParams(location.search).get("token");
+
+        }
 
         async function cargar() {
 
@@ -49,65 +48,65 @@
                     throw new Error("Token inválido");
 
                 const r = await fetch(`${API}/api/contratos/firma/${token}`);
+
                 const data = await r.json();
 
                 if (!r.ok)
                     throw new Error(data.error);
 
-                document.getElementById("estado").innerText =
-                    "Contrato listo para firma";
+                document.getElementById("estado").innerText = "Contrato listo para firma";
 
                 if (data.FICHERO_NOMBRE) {
 
-                    const pdf = document.getElementById("pdfViewer");
-                    pdf.style.display = "block";
+                    document.getElementById("pdfViewer").style.display = "block";
 
-                    pdf.src = `${API}/uploads/contratos/${data.FICHERO_NOMBRE}`;
+                    document.getElementById("pdfViewer").src =
+                        `${API}/uploads/contratos/${data.FICHERO_NOMBRE}`;
+
                 }
 
-            } catch (e) {
-                document.getElementById("estado").innerText = e.message;
             }
-        }
+            catch (e) {
 
-        /* =========================
-        AUTO FIRMA (SOLO DESCARGA)
-        ========================= */
+                document.getElementById("estado").innerText = e.message;
+
+            }
+
+        }
 
         async function abrirAutoFirma() {
 
-            if (!token)
-                return alert("Token inválido");
-
             try {
 
-                // 🔥 descarga del PDF desde backend
-                const res = await fetch(`${API}/api/contratos/descargar/${token}`);
+                const r = await fetch(`${API}/api/contratos/descargar/${token}`);
 
-                if (!res.ok)
+                if (!r.ok)
                     throw new Error("Error descargando contrato");
 
-                const blob = await res.blob();
+                const blob = await r.blob();
 
-                const url = window.URL.createObjectURL(blob);
+                const url = URL.createObjectURL(blob);
 
                 const a = document.createElement("a");
 
-                // 🔥 IMPORTANTE: formato que usa el watcher
-                a.download = `contrato_TOKEN_${token}_pendiente.pdf`;
-
                 a.href = url;
 
-                document.body.appendChild(a);
+                a.download = `contrato_TOKEN_${token}.pdf`;
+
                 a.click();
-                a.remove();
+
+                URL.revokeObjectURL(url);
 
                 document.getElementById("estado").innerText =
-                    "Abre el PDF con AutoFirma, firma y se subirá automáticamente.";
+                    "Firma el PDF con AutoFirma. Cuando el watcher detecte el PDF firmado se subirá automáticamente.";
 
-            } catch (e) {
-                document.getElementById("estado").innerText = e.message;
             }
+            catch (e) {
+
+                document.getElementById("estado").innerText = e.message;
+
+            }
+
         }
 
         cargar();

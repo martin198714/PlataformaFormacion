@@ -84,6 +84,18 @@ router.get(
 );
 
 /* =========================
+   DESCARGAR CONTRATO POR TOKEN
+========================= */
+
+router.get(
+  "/descargar/:token",
+  safe(
+    contratosController.descargarContrato,
+    "descargarContrato"
+  )
+);
+
+/* =========================
    DETALLE CONTRATO
 ========================= */
 
@@ -108,7 +120,7 @@ router.post(
 
 router.post(
   "/firmar/token/:token",
-  upload.single("pdfFirmado"), // 🔥 FIX AQUÍ
+  upload.single("pdfFirmado"),
   safe(contratosController.firmarPorTokenArchivo, "firmarPorTokenArchivo")
 );
 
@@ -119,7 +131,7 @@ router.post(
 router.post(
   "/firmar/:id",
   authMiddleware,
-  upload.single("pdfFirmado"), // 🔥 CONSISTENTE
+  upload.single("pdfFirmado"),
   safe(contratosController.firmar, "firmar")
 );
 
@@ -152,7 +164,7 @@ router.get(
  */
 router.post(
   "/autofirma/return",
-  upload.single("pdfFirmado"), // 🔥 FIX CRÍTICO
+  upload.single("pdfFirmado"),
   safe(
     contratosController.recibirAutoFirma ||
       contratosController.recibirAutofirma ||

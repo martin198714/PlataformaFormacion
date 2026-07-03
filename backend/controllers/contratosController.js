@@ -173,6 +173,46 @@ exports.verContrato = async (req, res) => {
   }
 };
 
+exports.descargarContrato = async (req, res) => {
+
+    try {
+
+        const contrato = await contratosService.obtenerPorToken(
+            req.params.token
+        );
+
+        if (!contrato?.FICHERO_NOMBRE) {
+            return res.status(404).json({
+                error: "Contrato no encontrado"
+            });
+        }
+
+        const fichero = path.join(
+            __dirname,
+            "..",
+            "uploads",
+            "contratos",
+            contrato.FICHERO_NOMBRE
+        );
+
+        if (!fs.existsSync(fichero)) {
+            return res.status(404).json({
+                error: "PDF inexistente"
+            });
+        }
+
+        res.download(fichero);
+
+    } catch (e) {
+
+        res.status(500).json({
+            error: e.message
+        });
+
+    }
+
+};
+
 /* =========================
    VER POR TOKEN
 ========================= */

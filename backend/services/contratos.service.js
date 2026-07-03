@@ -168,8 +168,15 @@ OBTENER POR TOKEN
 ========================= */
 
 async function obtenerPorToken(token) {
+
   const r = await db.query(`
-    SELECT * FROM CONTRATOS_MANTENIMIENTO WHERE TOKEN=?
+      SELECT
+          c.*,
+          a.FICHERO_NOMBRE
+      FROM CONTRATOS_MANTENIMIENTO c
+      LEFT JOIN ARCHIVOS a
+          ON a.ARCHIVO_ID = c.ARCHIVO_ENVIADO_ID
+      WHERE c.TOKEN = ?
   `, [token]);
 
   return normalizeContrato(toArray(r)[0] || {});
@@ -304,6 +311,35 @@ async function crearContrato(empresaId, perfiles) {
     hash
   });
 
+  const nombrePdf = path.basename(pdf.filePath);
+
+  const insertArchivo = await db.query(`
+    INSERT INTO ARCHIVOS
+    (
+        FICHERO_NOMBRE,
+        RUTA
+    )
+    VALUES
+    (?, ?)
+    RETURNING ARCHIVO_ID
+`, [
+    nombrePdf,
+    pdf.filePath
+  ]);
+
+  const archivoId =
+    insertArchivo?.[0]?.ARCHIVO_ID ||
+    toArray(insertArchivo)?.[0]?.ARCHIVO_ID;
+
+  await db.query(`
+    UPDATE CONTRATOS_MANTENIMIENTO
+    SET ARCHIVO_ENVIADO_ID=?
+    WHERE ID=?
+`, [
+    archivoId,
+    contratoId
+  ]);
+
   if (!pdf?.filePath) {
     throw new Error("Error generando el PDF");
   }
@@ -415,18 +451,20 @@ async function firmarContratoTokenArchivo(data) {
   });
 
   await db.query(`
-    UPDATE CONTRATOS_MANTENIMIENTO
-    SET
-      ESTADO=?,
-      FECHA_FIRMA=CURRENT_TIMESTAMP,
-      IP_FIRMA=?,
-      USER_AGENT=?,
-      HASH_FIRMADO=?
-    WHERE ID=?
-  `, [
+UPDATE CONTRATOS_MANTENIMIENTO
+SET
+    ARCHIVO_FIRMADO=?,
+    ESTADO=?,
+    FECHA_FIRMA=CURRENT_TIMESTAMP,
+    IP_FIRMA=?,
+    USER_AGENT=?,
+    HASH_FIRMADO=?
+WHERE ID=?
+`, [
+    data.rutaFirmado,
     ESTADOS_CONTRATO.FIRMADO,
-    data.ip || null,
-    data.userAgent || null,
+    data.ip,
+    data.userAgent,
     hashFirmado,
     contrato.ID
   ]);
