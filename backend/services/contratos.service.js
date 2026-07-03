@@ -47,12 +47,21 @@ function normalizarPerfiles(perfiles) {
 }
 
 function normalizeContrato(c) {
+  if (!c) return null;
+
   return {
     ...c,
-    PERFIL_NOMBRE: c.PERFIL_NOMBRE ?? "",
-    PERFIL: c.PERFIL ?? "",
-    EMPRESA_NOMBRE: c.EMPRESA_NOMBRE ?? "",
-    ESTADO: c.ESTADO ?? ""
+    EMPRESA_ID: safe(c.EMPRESA_ID),
+    EMPRESA_NOMBRE: safe(c.EMPRESA_NOMBRE),
+    PERFIL_ID: safe(c.PERFIL_ID),
+    PERFIL_NOMBRE: safe(c.PERFIL_NOMBRE),   // <-- AÑADIR
+    ESTADO: safe(c.ESTADO),
+    TOKEN: safe(c.TOKEN || c.TOKEN_FIRMA),
+    ARCHIVO_ENVIADO_ID: safe(c.ARCHIVO_ENVIADO_ID),
+    ARCHIVO_FIRMADO_ID: safe(c.ARCHIVO_FIRMADO_ID),
+    FECHA_ENVIO: safe(c.FECHA_ENVIO),
+    FECHA_FIRMA: safe(c.FECHA_FIRMA),
+    USUARIO_FIRMA_ID: safe(c.USUARIO_FIRMA_ID),
   };
 }
 
@@ -64,44 +73,35 @@ async function listarPorUsuario(usuarioId) {
 
   const r = await db.query(`
     SELECT
-    c.ID,
-    c.EMPRESA_ID,
-    e.NOMBRE AS EMPRESA_NOMBRE,
-    LIST(p.NOMBRE, ', ') AS PERFIL_NOMBRE,
-    c.ESTADO,
-    c.FECHA_ENVIO,
-    c.TOKEN
-FROM CONTRATOS_MANTENIMIENTO c
-INNER JOIN EMPRESAS e
-    ON e.EMPRESA_ID = c.EMPRESA_ID
-INNER JOIN CONTRATO_PERFILES cp
-    ON cp.CONTRATO_ID = c.ID
-INNER JOIN PERFILES p
-    ON p.ID = cp.PERFIL_ID
-WHERE c.EMPRESA_ID = (
-    SELECT EMPRESA_ID
-    FROM USUARIOS
-    WHERE USUARIO_ID = ?
-)
-GROUP BY
-    c.ID,
-    c.EMPRESA_ID,
-    e.NOMBRE,
-    c.ESTADO,
-    c.FECHA_ENVIO,
-    c.TOKEN
-ORDER BY c.ID DESC;
+      c.ID,
+      c.EMPRESA_ID,
+      e.NOMBRE AS EMPRESA_NOMBRE,
+      p.NOMBRE AS PERFIL_NOMBRE,
+      c.ESTADO,
+      c.FECHA_ENVIO,
+      c.TOKEN
+    FROM CONTRATOS_MANTENIMIENTO c
+    INNER JOIN EMPRESAS e
+      ON e.EMPRESA_ID = c.EMPRESA_ID
+    INNER JOIN CONTRATO_PERFILES cp
+      ON cp.CONTRATO_ID = c.ID
+    INNER JOIN PERFILES p
+      ON p.ID = cp.PERFIL_ID
+    WHERE c.EMPRESA_ID = (
+      SELECT EMPRESA_ID
+      FROM USUARIOS
+      WHERE USUARIO_ID = ?
+    )
+    ORDER BY c.ID DESC, p.NOMBRE
   `, [usuarioId]);
 
   const datos = toArray(r);
 
-  console.log("========== LISTAR USUARIO ==========");
+  console.log("===== LISTAR USUARIO =====");
   console.log(JSON.stringify(datos, null, 2));
-  console.log("====================================");
 
   return datos.map(normalizeContrato);
 }
-
 /* =========================
 LISTAR EMPRESA
 ========================= */
@@ -110,38 +110,29 @@ async function listarPorEmpresa(empresaId) {
 
   const r = await db.query(`
     SELECT
-    c.ID,
-    c.EMPRESA_ID,
-    e.NOMBRE AS EMPRESA_NOMBRE,
-    LIST(p.NOMBRE, ', ') AS PERFIL_NOMBRE,
-    c.ESTADO,
-    c.FECHA_ENVIO,
-    c.FECHA_FIRMA,
-    c.TOKEN
-FROM CONTRATOS_MANTENIMIENTO c
-INNER JOIN EMPRESAS e
-    ON e.EMPRESA_ID = c.EMPRESA_ID
-INNER JOIN CONTRATO_PERFILES cp
-    ON cp.CONTRATO_ID = c.ID
-INNER JOIN PERFILES p
-    ON p.ID = cp.PERFIL_ID
-WHERE c.EMPRESA_ID = ?
-GROUP BY
-    c.ID,
-    c.EMPRESA_ID,
-    e.NOMBRE,
-    c.ESTADO,
-    c.FECHA_ENVIO,
-    c.FECHA_FIRMA,
-    c.TOKEN
-ORDER BY c.ID DESC;
+      c.ID,
+      c.EMPRESA_ID,
+      e.NOMBRE AS EMPRESA_NOMBRE,
+      p.NOMBRE AS PERFIL_NOMBRE,
+      c.ESTADO,
+      c.FECHA_ENVIO,
+      c.FECHA_FIRMA,
+      c.TOKEN
+    FROM CONTRATOS_MANTENIMIENTO c
+    INNER JOIN EMPRESAS e
+      ON e.EMPRESA_ID = c.EMPRESA_ID
+    INNER JOIN CONTRATO_PERFILES cp
+      ON cp.CONTRATO_ID = c.ID
+    INNER JOIN PERFILES p
+      ON p.ID = cp.PERFIL_ID
+    WHERE c.EMPRESA_ID = ?
+    ORDER BY c.ID DESC, p.NOMBRE
   `, [empresaId]);
 
   const datos = toArray(r);
 
-  console.log("========== LISTAR EMPRESA ==========");
+  console.log("===== LISTAR EMPRESA =====");
   console.log(JSON.stringify(datos, null, 2));
-  console.log("====================================");
 
   return datos.map(normalizeContrato);
 }
