@@ -102,7 +102,22 @@ LISTAR USUARIO
 
 async function listarPorUsuario(usuarioId) {
 
-  const r = await db.query(`
+  // Comprobar si el usuario pertenece a Ejidosoft (EMPRESA_ID = 1)
+  const usuario = await db.query(`
+        SELECT EMPRESA_ID
+        FROM USUARIOS
+        WHERE USUARIO_ID = ?
+    `, [usuarioId]);
+
+  const empresaId = toArray(usuario)[0]?.EMPRESA_ID;
+
+  let sql;
+  let params = [];
+
+  if (empresaId === 1) {
+
+    // ADMIN (Ejidosoft): ve todos los contratos no borrados
+    sql = `
         SELECT
             c.ID,
             c.EMPRESA_ID,
@@ -115,18 +130,14 @@ async function listarPorUsuario(usuarioId) {
             a.FICHERO_NOMBRE
         FROM CONTRATOS_MANTENIMIENTO c
         LEFT JOIN EMPRESAS e
-            ON e.EMPRESA_ID=c.EMPRESA_ID
+            ON e.EMPRESA_ID = c.EMPRESA_ID
         LEFT JOIN CONTRATO_PERFILES cp
-            ON cp.CONTRATO_ID=c.ID
+            ON cp.CONTRATO_ID = c.ID
         LEFT JOIN PERFILES p
-            ON p.ID=cp.PERFIL_ID
+            ON p.ID = cp.PERFIL_ID
         LEFT JOIN ARCHIVOS a
-            ON a.ARCHIVO_ID=c.ARCHIVO_ENVIADO_ID
-        WHERE c.EMPRESA_ID=(
-            SELECT EMPRESA_ID
-            FROM USUARIOS
-            WHERE USUARIO_ID=?
-        )
+            ON a.ARCHIVO_ID = c.ARCHIVO_ENVIADO_ID
+        WHERE c.DELETED = 0
         GROUP BY
             c.ID,
             c.EMPRESA_ID,
@@ -137,9 +148,53 @@ async function listarPorUsuario(usuarioId) {
             c.TOKEN,
             a.FICHERO_NOMBRE
         ORDER BY c.ID DESC
-    `, [usuarioId]);
+    `;
+
+  } else {
+
+    // Empresa: solo ve sus contratos no borrados
+    sql = `
+        SELECT
+            c.ID,
+            c.EMPRESA_ID,
+            e.NOMBRE EMPRESA_NOMBRE,
+            LIST(p.NOMBRE, ', ') PERFIL_NOMBRE,
+            c.ESTADO,
+            c.FECHA_ENVIO,
+            c.FECHA_FIRMA,
+            c.TOKEN,
+            a.FICHERO_NOMBRE
+        FROM CONTRATOS_MANTENIMIENTO c
+        LEFT JOIN EMPRESAS e
+            ON e.EMPRESA_ID = c.EMPRESA_ID
+        LEFT JOIN CONTRATO_PERFILES cp
+            ON cp.CONTRATO_ID = c.ID
+        LEFT JOIN PERFILES p
+            ON p.ID = cp.PERFIL_ID
+        LEFT JOIN ARCHIVOS a
+            ON a.ARCHIVO_ID = c.ARCHIVO_ENVIADO_ID
+        WHERE c.EMPRESA_ID = ?
+          AND c.DELETED = 0
+        GROUP BY
+            c.ID,
+            c.EMPRESA_ID,
+            e.NOMBRE,
+            c.ESTADO,
+            c.FECHA_ENVIO,
+            c.FECHA_FIRMA,
+            c.TOKEN,
+            a.FICHERO_NOMBRE
+        ORDER BY c.ID DESC
+    `;
+
+    params = [empresaId];
+
+  }
+
+  const r = await db.query(sql, params);
 
   return toArray(r).map(normalizeContrato);
+
 }
 
 /* =========================
@@ -161,14 +216,15 @@ async function listarPorEmpresa(empresaId) {
             a.FICHERO_NOMBRE
         FROM CONTRATOS_MANTENIMIENTO c
         LEFT JOIN EMPRESAS e
-            ON e.EMPRESA_ID=c.EMPRESA_ID
+            ON e.EMPRESA_ID = c.EMPRESA_ID
         LEFT JOIN CONTRATO_PERFILES cp
-            ON cp.CONTRATO_ID=c.ID
+            ON cp.CONTRATO_ID = c.ID
         LEFT JOIN PERFILES p
-            ON p.ID=cp.PERFIL_ID
+            ON p.ID = cp.PERFIL_ID
         LEFT JOIN ARCHIVOS a
-            ON a.ARCHIVO_ID=c.ARCHIVO_ENVIADO_ID
-        WHERE c.EMPRESA_ID=?
+            ON a.ARCHIVO_ID = c.ARCHIVO_ENVIADO_ID
+        WHERE c.EMPRESA_ID = ?
+          AND c.DELETED = 0
         GROUP BY
             c.ID,
             c.EMPRESA_ID,
@@ -197,12 +253,13 @@ async function verContrato(id) {
             LIST(p.NOMBRE, ', ') PERFIL_NOMBRE
         FROM CONTRATOS_MANTENIMIENTO c
         LEFT JOIN ARCHIVOS a
-            ON a.ARCHIVO_ID=c.ARCHIVO_ENVIADO_ID
+            ON a.ARCHIVO_ID = c.ARCHIVO_ENVIADO_ID
         LEFT JOIN CONTRATO_PERFILES cp
-            ON cp.CONTRATO_ID=c.ID
+            ON cp.CONTRATO_ID = c.ID
         LEFT JOIN PERFILES p
-            ON p.ID=cp.PERFIL_ID
-        WHERE c.ID=?
+            ON p.ID = cp.PERFIL_ID
+        WHERE c.ID = ?
+          AND c.DELETED = 0
         GROUP BY
             c.ID,
             a.FICHERO_NOMBRE
@@ -223,8 +280,9 @@ async function obtenerPorToken(token) {
             a.FICHERO_NOMBRE
         FROM CONTRATOS_MANTENIMIENTO c
         LEFT JOIN ARCHIVOS a
-            ON a.ARCHIVO_ID=c.ARCHIVO_ENVIADO_ID
-        WHERE c.TOKEN=?
+            ON a.ARCHIVO_ID = c.ARCHIVO_ENVIADO_ID
+        WHERE c.TOKEN = ?
+          AND c.DELETED = 0
     `, [token]);
 
   return normalizeContrato(toArray(r)[0]);
@@ -325,6 +383,19 @@ async function crearContrato(empresaId, perfiles, usuarioId) {
       perfilId
     ]);
 
+    const prueba = await db.query(`
+    SELECT cp.CONTRATO_ID,
+           cp.PERFIL_ID,
+           p.NOMBRE
+    FROM CONTRATO_PERFILES cp
+    LEFT JOIN PERFILES p
+        ON p.ID = cp.PERFIL_ID
+    WHERE cp.CONTRATO_ID = ?
+`, [contratoId]);
+
+    console.log("PERFILES DEL CONTRATO:");
+    console.log(JSON.stringify(toArray(prueba), null, 2));
+
   }
 
   /* =========================
@@ -419,19 +490,29 @@ async function crearContrato(empresaId, perfiles, usuarioId) {
   ]);
 
   /* =========================
-     EMAILS
-  ========================= */
+   EMAILS (FILTRADOS POR PERFIL Y EMPRESA)
+========================= */
 
   const emailsRaw = await db.query(`
-        SELECT DISTINCT EMAIL
-        FROM USUARIOS
-        WHERE EMPRESA_ID=?
-    `, [empresa]);
+    SELECT DISTINCT u.EMAIL
+    FROM USUARIOS u
+    INNER JOIN USUARIOS_PERFILES up
+        ON up.USUARIO_ID = u.USUARIO_ID
+    INNER JOIN CONTRATO_PERFILES cp
+        ON cp.PERFIL_ID = up.PERFIL_ID
+    WHERE cp.CONTRATO_ID = ?
+      AND u.EMPRESA_ID = ?
+`, [
+    contratoId,
+    empresa
+  ]);
 
-  const emails =
-    toArray(emailsRaw)
-      .map(x => x.EMAIL)
-      .filter(Boolean);
+  const emails = toArray(emailsRaw)
+    .map(x => x.EMAIL)
+    .filter(Boolean);
+
+  console.log("DESTINATARIOS:");
+  console.log(emails);
 
   for (const email of emails) {
 
@@ -450,9 +531,11 @@ async function crearContrato(empresaId, perfiles, usuarioId) {
 
       });
 
+      console.log("📩 Enviado:", email);
+
     } catch (e) {
 
-      console.error(e.message);
+      console.error("❌ Error enviando a", email, e.message);
 
     }
 
@@ -467,6 +550,52 @@ async function crearContrato(empresaId, perfiles, usuarioId) {
     token
 
   };
+
+}
+
+/* =========================
+BORRAR CONTRATO
+========================= */
+
+async function borrarContrato(id) {
+
+    const contrato = await db.query(`
+        SELECT
+            ARCHIVO_ENVIADO_ID,
+            ARCHIVO_FIRMADO_ID
+        FROM CONTRATOS_MANTENIMIENTO
+        WHERE ID = ?
+    `, [id]);
+
+    const c = toArray(contrato)[0];
+
+    await db.query(`
+        DELETE FROM CONTRATO_PERFILES
+        WHERE CONTRATO_ID = ?
+    `, [id]);
+
+    await db.query(`
+        DELETE FROM CONTRATOS_MANTENIMIENTO
+        WHERE ID = ?
+    `, [id]);
+
+    if (c?.ARCHIVO_ENVIADO_ID) {
+        await db.query(`
+            DELETE FROM ARCHIVOS
+            WHERE ARCHIVO_ID = ?
+        `, [c.ARCHIVO_ENVIADO_ID]);
+    }
+
+    if (c?.ARCHIVO_FIRMADO_ID) {
+        await db.query(`
+            DELETE FROM ARCHIVOS
+            WHERE ARCHIVO_ID = ?
+        `, [c.ARCHIVO_FIRMADO_ID]);
+    }
+
+    return {
+        ok: true
+    };
 
 }
 
@@ -692,21 +821,16 @@ EXPORTS
 ========================= */
 
 module.exports = {
-
   listarPorUsuario,
   listarPorEmpresa,
-
   verContrato,
   obtenerPorToken,
-
   crearContrato,
-
+  borrarContrato,
   prepararFirmaAutoFirma,
   recibirFirmaAutoFirma,
-
   firmarContrato,
   firmarContratoToken,
   firmarContratoTokenArchivo,
   firmarContratoAuto
-
 };

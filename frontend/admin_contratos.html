@@ -71,6 +71,7 @@
                     <th>Estado</th>
                     <th>Fecha envío</th>
                     <th>Acción</th>
+                    <th>Borrar</th>
                 </tr>
             </thead>
 
@@ -170,6 +171,14 @@
                            </a>`
                             : "Pendiente"
                         }
+                </td>
+
+                 <td>
+                    <button
+                        class="btn btn-danger btn-sm"
+                        onclick="borrarContrato(${c.ID})">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
                 </td>
 
             </tr>
@@ -301,6 +310,45 @@
 
             } catch (e) {
                 console.error(e);
+            }
+
+        }
+
+        /* =========================
+BORRAR CONTRATO
+========================= */
+
+        async function borrarContrato(id) {
+
+            if (!confirm(`¿Desea borrar el contrato ${id}?`))
+                return;
+
+            try {
+
+                const res = await fetch(`${BASE_URL}/api/contratos/${id}`, {
+
+                    method: "DELETE",
+
+                    headers: getAuthHeaders()
+
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.error || "No se pudo borrar");
+                }
+
+                alert("Contrato eliminado correctamente");
+
+                cargar();
+
+            } catch (e) {
+
+                console.error(e);
+
+                alert(e.message);
+
             }
 
         }

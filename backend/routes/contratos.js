@@ -106,6 +106,16 @@ router.get(
 );
 
 /* =========================
+   BORRAR CONTRATO
+========================= */
+
+router.delete(
+  "/:id",
+  authMiddleware,
+  safe(contratosController.borrarContrato, "borrarContrato")
+);
+
+/* =========================
    FIRMA SIMPLE TOKEN
 ========================= */
 

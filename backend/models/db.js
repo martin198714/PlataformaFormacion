@@ -33,12 +33,34 @@ function query(sql, params = []) {
 
                 if (err) return reject(err);
 
-                // 🔥 NORMALIZACIÓN SEGURA
+                // 🔥 NORMALIZACIÓN SEGURA (FIX REAL)
                 try {
-                    const clean = JSON.parse(JSON.stringify(result || []));
+
+                    // 👇 en vez de stringify, normalizamos manualmente
+                    const clean = Array.isArray(result)
+                        ? result.map(row => {
+                            const obj = {};
+
+                            for (const key in row) {
+
+                                const value = row[key];
+
+                                // 🔥 Firebird BLOB fix (LIST() y textos grandes)
+                                if (value && typeof value === 'object' && value.type === 'Buffer') {
+                                    obj[key] = value.toString('utf8');
+                                } else {
+                                    obj[key] = value;
+                                }
+                            }
+
+                            return obj;
+                        })
+                        : result || [];
+
                     return resolve(clean);
+
                 } catch (e) {
-                    return resolve([]);
+                    return resolve(result || []);
                 }
             });
         });

@@ -391,3 +391,19 @@ exports.obtenerAuditoria = async (req, res) => {
     });
   }
 };
+
+exports.borrarContrato = async (req, res) => {
+  try {
+
+    const resultado = await contratosService.borrarContrato(req.params.id);
+
+    return res.json(resultado);
+
+  } catch (err) {
+
+    return res.status(400).json({
+      error: err.message
+    });
+
+  }
+};
