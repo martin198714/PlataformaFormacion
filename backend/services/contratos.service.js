@@ -122,7 +122,7 @@ async function listarPorUsuario(usuarioId) {
             c.ID,
             c.EMPRESA_ID,
             e.NOMBRE EMPRESA_NOMBRE,
-            LIST(p.NOMBRE, ', ') PERFIL_NOMBRE,
+            CAST(LIST(p.NOMBRE, ', ') AS VARCHAR(1000)) AS PERFIL_NOMBRE,
             c.ESTADO,
             c.FECHA_ENVIO,
             c.FECHA_FIRMA,
@@ -158,7 +158,7 @@ async function listarPorUsuario(usuarioId) {
             c.ID,
             c.EMPRESA_ID,
             e.NOMBRE EMPRESA_NOMBRE,
-            LIST(p.NOMBRE, ', ') PERFIL_NOMBRE,
+            CAST(LIST(p.NOMBRE, ', ') AS VARCHAR(1000)) AS PERFIL_NOMBRE,
             c.ESTADO,
             c.FECHA_ENVIO,
             c.FECHA_FIRMA,
@@ -208,7 +208,7 @@ async function listarPorEmpresa(empresaId) {
             c.ID,
             c.EMPRESA_ID,
             e.NOMBRE EMPRESA_NOMBRE,
-            LIST(p.NOMBRE, ', ') PERFIL_NOMBRE,
+            CAST(LIST(p.NOMBRE, ', ') AS VARCHAR(1000)) AS PERFIL_NOMBRE,
             c.ESTADO,
             c.FECHA_ENVIO,
             c.FECHA_FIRMA,
@@ -238,6 +238,7 @@ async function listarPorEmpresa(empresaId) {
     `, [empresaId]);
 
   return toArray(r).map(normalizeContrato);
+
 }
 
 /* =========================
@@ -250,7 +251,7 @@ async function verContrato(id) {
         SELECT
             c.*,
             a.FICHERO_NOMBRE,
-            LIST(p.NOMBRE, ', ') PERFIL_NOMBRE
+            CAST(LIST(p.NOMBRE, ', ') AS VARCHAR(1000)) AS PERFIL_NOMBRE
         FROM CONTRATOS_MANTENIMIENTO c
         LEFT JOIN ARCHIVOS a
             ON a.ARCHIVO_ID = c.ARCHIVO_ENVIADO_ID
