@@ -1,5 +1,7 @@
 const contratosService = require("../services/contratos.service");
 const { ESTADOS_CONTRATO } = require("../utils/estadosContrato");
+const fs = require("fs");
+const path = require("path");
 
 /* =========================
    UTIL
@@ -25,12 +27,10 @@ function normalizeContrato(c) {
   };
 }
 
-/* 🔥 NUEVO: normalizador de perfiles en controller (doble seguridad) */
+/* 🔥 NUEVO: normalizador de perfiles */
 function normalizarPerfilesInput(body) {
   if (body.perfiles !== undefined) return body.perfiles;
-
   if (body.perfilId !== undefined) return body.perfilId;
-
   return null;
 }
 
@@ -45,7 +45,6 @@ exports.listar = async (req, res) => {
     }
 
     const datos = await contratosService.listarPorUsuario(usuarioId);
-
     return res.json((datos || []).map(normalizeContrato));
   } catch (err) {
     return res.status(500).json({
@@ -67,7 +66,6 @@ exports.listarPorEmpresa = async (req, res) => {
     }
 
     const datos = await contratosService.listarPorEmpresa(empresaId);
-
     return res.json((datos || []).map(normalizeContrato));
   } catch (err) {
     return res.status(500).json({
@@ -78,15 +76,12 @@ exports.listarPorEmpresa = async (req, res) => {
 };
 
 /* =========================
-   CREAR CONTRATO (FIX REAL)
+   CREAR CONTRATO
 ========================= */
 exports.crear = async (req, res) => {
   try {
     const empresaId = Number(req.body.empresaId);
-
-    // 🔥 FIX: acepta perfilId o perfiles (array o número)
     const perfilesRaw = normalizarPerfilesInput(req.body);
-
     const usuarioId = req.user?.id;
 
     if (!usuarioId) {
@@ -101,7 +96,6 @@ exports.crear = async (req, res) => {
       return res.status(400).json({ error: "Perfiles no enviados" });
     }
 
-    // 🔥 normalización final segura
     const perfiles = Array.isArray(perfilesRaw)
       ? perfilesRaw
       : [perfilesRaw];
@@ -147,12 +141,7 @@ exports.verContrato = async (req, res) => {
       return res.status(400).json({ error: "ID inválido" });
     }
 
-    const contrato =
-      contratosService.obtenerPorId
-        ? await contratosService.obtenerPorId(id)
-        : contratosService.obtenerPorToken
-          ? await contratosService.obtenerPorToken(id)
-          : null;
+    const contrato = await contratosService.verContrato(id);
 
     if (!contrato) {
       return res.status(404).json({ error: "Contrato no encontrado" });
@@ -173,44 +162,39 @@ exports.verContrato = async (req, res) => {
   }
 };
 
+/* =========================
+   DESCARGAR CONTRATO
+========================= */
 exports.descargarContrato = async (req, res) => {
+  try {
+    const contrato = await contratosService.obtenerPorToken(req.params.token);
 
-    try {
-
-        const contrato = await contratosService.obtenerPorToken(
-            req.params.token
-        );
-
-        if (!contrato?.FICHERO_NOMBRE) {
-            return res.status(404).json({
-                error: "Contrato no encontrado"
-            });
-        }
-
-        const fichero = path.join(
-            __dirname,
-            "..",
-            "uploads",
-            "contratos",
-            contrato.FICHERO_NOMBRE
-        );
-
-        if (!fs.existsSync(fichero)) {
-            return res.status(404).json({
-                error: "PDF inexistente"
-            });
-        }
-
-        res.download(fichero);
-
-    } catch (e) {
-
-        res.status(500).json({
-            error: e.message
-        });
-
+    if (!contrato?.FICHERO_NOMBRE) {
+      return res.status(404).json({ error: "Contrato no encontrado" });
     }
 
+    const fichero = path.join(
+      __dirname,
+      "..",
+      "uploads",
+      "contratos",
+      contrato.FICHERO_NOMBRE
+    );
+
+    if (!fs.existsSync(fichero)) {
+      return res.status(404).json({ error: "PDF inexistente" });
+    }
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename="${contrato.FICHERO_NOMBRE}"`
+    );
+
+    return res.sendFile(fichero);
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
 };
 
 /* =========================
@@ -288,10 +272,10 @@ exports.firmarPorTokenArchivo = async (req, res) => {
     }
 
     if (!req.file?.path) {
-      return res.status(400).json({
-        error: "Falta PDF firmado",
-      });
+      return res.status(400).json({ error: "Falta PDF firmado" });
     }
+
+    console.log("PDF firmado recibido:", req.file.filename);
 
     const result = await contratosService.firmarContratoTokenArchivo({
       token,
@@ -328,14 +312,11 @@ exports.firmar = async (req, res) => {
       rutaFirmado: req.file?.path,
       ip: req.headers["x-forwarded-for"] || req.socket?.remoteAddress,
       userAgent: req.headers["user-agent"],
-      usuarioId: req.user?.id
     });
 
     res.json(result);
   } catch (err) {
-    res.status(500).json({
-      error: err.message
-    });
+    res.status(500).json({ error: err.message });
   }
 };
 
@@ -345,9 +326,7 @@ exports.firmar = async (req, res) => {
 exports.iniciarAutoFirma = async (req, res) => {
   try {
     const token = req.params.token;
-
     const data = await contratosService.prepararFirmaAutoFirma(token);
-
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -357,7 +336,6 @@ exports.iniciarAutoFirma = async (req, res) => {
 exports.recibirAutoFirma = async (req, res) => {
   try {
     const result = await contratosService.recibirFirmaAutoFirma(req.body);
-
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -376,9 +354,7 @@ exports.obtenerAuditoria = async (req, res) => {
     }
 
     if (!contratosService.obtenerAuditoria) {
-      return res.status(501).json({
-        error: "Auditoría no implementada",
-      });
+      return res.status(501).json({ error: "Auditoría no implementada" });
     }
 
     const logs = await contratosService.obtenerAuditoria(contratoId);
@@ -392,18 +368,14 @@ exports.obtenerAuditoria = async (req, res) => {
   }
 };
 
+/* =========================
+   BORRAR CONTRATO
+========================= */
 exports.borrarContrato = async (req, res) => {
   try {
-
     const resultado = await contratosService.borrarContrato(req.params.id);
-
     return res.json(resultado);
-
   } catch (err) {
-
-    return res.status(400).json({
-      error: err.message
-    });
-
+    return res.status(400).json({ error: err.message });
   }
 };

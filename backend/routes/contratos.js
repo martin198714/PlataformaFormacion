@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+
 const contratosController = require("../controllers/contratosController");
 const { authMiddleware } = require("../middlewares/auth");
 const { firmarContratoAuto } = require("../services/contratos.service");
@@ -19,21 +20,21 @@ if (!fs.existsSync(firmadosDir)) {
 }
 
 const storage = multer.diskStorage({
-  destination: firmadosDir,
+  destination: (req, file, cb) => cb(null, firmadosDir),
   filename: (req, file, cb) => {
     const safe = file.originalname.replace(/\s+/g, "_");
     cb(null, `${Date.now()}-${safe}`);
   }
 });
 
-/* 🔥 FIX IMPORTANTE:
-   aceptamos pdf y pdfFirmado */
 const upload = multer({
   storage,
   limits: { fileSize: 20 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const ok = file.mimetype === "application/pdf";
-    cb(null, ok);
+    if (file.mimetype !== "application/pdf") {
+      return cb(new Error("Solo se permiten PDFs"), false);
+    }
+    cb(null, true);
   }
 });
 
@@ -41,26 +42,20 @@ const upload = multer({
    SAFE WRAPPER
 ========================= */
 
-const safe = (fn, name) => {
-  return (req, res, next) => {
-    if (typeof fn !== "function") {
-      return res.status(500).json({
-        error: `Controller method missing: ${name}`
-      });
-    }
-    return fn(req, res, next);
-  };
+const safe = (fn, name) => (req, res, next) => {
+  if (typeof fn !== "function") {
+    return res.status(500).json({
+      error: `Controller method missing: ${name}`
+    });
+  }
+  return fn(req, res, next);
 };
 
 /* =========================
-   PROTEGIDOS
+   CONTRATOS (PROTEGIDOS)
 ========================= */
 
-router.get(
-  "/",
-  authMiddleware,
-  safe(contratosController.listar, "listar")
-);
+router.get("/", authMiddleware, safe(contratosController.listar, "listar"));
 
 router.get(
   "/empresa/:empresaId",
@@ -75,7 +70,7 @@ router.post(
 );
 
 /* =========================
-   FIRMA PÚBLICA (IMPORTANTE ANTES DE /:id)
+   PÚBLICO
 ========================= */
 
 router.get(
@@ -83,20 +78,13 @@ router.get(
   safe(contratosController.verContratoPorToken, "verContratoPorToken")
 );
 
-/* =========================
-   DESCARGAR CONTRATO POR TOKEN
-========================= */
-
 router.get(
   "/descargar/:token",
-  safe(
-    contratosController.descargarContrato,
-    "descargarContrato"
-  )
+  safe(contratosController.descargarContrato, "descargarContrato")
 );
 
 /* =========================
-   DETALLE CONTRATO
+   DETALLE / BORRAR
 ========================= */
 
 router.get(
@@ -105,10 +93,6 @@ router.get(
   safe(contratosController.verContrato, "verContrato")
 );
 
-/* =========================
-   BORRAR CONTRATO
-========================= */
-
 router.delete(
   "/:id",
   authMiddleware,
@@ -116,7 +100,7 @@ router.delete(
 );
 
 /* =========================
-   FIRMA SIMPLE TOKEN
+   FIRMA TOKEN
 ========================= */
 
 router.post(
@@ -125,7 +109,7 @@ router.post(
 );
 
 /* =========================
-   FIRMA PDF POR TOKEN (FIX MULTER ERROR)
+   FIRMA TOKEN CON PDF
 ========================= */
 
 router.post(
@@ -135,7 +119,7 @@ router.post(
 );
 
 /* =========================
-   FIRMA AUTENTICADA (LOGIN)
+   FIRMA AUTENTICADA
 ========================= */
 
 router.post(
@@ -153,7 +137,7 @@ router.post(
 );
 
 /* =========================
-   🔐 AUTOFIRMA FLOW
+   🔐 AUTOFIRMA FLOW (FIXED)
 ========================= */
 
 /**
@@ -161,48 +145,45 @@ router.post(
  */
 router.get(
   "/autofirma/:token",
-  safe(
-    contratosController.iniciarAutoFirma ||
-      contratosController.iniciarAutofirma ||
-      contratosController.prepararFirmaAutoFirma,
-    "iniciarAutoFirma"
-  )
+  safe(contratosController.prepararFirmaAutoFirma, "prepararFirmaAutoFirma")
 );
 
 /**
- * CALLBACK AUTOFIRMA (SUBIDA PDF FIRMADO)
+ * CALLBACK AUTOFIRMA
  */
 router.post(
   "/autofirma/return",
   upload.single("pdfFirmado"),
-  safe(
-    contratosController.recibirAutoFirma ||
-      contratosController.recibirAutofirma ||
-      contratosController.recibirFirmaAutoFirma,
-    "recibirAutoFirma"
-  )
+  safe(contratosController.recibirFirmaAutoFirma, "recibirFirmaAutoFirma")
 );
 
-router.post("/auto-upload", upload.single("file"), async (req, res) => {
-  try {
-    const { token } = req.body;
+/* =========================
+   AUTO-UPLOAD (FIX IMPORTADO + SEGURIDAD)
+========================= */
 
-    if (!token) throw new Error("Token requerido");
-    if (!req.file) throw new Error("Archivo requerido");
+router.post(
+  "/auto-upload",
+  authMiddleware,
+  upload.single("file"),
+  async (req, res) => {
+    try {
+      const { token } = req.body;
 
-    const { firmarContratoAuto } = require("../services/contrato.service");
+      if (!token) throw new Error("Token requerido");
+      if (!req.file) throw new Error("Archivo requerido");
 
-    const result = await firmarContratoAuto({
-      token,
-      rutaFirmado: req.file.path,
-      ip: req.ip,
-      userAgent: req.headers["user-agent"]
-    });
+      const result = await firmarContratoAuto({
+        token,
+        rutaFirmado: req.file.path,
+        ip: req.ip,
+        userAgent: req.headers["user-agent"]
+      });
 
-    res.json(result);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
+      res.json(result);
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
   }
-});
+);
 
 module.exports = router;
