@@ -478,9 +478,17 @@ RETURNING ID
     `Contrato mantenimiento ${contratoId}`
   ]);
 
-  const archivoId =
-    archivo?.[0]?.ARCHIVO_ID ||
-    toArray(archivo)?.[0]?.ARCHIVO_ID;
+  let archivoId = null;
+
+  if (archivo.ARCHIVO_ID) {
+    archivoId = archivo.ARCHIVO_ID;
+  } else if (Array.isArray(archivo)) {
+    archivoId = archivo[0]?.ARCHIVO_ID;
+  } else {
+    archivoId = toArray(archivo)[0]?.ARCHIVO_ID;
+  }
+
+  console.log("ARCHIVO_ID:", archivoId);
 
   await db.query(`
         UPDATE CONTRATOS_MANTENIMIENTO

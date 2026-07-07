@@ -27,91 +27,159 @@
     </div>
 
     <script src="./js/autoscript.js"></script>
+
     <script>
         const API = "http://localhost:3000";
 
         let token = null;
 
-        /* =========================
-           TOKEN
-        ========================= */
-
         function obtenerToken() {
             return new URLSearchParams(location.search).get("token");
         }
 
-        /* =========================
-           CARGAR CONTRATO
-        ========================= */
-
         async function cargar() {
-            try {
-                token = obtenerToken();
 
-                if (!token)
-                    throw new Error("Token inválido");
+            token = obtenerToken();
 
-                const r = await fetch(`${API}/api/contratos/firma/${token}`);
-                const data = await r.json();
+            const r = await fetch(`${API}/api/contratos/firma/${token}`);
+            const data = await r.json();
 
-                if (!r.ok || data.error)
-                    throw new Error(data.error || "Error cargando contrato");
-
-                document.getElementById("estado").innerText =
-                    "Contrato listo para firma";
-
-                const fichero = data.FICHERO_NOMBRE || data.fichero_nombre;
-
-                if (fichero) {
-                    const viewer = document.getElementById("pdfViewer");
-                    viewer.style.display = "block";
-                    viewer.src = `${API}/uploads/contratos/${fichero}`;
-                }
-
-            } catch (e) {
-                document.getElementById("estado").innerText = e.message;
+            if (data.error) {
+                document.getElementById("estado").innerText = data.error;
+                return;
             }
+
+            document.getElementById("estado").innerText = "Contrato listo";
+
+            const viewer = document.getElementById("pdfViewer");
+            viewer.style.display = "block";
+            viewer.src = `${API}/uploads/contratos/${data.FICHERO_NOMBRE}`;
         }
 
-        /* =========================
-           DESCARGA PARA AUTOFIRMA
-        ========================= */
+        function blobToBase64(blob) {
+
+            return new Promise(resolve => {
+
+                const reader = new FileReader();
+
+                reader.onload = () => {
+
+                    resolve(reader.result.split(",")[1]);
+
+                };
+
+                reader.readAsDataURL(blob);
+
+            });
+
+        }
+
+        function base64ToBlob(base64) {
+
+            const binary = atob(base64);
+
+            const bytes = new Uint8Array(binary.length);
+
+            for (let i = 0; i < binary.length; i++)
+                bytes[i] = binary.charCodeAt(i);
+
+            return new Blob([bytes], {
+                type: "application/pdf"
+            });
+
+        }
 
         async function abrirAutoFirma() {
+
             try {
+
+                document.getElementById("estado").innerText = "Preparando documento...";
+
                 const r = await fetch(`${API}/api/contratos/descargar/${token}`);
 
-                if (!r.ok)
-                    throw new Error("Error descargando contrato");
+                const pdfBlob = await r.blob();
 
-                const blob = await r.blob();
+                const pdf64 = await blobToBase64(pdfBlob);
 
-                const url = window.URL.createObjectURL(blob);
+                AutoScript.cargarAppAfirma();
 
-                const a = document.createElement("a");
-                a.href = url;
+                AutoScript.sign(
 
-                a.download = `contrato_${token}.pdf`;
-                document.body.appendChild(a);
+                    pdf64,
 
-                a.click();
+                    "SHA256withRSA",
 
-                a.remove();
-                URL.revokeObjectURL(url);
+                    "PAdES",
 
-                document.getElementById("estado").innerText =
-                    "Abre el PDF con AutoFirma, fírmalo y espera la subida automática.";
+                    "",
 
-            } catch (e) {
-                document.getElementById("estado").innerText = e.message;
+                    async function (pdfFirmado64) {
+
+                        document.getElementById("estado").innerText = "Subiendo contrato firmado...";
+
+                        const blobFirmado = base64ToBlob(pdfFirmado64);
+
+                        const form = new FormData();
+
+                        form.append(
+                            "pdfFirmado",
+                            blobFirmado,
+                            "contrato_firmado.pdf"
+                        );
+
+                        form.append(
+                            "token",
+                            token
+                        );
+
+                        const subida = await fetch(
+
+                            `${API}/api/contratos/autofirma/return`,
+
+                            {
+                                method: "POST",
+                                body: form
+                            }
+
+                        );
+
+                        const json = await subida.json();
+
+                        if (json.error) {
+                            alert(json.error);
+                            return;
+                        }
+
+                        document.getElementById("estado").innerText = "Contrato firmado correctamente";
+
+                        alert("Contrato firmado correctamente");
+
+                    },
+
+                    function (tipo, error) {
+
+                        console.error(error);
+
+                        alert("Error AutoFirma:\n" + error);
+
+                    }
+
+                );
+
             }
+
+            catch (e) {
+
+                console.error(e);
+
+                alert(e.message);
+
+            }
+
         }
 
-        /* =========================
-           INIT
-        ========================= */
-
         cargar();
+
     </script>
 
 </body>

@@ -167,9 +167,14 @@ exports.verContrato = async (req, res) => {
 ========================= */
 exports.descargarContrato = async (req, res) => {
   try {
+    console.log("===== DESCARGAR CONTRATO =====");
+
     const contrato = await contratosService.obtenerPorToken(req.params.token);
 
+    console.log("Contrato:", contrato);
+
     if (!contrato?.FICHERO_NOMBRE) {
+      console.log("No hay FICHERO_NOMBRE");
       return res.status(404).json({ error: "Contrato no encontrado" });
     }
 
@@ -181,18 +186,17 @@ exports.descargarContrato = async (req, res) => {
       contrato.FICHERO_NOMBRE
     );
 
+    console.log("Ruta:", fichero);
+    console.log("Existe:", fs.existsSync(fichero));
+
     if (!fs.existsSync(fichero)) {
       return res.status(404).json({ error: "PDF inexistente" });
     }
 
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      `inline; filename="${contrato.FICHERO_NOMBRE}"`
-    );
-
     return res.sendFile(fichero);
+
   } catch (e) {
+    console.error(e);
     return res.status(500).json({ error: e.message });
   }
 };
@@ -333,13 +337,34 @@ exports.iniciarAutoFirma = async (req, res) => {
   }
 };
 
-exports.recibirAutoFirma = async (req, res) => {
-  try {
-    const result = await contratosService.recibirFirmaAutoFirma(req.body);
-    res.json(result);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+exports.recibirFirmaAutoFirma = async (req, res) => {
+
+    const { token } = req.body;
+
+    const pdf = req.file;
+
+    if(!pdf){
+        return res.status(400).json({
+            error:"No se recibió el PDF"
+        });
+    }
+
+    await firmarContratoAuto({
+
+        token,
+
+        rutaFirmado: pdf.path,
+
+        ip: req.ip,
+
+        userAgent: req.headers["user-agent"]
+
+    });
+
+    res.json({
+        ok:true
+    });
+
 };
 
 /* =========================
