@@ -725,24 +725,42 @@ async function firmarContratoTokenArchivo(data) {
   });
 
   await db.query(`
-        UPDATE CONTRATOS_MANTENIMIENTO
-        SET
-            ESTADO=?,
-            FECHA_FIRMA=CURRENT_TIMESTAMP,
-            IP_FIRMA=?,
-            USER_AGENT=?,
-            HASH_FIRMADO=?,
-            ARCHIVO_FIRMADO=?,
-            ARCHIVO_FIRMADO_ID=?
-        WHERE ID=?
-    `, [
+    UPDATE CONTRATOS_MANTENIMIENTO
+    SET
+        ESTADO=?,
+        FECHA_FIRMA=CURRENT_TIMESTAMP,
+        FECHA_RECEPCION=CURRENT_TIMESTAMP,
+        IP_FIRMA=?,
+        USER_AGENT=?,
+        HASH_FIRMADO=?,
+        ARCHIVO_FIRMADO=?,
+        RUTA_FIRMADO=?,
+        ARCHIVO_FIRMADO_ID=?,
+        PDF_FIRMADO_ID=?,
+        TOKEN_FIRMA=?
+    WHERE ID=?
+`, [
+
     ESTADOS_CONTRATO.FIRMADO,
-    data.ip || null,
-    data.userAgent || null,
+
+    data.ip || "",
+
+    data.userAgent || "",
+
     hashFirmado,
+
     rutaFirmado,
+
+    rutaFirmado,
+
     archivoFirmadoId,
+
+    archivoFirmadoId,
+
+    contrato.TOKEN,
+
     contrato.ID
+
   ]);
 
   return {
