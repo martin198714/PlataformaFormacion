@@ -321,25 +321,27 @@ async function crearContrato(empresaId, perfiles, usuarioId) {
      CREAR CONTRATO
   ========================= */
 
-  await db.query(`
-    INSERT INTO CONTRATOS_MANTENIMIENTO
-    (
-        EMPRESA_ID,
-        TOKEN,
-        HASH_CONTRATO,
-        ESTADO,
-        FECHA_ENVIO
-    )
-    VALUES
-    (
-        ?, ?, ?, ?, CURRENT_TIMESTAMP
-    )
+  const insert = await db.query(`
+INSERT INTO CONTRATOS_MANTENIMIENTO
+(
+    EMPRESA_ID,
+    TOKEN,
+    HASH_CONTRATO,
+    ESTADO,
+    FECHA_ENVIO
+)
+VALUES
+(
+    ?, ?, ?, ?, CURRENT_TIMESTAMP
+)
+RETURNING ID
 `, [
     empresa,
     token,
     hash,
     ESTADOS_CONTRATO.PENDIENTE
   ]);
+
 
   /* =========================
      OBTENER EL ID DEL CONTRATO
@@ -559,7 +561,7 @@ BORRAR CONTRATO
 
 async function borrarContrato(id) {
 
-    const contrato = await db.query(`
+  const contrato = await db.query(`
         SELECT
             ARCHIVO_ENVIADO_ID,
             ARCHIVO_FIRMADO_ID
@@ -567,35 +569,35 @@ async function borrarContrato(id) {
         WHERE ID = ?
     `, [id]);
 
-    const c = toArray(contrato)[0];
+  const c = toArray(contrato)[0];
 
-    await db.query(`
+  await db.query(`
         DELETE FROM CONTRATO_PERFILES
         WHERE CONTRATO_ID = ?
     `, [id]);
 
-    await db.query(`
+  await db.query(`
         DELETE FROM CONTRATOS_MANTENIMIENTO
         WHERE ID = ?
     `, [id]);
 
-    if (c?.ARCHIVO_ENVIADO_ID) {
-        await db.query(`
+  if (c?.ARCHIVO_ENVIADO_ID) {
+    await db.query(`
             DELETE FROM ARCHIVOS
             WHERE ARCHIVO_ID = ?
         `, [c.ARCHIVO_ENVIADO_ID]);
-    }
+  }
 
-    if (c?.ARCHIVO_FIRMADO_ID) {
-        await db.query(`
+  if (c?.ARCHIVO_FIRMADO_ID) {
+    await db.query(`
             DELETE FROM ARCHIVOS
             WHERE ARCHIVO_ID = ?
         `, [c.ARCHIVO_FIRMADO_ID]);
-    }
+  }
 
-    return {
-        ok: true
-    };
+  return {
+    ok: true
+  };
 
 }
 
