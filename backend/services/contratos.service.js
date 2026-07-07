@@ -328,7 +328,8 @@ INSERT INTO CONTRATOS_MANTENIMIENTO
     TOKEN,
     HASH_CONTRATO,
     ESTADO,
-    FECHA_ENVIO
+    FECHA_ENVIO,
+    USUARIO_FIRMA_ID
 )
 VALUES
 (
@@ -682,28 +683,31 @@ async function firmarContratoTokenArchivo(data) {
 
     const stat = fs.statSync(rutaFirmado);
 
+    const usuarioCreador = Number(contrato.USUARIO_FIRMA_ID) || null;
+
+
     const archivoInsert = await db.query(`
-            INSERT INTO ARCHIVOS
-            (
-                TITULO,
-                URL,
-                FICHERO_NOMBRE,
-                TAMANIO,
-                PUBLICO,
-                CREADO_POR,
-                DESCRIPCION
-            )
-            VALUES
-            (
-                ?, ?, ?, ?, 1, ?, ?
-            )
-            RETURNING ARCHIVO_ID
-        `, [
+        INSERT INTO ARCHIVOS
+        (
+            TITULO,
+            URL,
+            FICHERO_NOMBRE,
+            TAMANIO,
+            PUBLICO,
+            CREADO_POR,
+            DESCRIPCION
+        )
+        VALUES
+        (
+            ?, ?, ?, ?, 1, ?, ?
+        )
+        RETURNING ARCHIVO_ID
+    `, [
       `Contrato firmado ${contrato.ID}`,
       `/uploads/firmados/${nombreFirmado}`,
       nombreFirmado,
       stat.size,
-      contrato.USUARIO_FIRMA_ID || 1,
+      usuarioCreador,
       `Contrato firmado ${contrato.ID}`
     ]);
 

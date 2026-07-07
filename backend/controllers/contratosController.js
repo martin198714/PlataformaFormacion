@@ -327,46 +327,110 @@ exports.firmar = async (req, res) => {
 /* =========================
    AUTO FIRMA
 ========================= */
+
 exports.iniciarAutoFirma = async (req, res) => {
   try {
+
     const token = req.params.token;
+
     const data = await contratosService.prepararFirmaAutoFirma(token);
-    res.json(data);
+
+    return res.json(data);
+
   } catch (err) {
-    res.status(500).json({ error: err.message });
+
+    console.error("Error iniciando AutoFirma:", err);
+
+    return res.status(500).json({
+      error: err.message
+    });
+
   }
 };
 
+
 exports.recibirFirmaAutoFirma = async (req, res) => {
+
+  try {
 
     const { token } = req.body;
 
     const pdf = req.file;
 
-    if(!pdf){
-        return res.status(400).json({
-            error:"No se recibió el PDF"
-        });
+
+    if (!pdf) {
+
+      return res.status(400).json({
+        error: "No se recibió el PDF firmado"
+      });
+
     }
 
-    await firmarContratoAuto({
 
-        token,
+    if (!token) {
 
-        rutaFirmado: pdf.path,
+      return res.status(400).json({
+        error: "No se recibió el token del contrato"
+      });
 
-        ip: req.ip,
+    }
 
-        userAgent: req.headers["user-agent"]
+
+    console.log("===== AUTOFIRMA RECIBIDA =====");
+    console.log("Token:", token);
+    console.log("Archivo:", pdf.filename);
+    console.log("Ruta:", pdf.path);
+
+
+
+    const resultado = await contratosService.firmarContratoAuto({
+
+      token,
+
+      rutaFirmado: pdf.path,
+
+      ip:
+        req.headers["x-forwarded-for"] ||
+        req.socket?.remoteAddress ||
+        req.ip,
+
+      userAgent:
+        req.headers["user-agent"] || ""
 
     });
 
-    res.json({
-        ok:true
+
+
+    return res.json({
+
+      ok: true,
+
+      mensaje: "Contrato firmado correctamente",
+
+      resultado
+
     });
+
+
+
+  } catch (err) {
+
+
+    console.error("💥 Error AutoFirma:", err);
+
+
+    return res.status(500).json({
+
+      error: "Error interno firmando contrato",
+
+      detalle: err.message
+
+    });
+
+
+  }
 
 };
-
 /* =========================
    AUDITORÍA
 ========================= */
