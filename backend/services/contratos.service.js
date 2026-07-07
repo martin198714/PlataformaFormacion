@@ -333,14 +333,15 @@ INSERT INTO CONTRATOS_MANTENIMIENTO
 )
 VALUES
 (
-    ?, ?, ?, ?, CURRENT_TIMESTAMP
+    ?, ?, ?, ?, CURRENT_TIMESTAMP, ?
 )
 RETURNING ID
 `, [
     empresa,
     token,
     hash,
-    ESTADOS_CONTRATO.PENDIENTE
+    ESTADOS_CONTRATO.PENDIENTE,
+    usuarioId
   ]);
 
 
